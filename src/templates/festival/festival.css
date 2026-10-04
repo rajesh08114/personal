@@ -1,0 +1,45 @@
+.fs-bulb {
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+.fs-curtain {
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.25) 0 6px, transparent 6px 40px),
+    linear-gradient(180deg, #a3122f, #6b0b1f);
+  box-shadow: inset 0 -40px 60px rgb(0 0 0 / 0.4);
+}
+.fs-marquee {
+  background: #2d1452;
+  box-shadow:
+    0 0 0 6px #2d1452,
+    0 0 0 8px var(--bd-accent);
+  background-image: radial-gradient(circle, var(--bd-accent) 2.5px, transparent 3px);
+  background-size: 22px 22px;
+  background-position: 0 0;
+  background-repeat: repeat-x;
+  animation: fs-chase 1.2s linear infinite;
+}
+@keyframes fs-chase {
+  to { background-position: 22px 0; }
+}
+.fs-lantern {
+  animation: fs-rise 9s ease-in forwards;
+}
+@keyframes fs-rise {
+  0% { transform: translateY(0) rotate(0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translateY(-40vh) rotate(4deg); }
+  100% { transform: translateY(-90vh) rotate(-3deg); opacity: 0; }
+}
+.fs-glowstick {
+  transform-origin: bottom center;
+  animation: fs-wave 1.2s ease-in-out infinite alternate;
+}
+@keyframes fs-wave {
+  from { transform: rotate(-18deg); }
+  to { transform: rotate(18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fs-lantern {
+    animation-duration: 6s !important;
+  }
+}

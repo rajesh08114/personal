@@ -1,0 +1,76 @@
+.gn-grid {
+  position: fixed;
+  left: -50%;
+  right: -50%;
+  bottom: -10%;
+  height: 55vh;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--bd-primary-rgb) / 0.35) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(0deg, rgb(var(--bd-primary-rgb) / 0.35) 0 2px, transparent 2px 60px);
+  transform: perspective(400px) rotateX(60deg);
+  transform-origin: bottom;
+  mask-image: linear-gradient(transparent, black 60%);
+  animation: gn-grid-move 1.2s linear infinite;
+}
+@keyframes gn-grid-move {
+  to { background-position: 0 60px, 0 60px; }
+}
+.gn-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 3px);
+}
+.gn-frame {
+  box-shadow:
+    0 0 0 4px #e9e4ff,
+    0 0 0 8px #140a2e,
+    0 0 0 12px rgb(var(--bd-primary-rgb) / 0.8),
+    0 0 30px 12px rgb(var(--bd-primary-rgb) / 0.25);
+}
+.gn-btn {
+  background: var(--bd-primary);
+  color: #fff;
+  box-shadow: 0 6px 0 #7a1468, 0 0 24px rgb(var(--bd-primary-rgb) / 0.6);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.gn-btn:hover {
+  filter: brightness(1.1);
+}
+.gn-btn:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 #7a1468, 0 0 24px rgb(var(--bd-primary-rgb) / 0.6);
+}
+.gn-blink {
+  animation: gn-blink 1s steps(1) infinite;
+}
+@keyframes gn-blink {
+  50% { opacity: 0; }
+}
+.gn-balloon {
+  width: 44px;
+  height: 56px;
+  background:
+    linear-gradient(var(--c), var(--c)) 8px 0 / 28px 8px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 8px / 44px 32px no-repeat,
+    linear-gradient(var(--c), var(--c)) 8px 40px / 28px 8px no-repeat,
+    linear-gradient(var(--c), var(--c)) 18px 48px / 8px 8px no-repeat;
+  image-rendering: pixelated;
+  animation: gn-rise linear forwards;
+}
+@keyframes gn-rise {
+  from { transform: translateY(60px); }
+  to { transform: translateY(-380px); }
+}
+
+/* The mini-game is user-initiated: keep balloons slow but playable under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .gn-balloon {
+    animation-duration: 9s !important;
+  }
+  .gn-grid {
+    animation: none !important;
+  }
+}

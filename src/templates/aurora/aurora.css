@@ -1,0 +1,90 @@
+/* Aurora Surprise — drifting light blobs behind glass. */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgb(var(--bd-secondary-rgb) / 0.35), transparent 60%),
+    linear-gradient(180deg, #0d0a1a 0%, #120d24 50%, #0a0814 100%);
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.45;
+  will-change: transform;
+}
+.aurora-blob.a {
+  width: 55vmax;
+  height: 55vmax;
+  left: -15vmax;
+  top: -10vmax;
+  background: radial-gradient(circle, var(--bd-primary), transparent 65%);
+  animation: aurora-drift-a 22s ease-in-out infinite alternate;
+}
+.aurora-blob.b {
+  width: 50vmax;
+  height: 50vmax;
+  right: -18vmax;
+  top: 20vh;
+  background: radial-gradient(circle, var(--bd-secondary), transparent 65%);
+  animation: aurora-drift-b 26s ease-in-out infinite alternate;
+}
+.aurora-blob.c {
+  width: 40vmax;
+  height: 40vmax;
+  left: 20vw;
+  bottom: -20vmax;
+  background: radial-gradient(circle, var(--bd-accent), transparent 65%);
+  opacity: 0.25;
+  animation: aurora-drift-a 30s ease-in-out infinite alternate-reverse;
+}
+@keyframes aurora-drift-a {
+  to { transform: translate3d(12vw, 10vh, 0) scale(1.15); }
+}
+@keyframes aurora-drift-b {
+  to { transform: translate3d(-10vw, -8vh, 0) scale(0.9); }
+}
+
+.aurora-ring {
+  background: conic-gradient(from 0deg, var(--bd-accent), var(--bd-primary), var(--bd-secondary), var(--bd-accent));
+  animation: spin 10s linear infinite;
+}
+
+.aurora-gradient-text {
+  background: linear-gradient(100deg, #fff 0%, var(--bd-accent) 35%, var(--bd-primary) 70%, #fff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 8s linear infinite;
+}
+
+/* Gift box */
+.gift-scene {
+  perspective: 900px;
+}
+.gift-box {
+  transform-style: preserve-3d;
+}
+@keyframes gift-shake {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-6deg); }
+  40% { transform: rotate(5deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(3deg); }
+}
+.gift-shake {
+  animation: gift-shake 0.6s ease-in-out;
+}
+.gift-rays {
+  background: repeating-conic-gradient(from 0deg, rgb(var(--bd-accent-rgb) / 0.35) 0deg 8deg, transparent 8deg 24deg);
+  mask-image: radial-gradient(circle, black 20%, transparent 65%);
+  animation: spin 18s linear infinite;
+}
+
+.signature-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}

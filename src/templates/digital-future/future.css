@@ -1,0 +1,58 @@
+.df-grid {
+  background-image:
+    linear-gradient(rgb(var(--bd-primary-rgb) / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--bd-primary-rgb) / 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+.df-panel {
+  box-shadow: 0 0 40px rgb(var(--bd-primary-rgb) / 0.08), inset 0 0 30px rgb(var(--bd-primary-rgb) / 0.05);
+}
+.df-scan {
+  animation: df-scan 3s ease-in-out infinite;
+}
+@keyframes df-scan {
+  0% { top: -20%; }
+  100% { top: 100%; }
+}
+.df-glitch::before,
+.df-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.df-glitch::before {
+  color: var(--bd-secondary);
+  transform: translate(-2px, 0);
+  clip-path: inset(0 0 60% 0);
+  animation: df-glitch-a 3.2s steps(1) infinite;
+  opacity: 0.8;
+}
+.df-glitch::after {
+  color: var(--bd-primary);
+  transform: translate(2px, 0);
+  clip-path: inset(55% 0 0 0);
+  animation: df-glitch-b 2.7s steps(1) infinite;
+  opacity: 0.8;
+}
+@keyframes df-glitch-a {
+  0%, 92%, 100% { transform: translate(0, 0); clip-path: inset(0 0 100% 0); }
+  93% { transform: translate(-3px, 1px); clip-path: inset(10% 0 55% 0); }
+  96% { transform: translate(3px, -1px); clip-path: inset(40% 0 30% 0); }
+}
+@keyframes df-glitch-b {
+  0%, 88%, 100% { transform: translate(0, 0); clip-path: inset(100% 0 0 0); }
+  89% { transform: translate(3px, 0); clip-path: inset(60% 0 10% 0); }
+  94% { transform: translate(-2px, 1px); clip-path: inset(20% 0 60% 0); }
+}
+.df-glitch-shake {
+  animation: df-shake 0.5s steps(2) both;
+}
+@keyframes df-shake {
+  0% { transform: translate(0); filter: hue-rotate(0deg); }
+  25% { transform: translate(-6px, 2px); filter: hue-rotate(90deg); }
+  50% { transform: translate(5px, -3px); }
+  75% { transform: translate(-3px, 1px); filter: hue-rotate(-90deg); }
+  100% { transform: translate(0); opacity: 0.4; }
+}
