@@ -5,7 +5,7 @@ import { ExperienceShell } from '@/components/experience/ExperienceShell';
 import { CreatorBar } from '@/components/experience/CreatorBar';
 import { createSampleConfig } from '@/data/sampleConfig';
 import { isTemplateId } from '@/data/normalizeConfig';
-import { getTemplate } from '@/templates/registry';
+import { getTemplate, isLoveTemplate } from '@/templates/registry';
 import { useDraft } from '@/store/DraftProvider';
 
 /** `/templates/:id` — the complete experience with fictional sample content. */
@@ -14,7 +14,7 @@ export default function TemplatePreviewPage() {
   const navigate = useNavigate();
   const { patch } = useDraft();
   const valid = isTemplateId(id);
-  const config = useMemo(() => (valid ? createSampleConfig(id) : null), [valid, id]);
+  const config = useMemo(() => (valid ? createSampleConfig(id, { love: isLoveTemplate(id) }) : null), [valid, id]);
   if (!valid || !config) return <Navigate to="/templates" replace />;
   const template = getTemplate(id);
 

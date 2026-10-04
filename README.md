@@ -1,6 +1,6 @@
 # Birthday Studio
 
-Build a cinematic, personal birthday website in minutes. Pick one of **19 different experiences**, add your photos and words, preview it live, and share a link.
+Build a cinematic, personal birthday website in minutes. Pick one of **38 different experiences**, including a 20-template **Love & Romance** collection. Add your photos and words, preview it live, and share a link.
 
 Each template is its own experience, not a colour swap. Starry Night spells their name in constellations, Game Night has three mini-games, Love Letter opens with a wax seal, and so on. The same photos and messages work in every template, so switching never loses content.
 
@@ -55,7 +55,6 @@ Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY P
 | 📒 | Birthday Scrapbook | Page-turning book, movable stickers, hidden notes, envelope |
 | 🕯️ | Minimal Luxury | Masked photography, editorial index, a single candle |
 | 🎮 | Game Night | Pop balloons, catch stars, boss charge, then "Level [AGE] unlocked" |
-| 💌 | Love Letter | Wax-seal envelope, handwriting reveal, tucked-in photos |
 | 🪩 | Neon Party | Neon signs, light board, audio visualizer, "drop the beat" |
 | 🌸 | Garden of Wishes | Plant seeds that bloom into memory flowers; fireflies follow the cursor |
 | 🎞️ | Film Roll | Sideways film strip where each negative develops; flip the final print |
@@ -66,6 +65,40 @@ Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY P
 | 🪐 | Cosmic Journey | Launch countdown, memories as orbiting planets, planet alignment |
 | ☕ | Coffee & Memories | Chalkboard menu, orders served to the table, cupcake candle, receipt |
 | 🛰️ | Digital Future | Boot sequence, holographic scan, decrypting logs, "Mission: complete" |
+
+## The Love & Romance collection
+
+A dedicated category (`/templates?c=love`) with its own mood filters: Romantic, Emotional, Cinematic, Cute, Elegant, Magical, Cozy, Creative and Premium. Love previews use romantic sample content (Emma & Noah) with dates and places.
+
+| | Template | Signature moment |
+| --- | --- | --- |
+| 01 | The Love Letter | Ivory envelope, line-by-line handwriting, photos slide in, folds back up |
+| 02 | Our Story | Pinned film chapters; photos open from a small window to full screen |
+| 03 | Two Souls | YOU + ME = US; particles become a heart, then their name |
+| 04 | The Memory Gallery | One photo at a time with museum placards, distortion transitions, collage |
+| 05 | Midnight Date | Explore a moonlit city; windows light up to spell I LOVE YOU |
+| 06 | Rose Garden | Buds bloom into memories; the whole garden blooms at the end |
+| 07 | Our Polaroid Wall | Drag, rotate and flip photos for hidden messages; photos form a heart |
+| 08 | Forever Timeline | Scroll-following timeline; milestones expand at centre stage |
+| 09 | Constellation of Us | Stars hold memories, then rearrange to spell both names |
+| 10 | The Secret Garden | Four gates; catch fireflies for keys; a glowing clearing: “You.” |
+| 11 | Vinyl Love | Turntable plays a five-track story; needle lifts at the end |
+| 12 | Candlelight Dinner | Objects on the table open memories, the menu, a love note and a gift |
+| 13 | Parallel Universes | Four worlds collapse into one: “I’d still choose you.” |
+| 14 | Message in the Stars | Each sentence becomes a star; the sky spells their name |
+| 15 | The Gift Box | 3D box, then five gifts that each unwrap differently |
+| 16 | Cinema Date | Private screening, scene menu, credits starring you both |
+| 17 | Digital Heartbeat | Live ECG reacts to cursor, clicks and music; becomes a heart |
+| 18 | Forever Letterbox | Pinned 21:9 frame, slow pans, dip-to-black: “To be continued…” |
+| 19 | Handwritten Journal | Notebook pages turn as you scroll; folded-corner secrets |
+| 20 | Our Little Universe | Drag-to-spin 3D orbits, six planets to explore, zoom-out finale |
+
+Every love template reads the same `BirthdayConfig`, so switching between them, or back to a birthday template, keeps all content. Memories and story chapters have optional **date** and **place** fields, used by placards, timelines and star captions. The upgraded Love Letter keeps its original id, so existing drafts that used it still load.
+
+Shared engine pieces added for the collection:
+
+- `MorphParticles` + `shapes.ts`: glowing particles that drift freely or spring into a heart, a heart outline or any text. Frame-rate independent; under reduced motion they snap straight to the shape.
+- `audio.play()` / `audio.pause()` on `useExperience()`, so a template (Vinyl Love) can start and stop the song from its own controls.
 
 ## Architecture
 
@@ -125,8 +158,8 @@ Everything the templates show comes from one `BirthdayConfig` (see `src/types/bi
   heroImage: 'data:image/webp;base64,…',
   finalImage: undefined,             // falls back to heroImage
   messages: { intro, main, wish, surprise, final },
-  memories: [{ id, image, title, description }],   // up to 12
-  timeline: [{ id, image, title, description }],   // up to 6
+  memories: [{ id, image, title, description, date?, place? }],   // up to 12
+  timeline: [{ id, image, title, description, date?, place? }],   // up to 6
   theme: { preset: 'template' | 'romantic' | … | 'custom', primary, secondary, accent },
   music: { url, name, enabled, volume },
 }
@@ -165,7 +198,7 @@ For Firebase, Supabase or Postgres, implement the small `BirthdayRepository` int
 
 1. Create `src/templates/my-template/meta.tsx` with a `BirthdayTemplate` object (name, moods, palette, fonts, `Thumbnail`, `component: lazy(() => import('./index'))`).
 2. Build `index.tsx`. Use `useExperience()` and `useBirthdayText()` for content, `<Fill>` and `<PhotoSlot>` for placeholder-aware text and images, `getMemories` / `getTimeline` for lists, and call `open()` from your opening screen.
-3. Add the id to `TemplateId` in `src/types/birthday.ts` and to the list in `src/data/normalizeConfig.ts`.
+3. Add the id to `TEMPLATE_IDS` in `src/data/templateIds.ts` (the single source of truth for `TemplateId` and validation). For a love template, add `'love'` to `categories` and set `loveTags`.
 4. Register it in `src/templates/registry.ts`.
 
 ## Accessibility and performance
@@ -173,7 +206,7 @@ For Firebase, Supabase or Postgres, implement the small `BirthdayRepository` int
 - Semantic sections and headings, visible focus rings, and labelled icon buttons. Dialogs and the lightbox trap focus and close with Esc. The lightbox supports ← / → and swipe; the scrapbook supports arrow keys.
 - Every interaction has a keyboard or button alternative: "Blow them all out", "Skip level", "Plant every seed", "Pop them all at once", and so on.
 - `prefers-reduced-motion` is respected throughout: Motion is set to `reducedMotion="user"`, CSS animations are neutralised, effects are disabled, and scroll-driven sections fall back to plain layouts.
-- Each template and page is its own chunk (≈4–7 KB gzipped per template) and loads only its own Google Fonts.
+- Each template and page is its own chunk (≈3–7 KB gzipped per template) and loads only its own Google Fonts.
 - Particles pause when off-screen or in a background tab, and their count scales with device capability. The effects canvas only runs while particles exist.
 - Images are lazy-loaded, fade in, and fall back gracefully when missing or broken.
 - Neon and strobe-style effects stay below photosensitivity-safe flash rates.

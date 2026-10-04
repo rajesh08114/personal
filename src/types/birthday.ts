@@ -3,26 +3,9 @@
  * Templates never hardcode personal content — they read it from here.
  */
 
-export type TemplateId =
-  | 'aurora'
-  | 'starry-night'
-  | 'polaroid-memories'
-  | 'cinematic-film'
-  | 'balloon-festival'
-  | 'scrapbook'
-  | 'minimal-luxury'
-  | 'game-night'
-  | 'love-letter'
-  | 'neon-party'
-  | 'garden-of-wishes'
-  | 'film-roll'
-  | 'time-capsule'
-  | 'comic-book'
-  | 'fairytale'
-  | 'festival'
-  | 'cosmic-journey'
-  | 'coffee-memories'
-  | 'digital-future';
+import type { TEMPLATE_IDS } from '@/data/templateIds';
+
+export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
 export type ThemePresetId =
   | 'template'
@@ -41,14 +24,14 @@ export interface Memory {
   image?: string;
   title: string;
   description: string;
+  /** Free text, e.g. "June 2021" or "14 Feb 2022". Optional. */
+  date?: string;
+  /** Free text, e.g. "Lisbon" or "Our first apartment". Optional. */
+  place?: string;
 }
 
-export interface TimelineItem {
-  id: string;
-  image?: string;
-  title: string;
-  description: string;
-}
+/** Story chapters / important dates share the same shape as memories. */
+export type TimelineItem = Memory;
 
 export interface BirthdayMessages {
   /** Opening line. Empty = each template uses its own signature opening. */

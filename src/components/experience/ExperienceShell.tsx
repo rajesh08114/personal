@@ -61,6 +61,7 @@ export function ExperienceShell({ config, mode, startOpened = false }: Experienc
   }, [name, mode]);
 
   const { play } = audio;
+  const playMusic = useCallback(() => void play(), [play]);
   const open = useCallback(() => {
     setOpened(true);
     void play();
@@ -98,9 +99,9 @@ export function ExperienceShell({ config, mode, startOpened = false }: Experienc
       effectsScale,
       reducedMotion,
       age: getTurningAge(config),
-      audio: { available: audio.available, playing: audio.playing, getLevels: audio.getLevels },
+      audio: { available: audio.available, playing: audio.playing, getLevels: audio.getLevels, play: playMusic, pause: audio.pause },
     }),
-    [config, template, mode, theme, opened, open, restart, fx, effectsScale, reducedMotion, audio.available, audio.playing, audio.getLevels],
+    [config, template, mode, theme, opened, open, restart, fx, effectsScale, reducedMotion, audio.available, audio.playing, audio.getLevels, playMusic, audio.pause],
   );
 
   const Template = template.component;

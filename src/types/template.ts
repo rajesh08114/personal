@@ -1,7 +1,10 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
 import type { TemplateId, ThemeColors } from './birthday';
 
-export type TemplateCategory = 'romantic' | 'fun' | 'memories' | 'elegant' | 'creative' | 'cozy';
+export type TemplateCategory = 'romantic' | 'fun' | 'memories' | 'elegant' | 'creative' | 'cozy' | 'love';
+
+/** Secondary filters inside the Love & Romance collection. */
+export type LoveTag = 'romantic' | 'emotional' | 'cinematic' | 'cute' | 'elegant' | 'magical' | 'cozy' | 'creative' | 'premium';
 
 export interface TemplateFonts {
   /** Google Fonts css2 `family=` values, e.g. "Bebas+Neue" or "Lora:ital,wght@0,400;1,400". */
@@ -28,6 +31,8 @@ export interface BirthdayTemplate {
   tagline: string;
   description: string;
   categories: TemplateCategory[];
+  /** Filters for the Love & Romance collection (love templates only). */
+  loveTags?: LoveTag[];
   moods: string[];
   bestFor: string;
   /** Default colours, used when the creator keeps "Template colours". */

@@ -1,0 +1,21 @@
+.gb-face {
+  backface-visibility: hidden;
+  border-radius: 6px;
+  box-shadow: inset 0 0 30px rgb(0 0 0 / 0.12);
+}
+.gb-cube {
+  transform: rotateX(-18deg) rotateY(-30deg);
+}
+.gb-cube.is-spinning {
+  animation: gb-spin 10s linear infinite;
+}
+@keyframes gb-spin {
+  from { transform: rotateX(-18deg) rotateY(0deg); }
+  to { transform: rotateX(-18deg) rotateY(360deg); }
+}
+.gb-glow {
+  background: conic-gradient(from 0deg, var(--bd-accent), #ffd6e0, var(--bd-primary), var(--bd-accent));
+  filter: blur(30px);
+  opacity: 0.6;
+  animation: spin 8s linear infinite;
+}

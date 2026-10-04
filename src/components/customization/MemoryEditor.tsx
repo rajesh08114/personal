@@ -95,6 +95,22 @@ export function MemoryEditor({
                   onChange={(e) => update(m.id, { description: e.target.value })}
                   placeholder={captionPlaceholder}
                 />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Date (optional)"
+                    maxLength={40}
+                    value={m.date ?? ''}
+                    onChange={(e) => update(m.id, { date: e.target.value || undefined })}
+                    placeholder="e.g. June 2021"
+                  />
+                  <Input
+                    label="Place (optional)"
+                    maxLength={60}
+                    value={m.place ?? ''}
+                    onChange={(e) => update(m.id, { place: e.target.value || undefined })}
+                    placeholder="e.g. Lisbon"
+                  />
+                </div>
               </div>
             </div>
           </li>

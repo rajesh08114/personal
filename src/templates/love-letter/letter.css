@@ -1,0 +1,23 @@
+.ll-room {
+  background:
+    radial-gradient(ellipse at 75% 0%, rgb(255 228 190 / 0.9), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgb(217 102 122 / 0.12), transparent 50%),
+    #f4ecdf;
+}
+.ll-petal {
+  position: absolute;
+  top: -5%;
+  width: 14px;
+  height: 18px;
+  border-radius: 60% 0 60% 0;
+  background: linear-gradient(135deg, #e88a9a, #b8364d);
+  opacity: 0.55;
+  animation-name: ll-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes ll-fall {
+  0% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 60px 55vh; rotate: 200deg; }
+  100% { translate: -30px 110vh; rotate: 400deg; }
+}

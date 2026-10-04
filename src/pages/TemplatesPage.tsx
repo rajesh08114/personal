@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ArrowRight, Eye, Sparkles } from 'lucide-react';
-import type { TemplateCategory } from '@/types/template';
-import { CATEGORIES, TEMPLATES } from '@/templates/registry';
+import { ArrowRight, Eye, Heart, Sparkles } from 'lucide-react';
+import type { LoveTag, TemplateCategory } from '@/types/template';
+import { CATEGORIES, LOVE_TAGS, TEMPLATES } from '@/templates/registry';
 import { useDraft } from '@/store/DraftProvider';
 import { Particles } from '@/components/effects/Particles';
 import { cn } from '@/utils/cn';
 
 /** `/templates` — "Choose your birthday experience". */
 export default function TemplatesPage() {
-  const [category, setCategory] = useState<TemplateCategory | 'all'>('all');
+  const [category, setCategory] = useState<TemplateCategory | 'all'>(() =>
+    new URLSearchParams(window.location.search).get('c') === 'love' ? 'love' : 'all',
+  );
+  const [loveTag, setLoveTag] = useState<LoveTag | 'all'>('all');
   const { config, patch } = useDraft();
   const navigate = useNavigate();
-  const list = category === 'all' ? TEMPLATES : TEMPLATES.filter((t) => t.categories.includes(category));
+  const byCategory = category === 'all' ? TEMPLATES : TEMPLATES.filter((t) => t.categories.includes(category));
+  const list = category === 'love' && loveTag !== 'all' ? byCategory.filter((t) => t.loveTags?.includes(loveTag)) : byCategory;
+  const loveCount = TEMPLATES.filter((t) => t.categories.includes('love')).length;
 
   useEffect(() => {
     document.title = 'Choose your birthday experience — Birthday Studio';
@@ -76,16 +81,62 @@ export default function TemplatesPage() {
               type="button"
               role="tab"
               aria-selected={category === c.id}
-              onClick={() => setCategory(c.id)}
+              onClick={() => {
+                setCategory(c.id);
+                setLoveTag('all');
+              }}
               className={cn(
-                'h-10 shrink-0 rounded-full px-5 text-sm font-semibold transition-colors duration-200',
-                category === c.id ? 'bg-white text-ink-900' : 'bg-white/5 text-white/75 ring-1 ring-white/10 hover:bg-white/10 hover:text-white',
+                'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-5 text-sm font-semibold transition-colors duration-200',
+                category === c.id
+                  ? c.id === 'love'
+                    ? 'bg-[#c2185b] text-white'
+                    : 'bg-white text-ink-900'
+                  : 'bg-white/5 text-white/75 ring-1 ring-white/10 hover:bg-white/10 hover:text-white',
               )}
             >
+              {c.id === 'love' && <Heart className="size-3.5 fill-current" aria-hidden />}
               {c.label}
             </button>
           ))}
         </div>
+
+        {category === 'love' && (
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            aria-labelledby="love-collection"
+            className="relative mb-10 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_20%_0%,rgb(194_24_91/0.35),transparent_60%),radial-gradient(ellipse_at_100%_100%,rgb(124_58_237/0.25),transparent_55%)] p-6 sm:p-10"
+          >
+            <p className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.3em] text-[#ff8fb1] uppercase">
+              <Heart className="size-3.5 fill-current" aria-hidden /> The love collection · {loveCount} experiences
+            </p>
+            <h2 id="love-collection" className="mt-3 max-w-2xl font-display text-3xl leading-tight sm:text-5xl">
+              An interactive love story, made for two people.
+            </h2>
+            <p className="mt-3 max-w-xl text-white/65">
+              Letters that unfold, two souls that drift together, a midnight city that spells it out. Every one tells your
+              story in its own way.
+            </p>
+            <div className="no-scrollbar -mx-1 mt-6 flex gap-2 overflow-x-auto px-1" role="group" aria-label="Filter love templates by mood">
+              {LOVE_TAGS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={loveTag === t.id}
+                  onClick={() => setLoveTag(t.id)}
+                  className={cn(
+                    'h-9 shrink-0 rounded-full px-4 text-xs font-semibold transition-colors',
+                    loveTag === t.id ? 'bg-white text-ink-900' : 'bg-white/5 text-white/70 ring-1 ring-white/10 hover:text-white',
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {list.length === 0 && <p className="py-16 text-center text-white/60">No templates match that mood yet — try another filter.</p>}
 
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t, i) => {

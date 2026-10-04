@@ -11,6 +11,9 @@ export interface AudioApi {
   playing: boolean;
   /** Fills `out` with frequency data (0–255). Returns false when no live audio is available. */
   getLevels: (out: Uint8Array) => boolean;
+  /** Start / stop the configured song (call from a user gesture). */
+  play: () => void;
+  pause: () => void;
 }
 
 export interface ExperienceValue {

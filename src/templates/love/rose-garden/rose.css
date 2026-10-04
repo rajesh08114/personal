@@ -1,0 +1,26 @@
+.rg-petal {
+  position: absolute;
+  left: -5%;
+  width: 16px;
+  height: 20px;
+  border-radius: 70% 10% 70% 10%;
+  background: linear-gradient(135deg, #d63a5a, #7a0f24);
+  opacity: 0.6;
+  animation-name: rg-wind;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes rg-wind {
+  0% { translate: 0 0; rotate: 0deg; }
+  30% { translate: 35vw 6vh; rotate: 140deg; }
+  60% { translate: 70vw -3vh; rotate: 300deg; }
+  100% { translate: 110vw 10vh; rotate: 480deg; }
+}
+.rg-sway {
+  transform-origin: 50% 100%;
+  animation: rg-sway 5s ease-in-out infinite alternate;
+}
+@keyframes rg-sway {
+  from { transform: rotate(-2.5deg); }
+  to { transform: rotate(2.5deg); }
+}

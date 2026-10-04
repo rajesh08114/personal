@@ -7,28 +7,7 @@ import type {
 } from '@/types/birthday';
 import { createDefaultConfig, MAX_MEMORIES, MAX_TIMELINE } from './defaultConfig';
 import { createId } from '@/utils/id';
-
-const TEMPLATE_IDS: TemplateId[] = [
-  'aurora',
-  'starry-night',
-  'polaroid-memories',
-  'cinematic-film',
-  'balloon-festival',
-  'scrapbook',
-  'minimal-luxury',
-  'game-night',
-  'love-letter',
-  'neon-party',
-  'garden-of-wishes',
-  'film-roll',
-  'time-capsule',
-  'comic-book',
-  'fairytale',
-  'festival',
-  'cosmic-journey',
-  'coffee-memories',
-  'digital-future',
-];
+import { TEMPLATE_IDS } from './templateIds';
 
 const PRESETS: ThemePresetId[] = [
   'template',
@@ -52,7 +31,7 @@ const hex = (v: unknown, fallback: string): string =>
   typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
 
 export function isTemplateId(v: unknown): v is TemplateId {
-  return typeof v === 'string' && (TEMPLATE_IDS as string[]).includes(v);
+  return typeof v === 'string' && (TEMPLATE_IDS as readonly string[]).includes(v);
 }
 
 /** Only allow images/audio we can safely render: data URLs, blob URLs, http(s). */
@@ -69,6 +48,8 @@ function memory(v: unknown): Memory | null {
     image: mediaUrl(v.image),
     title: str(v.title, '', 120),
     description: str(v.description, '', 400),
+    date: optStr(str(v.date, '', 40)),
+    place: optStr(str(v.place, '', 60)),
   };
 }
 

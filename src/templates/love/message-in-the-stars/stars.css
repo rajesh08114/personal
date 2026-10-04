@@ -1,0 +1,38 @@
+.ms-aurora {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 45vh;
+  filter: blur(50px);
+  opacity: 0.45;
+  mix-blend-mode: screen;
+}
+.ms-aurora-a {
+  top: -5%;
+  background: linear-gradient(100deg, transparent 10%, rgb(52 211 153 / 0.55) 35%, rgb(56 189 248 / 0.35) 55%, transparent 80%);
+  animation: ms-wave 18s ease-in-out infinite alternate;
+}
+.ms-aurora-b {
+  top: 12%;
+  background: linear-gradient(80deg, transparent 15%, rgb(167 139 250 / 0.45) 45%, rgb(244 114 182 / 0.25) 65%, transparent 85%);
+  animation: ms-wave 24s ease-in-out infinite alternate-reverse;
+}
+@keyframes ms-wave {
+  from { transform: translateX(-6%) skewY(-4deg); }
+  to { transform: translateX(6%) skewY(3deg); }
+}
+.ms-shoot {
+  position: absolute;
+  right: -10%;
+  height: 2px;
+  width: 160px;
+  background: linear-gradient(90deg, transparent, #fff);
+  opacity: 0;
+  animation: ms-shoot 12s linear infinite;
+}
+@keyframes ms-shoot {
+  0% { transform: translate(0, 0) rotate(-20deg); opacity: 0; }
+  2% { opacity: 1; }
+  8% { transform: translate(-50vw, 18vw) rotate(-20deg); opacity: 0; }
+  100% { opacity: 0; }
+}

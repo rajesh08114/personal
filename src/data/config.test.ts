@@ -35,6 +35,18 @@ describe('normalizeConfig', () => {
     expect(c.theme.preset).toBe('romantic');
   });
 
+  it('keeps optional date and place on memories, dropping empty ones', () => {
+    const c = normalizeConfig({ memories: [{ id: 'a', title: 'x', description: 'y', date: 'June 2021', place: '' }] });
+    expect(c.memories[0].date).toBe('June 2021');
+    expect(c.memories[0].place).toBeUndefined();
+  });
+
+  it('accepts every love template id', () => {
+    for (const id of ['our-story', 'two-souls', 'midnight-date', 'our-little-universe'] as const) {
+      expect(normalizeConfig({ templateId: id }).templateId).toBe(id);
+    }
+  });
+
   it('caps list lengths and text lengths', () => {
     const c = normalizeConfig({
       birthdayPerson: 'x'.repeat(500),
@@ -82,5 +94,12 @@ describe('placeholders & content', () => {
 
   it('the sample config is fully ready', () => {
     expect(getReadiness(createSampleConfig()).every((r) => r.done)).toBe(true);
+  });
+
+  it('love previews use romantic sample content with dates and places', () => {
+    const c = createSampleConfig('two-souls', { love: true });
+    expect(c.relationship).toBe('Partner');
+    expect(c.memories.every((m) => m.date && m.place)).toBe(true);
+    expect(c.timeline[0].date).toBeTruthy();
   });
 });

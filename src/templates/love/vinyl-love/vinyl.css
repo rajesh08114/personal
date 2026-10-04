@@ -1,0 +1,19 @@
+.vl-record {
+  animation: vl-spin 1.8s linear infinite;
+  animation-play-state: paused;
+}
+.vl-record.is-spinning {
+  animation-play-state: running;
+}
+@keyframes vl-spin {
+  to { transform: rotate(360deg); }
+}
+.vl-eq span {
+  height: 100%;
+  transform-origin: bottom;
+  animation: vl-eq 0.7s ease-in-out infinite alternate;
+}
+@keyframes vl-eq {
+  from { transform: scaleY(0.25); }
+  to { transform: scaleY(1); }
+}
