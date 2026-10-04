@@ -2,20 +2,22 @@ import { lazy } from 'react';
 import type { BirthdayTemplate } from '@/types/template';
 
 function Thumbnail() {
-  const orbs = [
-    ['18%', '30%', 'from-[#ffd29a] to-[#ff7a59]'],
-    ['42%', '58%', 'from-[#ff9ad5] to-[#5ee7df]'],
-    ['62%', '24%', 'from-[#7dd3fc] to-[#2563eb]'],
-    ['78%', '58%', 'from-[#c4b5fd] to-[#7c3aed]'],
+  const books = [
+    ['#d9762b', 'h-[62%]'],
+    ['#2f5d62', 'h-[70%]'],
+    ['#a8342b', 'h-[66%]'],
+    ['#1c1b19', 'h-[60%]'],
   ];
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_center,#1b1035,#05030d_75%)]">
-      {orbs.map(([x, y, g], i) => (
-        <span key={i} className={`absolute size-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br ${g} opacity-90 shadow-[0_0_30px_rgb(255_255_255/0.25)] transition-all duration-1000 group-hover:top-1/2 group-hover:left-1/2`} style={{ left: x, top: y }} />
-      ))}
-      <p className="absolute inset-x-0 bottom-3 text-center text-[0.6rem] tracking-[0.3em] text-white/70" style={{ fontFamily: "'Unbounded', sans-serif" }}>
-        IN EVERY UNIVERSE
-      </p>
+    <div className="relative flex h-full w-full flex-col items-center justify-end overflow-hidden bg-[#e8dfcc] pb-6">
+      <div className="flex h-[78%] items-end gap-2">
+        {books.map(([c, h], i) => (
+          <span key={c} className={`${h} w-12 shadow-md transition-transform duration-500 ${i === 1 ? 'group-hover:-translate-y-3' : ''}`} style={{ background: c }}>
+            <span className="mx-auto mt-[30%] block size-7 rounded-full bg-[#f2ebdc]/30" />
+          </span>
+        ))}
+      </div>
+      <div className="h-2.5 w-[70%] bg-[#7a5c40]" />
     </div>
   );
 }
@@ -24,16 +26,16 @@ export const parallelUniversesTemplate: BirthdayTemplate = {
   id: 'parallel-universes',
   name: 'Parallel Universes',
   tagline: 'In every universe, I’d still choose you',
-  description: 'Four dreamlike worlds, each holding a different memory. Dive into each one, then watch them collapse into one: “I’d still choose you.”',
+  description: 'Four vintage science-fiction paperbacks on a shelf: the same two characters in four different editions. Each cover swings open on a chapter of your story, and every edition has the same last page.',
   categories: ['love'],
   loveTags: ['creative', 'magical', 'cinematic'],
-  moods: ['Dreamy', 'Sci-fi', 'Profound'],
-  bestFor: 'Creative couples and sci-fi romantics',
-  palette: { primary: '#c4b5fd', secondary: '#1b1035', accent: '#5ee7df' },
-  tone: 'dark',
-  fonts: { google: ['Unbounded:wght@300;500;700', 'Plus+Jakarta+Sans:wght@300;400;500'], display: "'Unbounded', system-ui, sans-serif", body: "'Plus Jakarta Sans', system-ui, sans-serif" },
-  animations: { language: 'Portal & collapse', ambientDensity: 6 },
-  interactions: { highlights: ['Four glowing worlds', 'Dive into each universe', 'Colour-shifting space', 'Universes collapse into one'] },
+  moods: ['Witty', 'Bookish', 'Profound'],
+  bestFor: 'Bookish couples and sci-fi romantics',
+  palette: { primary: '#2b2520', secondary: '#e8dfcc', accent: '#d9762b' },
+  tone: 'light',
+  fonts: { google: ['Crimson+Pro:ital,wght@0,400;0,600;1,400', 'Jost:wght@300;400;500;600', 'Anton'], display: "'Crimson Pro', Georgia, serif", body: "'Crimson Pro', Georgia, serif", accent: "'Jost', system-ui, sans-serif" },
+  animations: { language: 'Book physics — pull, swing open, stack', ambientDensity: 0 },
+  interactions: { highlights: ['Four period paperback covers', 'Covers swing open on the spine', 'Photos printed as two-ink cover art', 'The same last page in every edition'] },
   Thumbnail,
   component: lazy(() => import('./index')),
 };

@@ -506,7 +506,7 @@ function Finale() {
             initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ duration: 1.4 }}
-            className="rounded-3xl border border-white/15 bg-white/5 p-8 backdrop-blur"
+            className="rounded-3xl border border-white/15 bg-white/5 p-8"
           >
             <p className={`${serif} text-2xl leading-relaxed italic`}>
               <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />

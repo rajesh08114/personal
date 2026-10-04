@@ -264,7 +264,7 @@ function Transmission() {
   const { config } = useExperience();
   return (
     <section aria-labelledby="cj-tx" className="px-5 py-20">
-      <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 1 }} className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl border border-[var(--bd-primary)]/30 bg-[#070a1f]/80 p-7 backdrop-blur sm:p-12">
+      <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 1 }} className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl border border-[var(--bd-primary)]/30 bg-[#070a1f]/80 p-7 sm:p-12">
         <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24 animate-[cj-scan_4s_linear_infinite] bg-gradient-to-b from-[rgb(var(--bd-primary-rgb)/0.12)] to-transparent" />
         <div className="flex items-center gap-3">
           <Satellite className="size-6 text-[var(--bd-primary)]" aria-hidden />

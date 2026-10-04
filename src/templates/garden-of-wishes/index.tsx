@@ -79,7 +79,7 @@ function Opening() {
     window.setTimeout(open, 2000);
   };
   return (
-    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#fdf2e3]/80 px-6 text-center backdrop-blur-sm" exit={{ opacity: 0, transition: { duration: 1 } }}>
+    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#fdf2e3]/80 px-6 text-center" exit={{ opacity: 0, transition: { duration: 1 } }}>
       <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.6 }} className={`${serif} max-w-xl text-3xl leading-snug italic sm:text-5xl`}>
         {config.messages.intro.trim() || 'Every beautiful memory leaves a little light behind.'}
       </motion.p>
@@ -257,7 +257,7 @@ function Message() {
       <Reveal kind="scale" className="relative mx-auto max-w-2xl">
         <Flower2 className="absolute -top-6 -left-4 size-14 rotate-[-20deg] text-[var(--bd-primary)]" aria-hidden />
         <Flower2 className="absolute -right-3 -bottom-6 size-12 rotate-12 text-[#c8b6ff]" aria-hidden />
-        <article className="rounded-[2.5rem] bg-white/75 p-8 shadow-[0_30px_60px_-30px_rgb(61_74_58/0.4)] backdrop-blur-md sm:p-12">
+        <article className="rounded-[2.5rem] bg-white/75 p-8 shadow-[0_30px_60px_-30px_rgb(61_74_58/0.4)] sm:p-12">
           <h2 id="gw-msg" className={`${serif} text-3xl italic sm:text-4xl`}>
             A message just for you…
           </h2>
@@ -301,7 +301,7 @@ function Vine() {
               transition={{ duration: 0.8, ease: EASE.out }}
               className={cn('flex min-h-64 items-center py-6', i % 2 ? 'justify-end' : 'justify-start')}
             >
-              <div className="w-[min(78%,22rem)] rounded-[2rem] rounded-tl-none bg-white/80 p-4 shadow-lg backdrop-blur">
+              <div className="w-[min(78%,22rem)] rounded-[2rem] rounded-tl-none bg-white/80 p-4 shadow-lg">
                 <PhotoSlot src={t.image} alt={t.titleText} label="Add a photo" tone="light" className="aspect-[16/10] w-full rounded-2xl" />
                 <h3 className={`${serif} mt-3 text-2xl italic`}>{t.titleText}</h3>
                 <p className="text-[#5d6b58]">{t.captionText}</p>

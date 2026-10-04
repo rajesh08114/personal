@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingScreen, SegmentedControl } from '@/components/ui/Layout';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { getReadiness } from '@/utils/readiness';
+import { localRepository, storageMode } from '@/data/repository';
 import { cn } from '@/utils/cn';
 
 /** `/create` — the Birthday Studio: customise everything with a live preview. */
@@ -128,7 +129,7 @@ export default function CreatePage() {
         </main>
 
         {(isDesktop || mobileView === 'preview') && (
-          <aside className="min-h-0 flex-1 bg-[radial-gradient(circle_at_50%_0%,#2f2539,#0f0b14_70%)]" aria-label="Live preview">
+          <aside className="min-h-0 flex-1 bg-[#2a2622]" aria-label="Live preview">
             <LivePreview config={config} device={device} onDeviceChange={setDevice} className="h-full" />
           </aside>
         )}
@@ -140,7 +141,13 @@ export default function CreatePage() {
         config={config}
         shareId={shareId}
         onSaved={setShareId}
-        onImport={(c) => setConfig(c)}
+        onImport={(c, importedId) => {
+          setConfig(c);
+          if (!importedId) return;
+          // Keep the original link working: in local mode, restore the birthday under its old id in this browser.
+          setShareId(importedId);
+          if (storageMode === 'local') void localRepository.save(c, importedId);
+        }}
         onJump={jumpTo}
       />
     </div>
@@ -196,7 +203,7 @@ function Readiness({
         aria-valuemax={100}
         aria-label="Personalisation progress"
       >
-        <div className="h-full rounded-full bg-gradient-to-r from-gold-soft to-brand transition-all duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-gold-soft transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
       {next && (
         <button type="button" onClick={() => onJump(next.section)} className="mt-3 text-xs font-semibold text-gold-soft hover:underline">

@@ -56,7 +56,7 @@ function Opening() {
       <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 1.8 }} className={`${serif} mt-6 max-w-2xl text-4xl leading-snug sm:text-6xl`}>
         {config.messages.intro.trim() || 'I wrote you a message — and gave every word to the stars.'}
       </motion.h1>
-      <motion.button type="button" onClick={open} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className="mt-14 inline-flex h-13 items-center gap-2 rounded-full border border-[#e0f2fe]/40 bg-[#e0f2fe]/5 px-8 tracking-[0.2em] uppercase backdrop-blur transition-colors hover:bg-[#e0f2fe] hover:text-[#020611]">
+      <motion.button type="button" onClick={open} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className="mt-14 inline-flex h-13 items-center gap-2 rounded-full border border-[#e0f2fe]/40 bg-[#e0f2fe]/5 px-8 tracking-[0.2em] uppercase transition-colors hover:bg-[#e0f2fe] hover:text-[#020611]">
         <Sparkles className="size-4" aria-hidden /> Look up
       </motion.button>
     </motion.div>
@@ -154,7 +154,7 @@ function Sky() {
           )}
           <AnimatePresence>
             {hover !== null && phase === 'writing' && all[hover] && (
-              <motion.p key={hover} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="pointer-events-none absolute inset-x-4 bottom-2 mx-auto max-w-xl rounded-2xl bg-[#020611]/80 px-4 py-3 text-center italic backdrop-blur" role="status">
+              <motion.p key={hover} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="pointer-events-none absolute inset-x-4 bottom-2 mx-auto max-w-xl rounded-2xl bg-[#020611]/80 px-4 py-3 text-center italic" role="status">
                 “{all[hover]}”
               </motion.p>
             )}
@@ -164,7 +164,7 @@ function Sky() {
         <div className="relative mx-auto w-full max-w-2xl px-5 pb-16">
           <AnimatePresence mode="wait">
             {phase === 'writing' && !done && (
-              <motion.div key={`line-${sent}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: flying === null ? 1 : 0, y: flying === null ? 0 : -30 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="rounded-3xl border border-[#e0f2fe]/15 bg-[#06142b]/70 p-6 text-center backdrop-blur">
+              <motion.div key={`line-${sent}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: flying === null ? 1 : 0, y: flying === null ? 0 : -30 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="rounded-3xl border border-[#e0f2fe]/15 bg-[#06142b]/70 p-6 text-center">
                 <p className="text-xs tracking-[0.3em] text-[#e0f2fe]/50 uppercase">Line {sent + 1}</p>
                 <p className={`${serif} mt-3 text-2xl leading-snug sm:text-3xl`}>{lines[sent]}</p>
                 <button type="button" onClick={send} disabled={flying !== null} className="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-[#e0f2fe] px-6 font-semibold text-[#020611]">

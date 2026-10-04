@@ -2,34 +2,36 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Hand, X } from 'lucide-react';
-import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
+import { useBirthdayText, useExperience } from '@/components/experience/ExperienceContext';
 import { Fill, Paragraphs, splitParagraphs } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { getMemories, getTimeline } from '@/components/experience/content';
-import { Particles } from '@/components/effects/Particles';
 import { useFocusTrap, useLockBodyScroll } from '@/hooks/useFocusTrap';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { EASE } from '@/animations/tokens';
 import { cn } from '@/utils/cn';
+import './orrery.css';
 
+/**
+ * Our Little Universe — a hand-made brass orrery on a desk. Each painted planet
+ * rides its own arm around a brass sun engraved with two names.
+ */
 const round = 'font-t-display';
 type WorldId = 'memories' | 'photos' | 'messages' | 'little' | 'dreams' | 'future';
 const WORLDS: Array<{ id: WorldId; name: string; r: number; size: number; speed: number; look: string }> = [
-  { id: 'memories', name: 'Memories', r: 0.36, size: 44, speed: 0.32, look: 'radial-gradient(circle at 32% 30%, #fff1f7, #ff8fc4 45%, #9d2a6b)' },
-  { id: 'photos', name: 'Photos', r: 0.47, size: 56, speed: 0.22, look: 'radial-gradient(circle at 32% 30%, #e0f2fe, #38bdf8 45%, #1e3a8a)' },
-  { id: 'messages', name: 'Messages', r: 0.58, size: 40, speed: 0.17, look: 'radial-gradient(circle at 32% 30%, #fef9c3, #fbbf24 45%, #b45309)' },
-  { id: 'little', name: 'Little things', r: 0.69, size: 34, speed: 0.13, look: 'radial-gradient(circle at 32% 30%, #dcfce7, #4ade80 45%, #166534)' },
-  { id: 'dreams', name: 'Dreams', r: 0.8, size: 50, speed: 0.1, look: 'radial-gradient(circle at 32% 30%, #f3e8ff, #c084fc 45%, #6b21a8)' },
-  { id: 'future', name: 'Future plans', r: 0.91, size: 38, speed: 0.08, look: 'radial-gradient(circle at 32% 30%, #ffedd5, #fb923c 45%, #9a3412)' },
+  // Painted enamel over brass: oxblood, verdigris, ivory, slate, ochre, navy.
+  { id: 'memories', name: 'Memories', r: 0.36, size: 40, speed: 0.32, look: 'radial-gradient(circle at 34% 30%, #d9a093, #8e3b2e 50%, #4a1d16)' },
+  { id: 'photos', name: 'Photos', r: 0.47, size: 52, speed: 0.22, look: 'radial-gradient(circle at 34% 30%, #b9d1c4, #5f8f7d 50%, #2c4a3f)' },
+  { id: 'messages', name: 'Messages', r: 0.58, size: 36, speed: 0.17, look: 'radial-gradient(circle at 34% 30%, #fbf5e6, #d8cdb2 50%, #8d8167)' },
+  { id: 'little', name: 'Little things', r: 0.69, size: 30, speed: 0.13, look: 'radial-gradient(circle at 34% 30%, #b8bfc6, #6c7680 50%, #353c43)' },
+  { id: 'dreams', name: 'Dreams', r: 0.8, size: 46, speed: 0.1, look: 'radial-gradient(circle at 34% 30%, #eed6a0, #bf8f3a 50%, #6b4b18)' },
+  { id: 'future', name: 'Future plans', r: 0.91, size: 34, speed: 0.08, look: 'radial-gradient(circle at 34% 30%, #9fb0cc, #34496e 50%, #18233a)' },
 ];
 
 export default function OurLittleUniverse() {
-  const { opened, theme } = useExperience();
+  const { opened } = useExperience();
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-[#07041a] text-[#f5ecff]">
-      <div aria-hidden className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgb(var(--bd-secondary-rgb)/0.9),transparent_70%)]">
-        <Particles variant="stars" density={10} colors={['#ffffff', theme.primary, theme.accent]} />
-      </div>
+    <div className="lu-desk relative min-h-dvh overflow-x-clip text-[#efe4cc]">
       <AnimatePresence>{!opened && <Arrival key="a" />}</AnimatePresence>
       {opened && <Universe />}
     </div>
@@ -40,24 +42,24 @@ function Arrival() {
   const { config, open } = useExperience();
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center" exit={{ opacity: 0, scale: 0.6, transition: { duration: 1.1 } }}>
-      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 2, ease: EASE.out }} className="size-24 rounded-full bg-[radial-gradient(circle_at_35%_35%,#fff,var(--bd-primary)_45%,#7c3aed)] shadow-[0_0_80px_20px_rgb(255_156_208/0.35)]" aria-hidden />
+      <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease: EASE.out }} className="lu-brass size-24 rounded-full" aria-hidden />
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 1.6 }} className={`${round} mt-10 max-w-xl text-3xl leading-snug sm:text-4xl`}>
         {config.messages.intro.trim() || 'I made us a little universe.'}
       </motion.p>
-      <motion.button type="button" onClick={open} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className={`${round} mt-10 h-13 rounded-full bg-[var(--bd-primary)] px-9 font-bold text-[#07041a] shadow-[0_0_40px_rgb(255_156_208/0.5)]`}>
-        Float inside
+      <motion.button type="button" onClick={open} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className={`${round} lu-plate mt-10 h-13 px-9 text-lg tracking-[0.12em] text-[#2a2015]`}>
+        Wind the orrery
       </motion.button>
     </motion.div>
   );
 }
 
 function Universe() {
-  const { config, reducedMotion, fx, restart } = useExperience();
+  const { config, reducedMotion, restart } = useExperience();
   const { name, sender } = useBirthdayText();
-  const colors = useThemeColors(['#ffffff']);
   const stageRef = useRef<HTMLDivElement>(null);
   const planetRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const ringRefs = useRef<Array<SVGEllipseElement | null>>([]);
+  const armRefs = useRef<Array<SVGLineElement | null>>([]);
   const view = useRef({ angle: 0, tilt: typeof window !== 'undefined' && window.innerWidth < 640 ? 0.8 : 0.42, dragging: false, lastX: 0, lastY: 0, vel: 0 });
   const [world, setWorld] = useState<WorldId | null>(null);
   const [visited, setVisited] = useState<WorldId[]>([]);
@@ -94,6 +96,13 @@ function Universe() {
             el.style.transform = `translate(${cx + x * persp - w.size / 2}px, ${cy + y * persp - w.size / 2}px) scale(${scale})`;
             el.style.zIndex = String(Math.round(1000 + z));
             el.style.filter = `brightness(${0.75 + (scale / k - 0.8) * 0.9})`;
+          }
+          const arm = armRefs.current[i];
+          if (arm) {
+            arm.setAttribute('x1', String(cx));
+            arm.setAttribute('y1', String(cy));
+            arm.setAttribute('x2', String(cx + x * persp));
+            arm.setAttribute('y2', String(cy + y * persp));
           }
           const ring = ringRefs.current[i];
           if (ring) {
@@ -141,12 +150,12 @@ function Universe() {
     <main className="relative z-10">
       <section aria-labelledby="lu-title" className="px-5 pt-14 text-center">
         <h1 id="lu-title" className={`${round} text-3xl font-bold sm:text-5xl`}>
-          Happy Birthday, <span className="text-[var(--bd-primary)]"><Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /></span>
+          Happy birthday, <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} />
         </h1>
-        <p className="mt-2 inline-flex items-center gap-2 text-[#f5ecff]/65">
-          <Hand className="size-4" aria-hidden /> Drag to spin our universe · tap a planet to land
+        <p className="mt-2 inline-flex items-center gap-2 text-[#efe4cc]/70 italic">
+          <Hand className="size-4" aria-hidden /> Turn the orrery by hand · touch a planet to read it
         </p>
-        <p className="mt-1 text-sm text-[#f5ecff]/45" aria-live="polite">
+        <p className="mt-1 text-sm text-[#efe4cc]/50" aria-live="polite">
           {visited.length} of {WORLDS.length} worlds explored
         </p>
       </section>
@@ -167,15 +176,20 @@ function Universe() {
           {WORLDS.map((w, i) => (
             <ellipse key={w.id} ref={(el) => {
                 ringRefs.current[i] = el;
-              }} fill="none" stroke="#ffffff" strokeOpacity={0.12} strokeDasharray={i % 2 ? '3 6' : undefined} />
+              }} fill="none" stroke="#b08d57" strokeOpacity={0.35} strokeWidth={i % 2 ? 1 : 1.5} />
+          ))}
+          {WORLDS.map((w, i) => (
+            <line key={w.id} ref={(el) => {
+                armRefs.current[i] = el;
+              }} stroke="#c9a467" strokeOpacity={0.7} strokeWidth={2} strokeLinecap="round" />
           ))}
         </svg>
-        <div className="pointer-events-none absolute top-1/2 left-1/2 z-[1000] flex size-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_35%,#fff,var(--bd-primary)_40%,#7c3aed_80%)] text-center text-[#2a1650] shadow-[0_0_100px_30px_rgb(255_156_208/0.35)] sm:size-40">
-          <span className={`${round} max-w-[85%] truncate text-xs font-bold sm:text-base`}>{name}</span>
-          <span className="text-lg" aria-hidden>
-            ♥
+        <div className="lu-brass pointer-events-none absolute top-1/2 left-1/2 z-[1000] flex size-20 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full text-center text-[#3a2a12] sm:size-32">
+          <span className={`${round} max-w-[80%] truncate text-xs font-bold sm:text-sm`}>{name}</span>
+          <span className="text-[0.6rem] sm:text-xs" aria-hidden>
+            &amp;
           </span>
-          <span className={`${round} max-w-[85%] truncate text-xs font-bold sm:text-base`}>{sender}</span>
+          <span className={`${round} max-w-[80%] truncate text-xs font-bold sm:text-sm`}>{sender}</span>
         </div>
         {WORLDS.map((w, i) => (
           <button
@@ -189,10 +203,10 @@ function Universe() {
             className="group absolute top-0 left-0 rounded-full will-change-transform before:absolute before:-inset-6 before:rounded-full before:content-['']"
             style={{ width: w.size, height: w.size }}
           >
-            <span className="absolute inset-0 rounded-full shadow-[inset_-6px_-8px_14px_rgb(0_0_0/0.35)] transition-transform duration-300 group-hover:scale-110" style={{ background: w.look }} />
-            {i === 1 && <span aria-hidden className="absolute top-1/2 left-1/2 h-3 w-[170%] -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] rounded-[50%] border-2 border-[#bae6fd]/70" />}
-            {visited.includes(w.id) && <span aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full bg-white shadow-[0_0_8px_white]" />}
-            <span className={`${round} pointer-events-none absolute top-full left-1/2 mt-1 -translate-x-1/2 text-[0.65rem] font-bold whitespace-nowrap text-white/75`}>{w.name}</span>
+            <span className="absolute inset-0 rounded-full shadow-[inset_-5px_-7px_10px_rgb(0_0_0/0.4),0_0_0_2px_#b08d57] transition-transform duration-300 group-hover:scale-110" style={{ background: w.look }} />
+            {i === 1 && <span aria-hidden className="absolute top-1/2 left-1/2 h-3 w-[170%] -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] rounded-[50%] border-2 border-[#c9a467]" />}
+            {visited.includes(w.id) && <span aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full bg-[#c9a467]" />}
+            <span className={`${round} pointer-events-none absolute top-full left-1/2 mt-1 -translate-x-1/2 text-[0.7rem] tracking-[0.08em] whitespace-nowrap text-[#efe4cc]/80`}>{w.name}</span>
           </button>
         ))}
       </motion.div>
@@ -201,27 +215,26 @@ function Universe() {
         {!zoomOut ? (
           <button
             type="button"
-            onClick={() => {
-              setZoomOut(true);
-              window.setTimeout(() => fx.rain({ colors, shapes: ['star', 'circle'], count: 120, size: 9, duration: 4 }), 2200);
-            }}
-            className={cn(`${round} h-13 rounded-full px-9 font-bold transition-colors`, visited.length >= 3 ? 'bg-white text-[#07041a]' : 'border border-white/25 text-white/75 hover:border-white')}
+            onClick={() => setZoomOut(true)}
+            className={cn(`${round} h-13 px-9 text-lg tracking-[0.1em] transition-colors`, visited.length >= 3 ? 'lu-plate text-[#2a2015]' : 'border border-[#c9a467]/40 text-[#efe4cc]/80 hover:border-[#c9a467]')}
           >
-            Zoom out
+            Step back and read the plaque
           </button>
         ) : (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.2, duration: 1.4 }} role="status">
-            <p className={`${round} text-sm tracking-[0.5em] text-[var(--bd-accent)]`}>
-              <Fill value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} /> & <Fill value={config.senderName.toUpperCase()} placeholder={PLACEHOLDER.sender} />
-            </p>
-            <h2 id="lu-final" className={`${round} mt-4 text-4xl font-bold sm:text-6xl`}>
-              Our Little Universe
-            </h2>
-            <p className="mt-4 text-2xl">
-              Happy Birthday, <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /> ♥
-            </p>
-            <button type="button" onClick={restart} className={`${round} mt-8 h-11 text-sm text-white/50 hover:text-white`}>
-              Float back in
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2, duration: 1.2 }} role="status" className="flex flex-col items-center">
+            <div className="lu-plate max-w-xl px-8 py-7 text-[#2a2015] sm:px-12">
+              <h2 id="lu-final" className={`${round} text-3xl tracking-[0.08em] sm:text-5xl`}>
+                Our Little Universe
+              </h2>
+              <p className={`${round} mt-2 text-sm tracking-[0.25em] uppercase`}>
+                Made for <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /> by <Fill value={config.senderName} placeholder={PLACEHOLDER.sender} />
+              </p>
+              <p className="mt-5 text-lg leading-relaxed italic">
+                <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
+              </p>
+            </div>
+            <button type="button" onClick={restart} className={`${round} mt-8 h-11 text-sm text-[#efe4cc]/60 underline underline-offset-4 hover:text-[#efe4cc]`}>
+              Wind it again
             </button>
           </motion.div>
         )}
@@ -248,10 +261,10 @@ function WorldPanel({ id, onClose }: { id: WorldId; onClose: () => void }) {
       body = (
         <ul className="space-y-4">
           {memories.map((m) => (
-            <li key={m.id} className="rounded-2xl bg-white/5 p-4">
+            <li key={m.id} className="border-b border-[#2a2015]/15 pb-3">
               <p className="font-semibold">{m.titleText}</p>
-              {(m.date || m.place) && <p className="text-xs tracking-widest text-white/50 uppercase">{[m.date, m.place].filter(Boolean).join(' · ')}</p>}
-              <p className="mt-1 text-white/75">{m.captionText}</p>
+              {(m.date || m.place) && <p className="text-xs tracking-widest text-[#2a2015]/55 uppercase">{[m.date, m.place].filter(Boolean).join(' · ')}</p>}
+              <p className="mt-1 text-[#2a2015]/80">{m.captionText}</p>
             </li>
           ))}
         </ul>
@@ -262,7 +275,7 @@ function WorldPanel({ id, onClose }: { id: WorldId; onClose: () => void }) {
         <ul className="grid grid-cols-2 gap-3">
           {[{ id: 'hero', image: config.heroImage, titleText: name }, ...memories].map((m) => (
             <li key={m.id}>
-              <PhotoSlot src={m.image} alt={m.titleText} label="Photo" className="aspect-square w-full rounded-2xl" />
+              <PhotoSlot src={m.image} alt={m.titleText} label="Photo" tone="light" className="aspect-square w-full" />
             </li>
           ))}
         </ul>
@@ -275,11 +288,11 @@ function WorldPanel({ id, onClose }: { id: WorldId; onClose: () => void }) {
       body = (
         <ul className="space-y-4">
           {timeline.map((t) => (
-            <li key={t.id} className="flex gap-4 rounded-2xl bg-white/5 p-3">
-              <PhotoSlot src={t.image} alt={t.titleText} label="+" className="size-20 shrink-0 rounded-xl" />
+            <li key={t.id} className="flex gap-4 border-b border-[#2a2015]/15 pb-3">
+              <PhotoSlot src={t.image} alt={t.titleText} label="+" tone="light" className="size-20 shrink-0" />
               <div>
                 <p className="font-semibold">{t.titleText}</p>
-                <p className="text-white/70">{t.captionText}</p>
+                <p className="text-[#2a2015]/75">{t.captionText}</p>
               </div>
             </li>
           ))}
@@ -289,7 +302,7 @@ function WorldPanel({ id, onClose }: { id: WorldId; onClose: () => void }) {
     case 'dreams':
       body = (
         <div>
-          <PhotoSlot src={config.finalImage ?? config.heroImage} alt="The life we dream of" label="Add a final photo" className="aspect-[4/3] w-full rounded-2xl" />
+          <PhotoSlot src={config.finalImage ?? config.heroImage} alt="The life we dream of" label="Add a final photo" tone="light" className="aspect-[4/3] w-full" />
           <p className="mt-4 text-xl leading-relaxed italic">{paras[paras.length - 1] ?? config.messages.final}</p>
         </div>
       );
@@ -304,22 +317,22 @@ function WorldPanel({ id, onClose }: { id: WorldId; onClose: () => void }) {
 
   return createPortal(
     <motion.div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="absolute inset-0 bg-[#07041a]/70 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-[#0e0b08]/70" onClick={onClose} aria-hidden />
       <motion.div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={w.name}
-        initial={{ scale: 0.2, opacity: 0, borderRadius: '50%' }}
-        animate={{ scale: 1, opacity: 1, borderRadius: '2rem' }}
-        exit={{ scale: 0.3, opacity: 0, borderRadius: '50%' }}
-        transition={{ duration: 0.6, ease: EASE.out }}
-        className="relative max-h-[86dvh] w-full max-w-lg overflow-y-auto border border-white/15 bg-[#120a2c]/95 p-6 text-[#f5ecff] shadow-[0_0_100px_rgb(255_156_208/0.25)]"
+        initial={{ y: 40, opacity: 0, rotate: -1 }}
+        animate={{ y: 0, opacity: 1, rotate: 0 }}
+        exit={{ y: 30, opacity: 0 }}
+        transition={{ duration: 0.45, ease: EASE.out }}
+        className="lu-card relative max-h-[86dvh] w-full max-w-lg overflow-y-auto p-6 text-[#2a2015] sm:p-8"
       >
         <div className="mb-5 flex items-center gap-3">
-          <span className="size-10 rounded-full shadow-[inset_-4px_-6px_10px_rgb(0_0_0/0.35)]" style={{ background: w.look }} aria-hidden />
+          <span className="size-10 rounded-full shadow-[inset_-4px_-6px_10px_rgb(0_0_0/0.35),0_0_0_2px_#b08d57]" style={{ background: w.look }} aria-hidden />
           <h3 className={`${round} flex-1 text-2xl font-bold`}>{w.name}</h3>
-          <button type="button" onClick={onClose} aria-label="Back to our universe" className="inline-flex size-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label="Back to the orrery" className="inline-flex size-10 items-center justify-center rounded-full hover:bg-[#2a2015]/10">
             <X className="size-4" aria-hidden />
           </button>
         </div>

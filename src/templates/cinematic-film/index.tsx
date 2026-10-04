@@ -145,7 +145,7 @@ function ChapterNav() {
     return () => io.disconnect();
   }, []);
   return (
-    <nav aria-label="Chapters" className="fixed z-40 max-md:inset-x-0 max-md:bottom-0 max-md:bg-black/80 max-md:backdrop-blur md:top-1/2 md:right-5 md:-translate-y-1/2">
+    <nav aria-label="Chapters" className="fixed z-40 max-md:inset-x-0 max-md:bottom-0 max-md:bg-black/80 md:top-1/2 md:right-5 md:-translate-y-1/2">
       <ol className="flex justify-center gap-1 p-2 md:flex-col md:gap-2">
         {CHAPTERS.map((c, i) => (
           <li key={c.id}>

@@ -24,7 +24,7 @@ const DEFAULT_TIMELINE: Array<Pick<TimelineItem, 'title' | 'description'>> = [
 export function createDefaultConfig(): BirthdayConfig {
   return {
     version: 1,
-    templateId: 'aurora',
+    templateId: 'birthday-edition',
     birthdayPerson: '',
     senderName: '',
     relationship: '',

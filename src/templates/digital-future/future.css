@@ -1,58 +1,74 @@
-.df-grid {
-  background-image:
-    linear-gradient(rgb(var(--bd-primary-rgb) / 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--bd-primary-rgb) / 0.07) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+/* Terminal 1983 — amber phosphor on a curved glass tube, in a beige plastic case. */
+.df-screen {
+  background-color: #140e04;
+  color: #ffb000;
+  /* Phosphor bloom: a soft, same-colour halo on every glyph. */
+  text-shadow: 0 0 2px rgb(255 176 0 / 0.55);
 }
-.df-panel {
-  box-shadow: 0 0 40px rgb(var(--bd-primary-rgb) / 0.08), inset 0 0 30px rgb(var(--bd-primary-rgb) / 0.05);
+
+.df-body {
+  font-family: var(--font-body-t, 'IBM Plex Mono', monospace);
 }
-.df-scan {
-  animation: df-scan 3s ease-in-out infinite;
+
+.df-scanlines {
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
 }
-@keyframes df-scan {
-  0% { top: -20%; }
-  100% { top: 100%; }
+
+/* The tube is curved: darker towards the corners. On larger screens a beige case frames it. */
+.df-bezel {
+  box-shadow: inset 0 0 120px 30px rgb(0 0 0 / 0.75);
 }
-.df-glitch::before,
-.df-glitch::after {
-  content: attr(data-text);
+@media (min-width: 768px) {
+  .df-bezel {
+    border: 18px solid #d8cfb8;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 0 2px #b9ae93,
+      inset 0 0 120px 40px rgb(0 0 0 / 0.8);
+  }
+}
+
+.df-box {
+  border: 2px solid rgb(255 176 0 / 0.65);
+  box-shadow: inset 0 0 0 4px #140e04, inset 0 0 0 5px rgb(255 176 0 / 0.35);
+}
+.df-box-title {
+  background: #140e04;
+}
+
+.df-key {
+  border: 2px solid #ffb000;
+}
+.df-key:hover:not(:disabled),
+.df-key:focus-visible {
+  background: #ffb000;
+  color: #140e04;
+  text-shadow: none;
+}
+
+.df-cursor {
+  background: #ffb000;
+  animation: df-blink 1.06s steps(1) infinite;
+}
+@keyframes df-blink {
+  50% { opacity: 0; }
+}
+
+/* Photos rendered in a single phosphor colour. */
+.df-photo {
+  background: #1c1407;
+}
+.df-photo img {
+  filter: grayscale(1) sepia(1) saturate(1.5) hue-rotate(-12deg) brightness(0.78) contrast(1.1);
+}
+.df-photo::after {
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 3px);
 }
-.df-glitch::before {
-  color: var(--bd-secondary);
-  transform: translate(-2px, 0);
-  clip-path: inset(0 0 60% 0);
-  animation: df-glitch-a 3.2s steps(1) infinite;
-  opacity: 0.8;
-}
-.df-glitch::after {
-  color: var(--bd-primary);
-  transform: translate(2px, 0);
-  clip-path: inset(55% 0 0 0);
-  animation: df-glitch-b 2.7s steps(1) infinite;
-  opacity: 0.8;
-}
-@keyframes df-glitch-a {
-  0%, 92%, 100% { transform: translate(0, 0); clip-path: inset(0 0 100% 0); }
-  93% { transform: translate(-3px, 1px); clip-path: inset(10% 0 55% 0); }
-  96% { transform: translate(3px, -1px); clip-path: inset(40% 0 30% 0); }
-}
-@keyframes df-glitch-b {
-  0%, 88%, 100% { transform: translate(0, 0); clip-path: inset(100% 0 0 0); }
-  89% { transform: translate(3px, 0); clip-path: inset(60% 0 10% 0); }
-  94% { transform: translate(-2px, 1px); clip-path: inset(20% 0 60% 0); }
-}
-.df-glitch-shake {
-  animation: df-shake 0.5s steps(2) both;
-}
-@keyframes df-shake {
-  0% { transform: translate(0); filter: hue-rotate(0deg); }
-  25% { transform: translate(-6px, 2px); filter: hue-rotate(90deg); }
-  50% { transform: translate(5px, -3px); }
-  75% { transform: translate(-3px, 1px); filter: hue-rotate(-90deg); }
-  100% { transform: translate(0); opacity: 0.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .df-cursor { animation: none; }
 }

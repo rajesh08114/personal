@@ -1,11 +1,18 @@
 import { useId, useRef, useState, type DragEvent } from 'react';
-import { ImagePlus, LoaderCircle, RefreshCw, Trash2, TriangleAlert } from 'lucide-react';
+import { Crop, ImagePlus, LoaderCircle, RefreshCw, Trash2, TriangleAlert } from 'lucide-react';
+import type { PhotoFraming } from '@/types/birthday';
+import { framingStyle } from '@/components/experience/photoFraming';
+import { PhotoEditor } from './PhotoEditor';
 import { compressImage, errorMessage, IMAGE_ACCEPT } from '@/utils/media';
 import { cn } from '@/utils/cn';
 
 interface ImageUploaderProps {
   value?: string;
+  /** Called with the new photo (or undefined when removed). Parents should reset framing here too. */
   onChange: (value: string | undefined) => void;
+  framing?: PhotoFraming;
+  /** Enables the "Adjust" photo editor. */
+  onFramingChange?: (framing: PhotoFraming | undefined) => void;
   /** Accessible name, e.g. "Hero photo". */
   label: string;
   /** Friendly empty-state title, e.g. "Add your hero photo". */
@@ -23,6 +30,8 @@ interface ImageUploaderProps {
 export function ImageUploader({
   value,
   onChange,
+  framing,
+  onFramingChange,
   label,
   emptyTitle,
   emptyHint = 'JPG, PNG or WEBP · drag & drop or tap',
@@ -34,6 +43,7 @@ export function ImageUploader({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [editing, setEditing] = useState(false);
   const errorId = useId();
 
   const handleFile = async (file: File | undefined) => {
@@ -84,15 +94,32 @@ export function ImageUploader({
       >
         {value ? (
           <>
-            <img src={value} alt={`${label} preview`} className="h-full w-full object-cover" />
-            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2 pt-8">
+            <img src={value} alt={`${label} preview`} className="h-full w-full object-cover" style={framingStyle(framing)} />
+            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-linear-to-t from-black/60 to-transparent p-2 pt-8">
+              {onFramingChange && (
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className={cn(
+                    'inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 text-xs font-semibold text-ink-900 shadow hover:bg-white',
+                    compact ? 'w-9 justify-center' : 'px-3',
+                  )}
+                  aria-label={`Adjust ${label.toLowerCase()}`}
+                >
+                  <Crop className="size-3.5" aria-hidden /> {!compact && 'Adjust'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={pick}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 px-3 text-xs font-semibold text-ink-900 shadow hover:bg-white"
+                className={cn(
+                  'inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 text-xs font-semibold text-ink-900 shadow hover:bg-white',
+                  compact || onFramingChange ? 'w-9 justify-center' : 'px-3',
+                )}
                 aria-label={`Replace ${label.toLowerCase()}`}
+                title="Replace"
               >
-                <RefreshCw className="size-3.5" aria-hidden /> Replace
+                <RefreshCw className="size-3.5" aria-hidden /> {!compact && !onFramingChange && 'Replace'}
               </button>
               <button
                 type="button"
@@ -132,6 +159,9 @@ export function ImageUploader({
           </div>
         )}
       </div>
+      {onFramingChange && (
+        <PhotoEditor open={editing} src={value} framing={framing} label={label} onClose={() => setEditing(false)} onSave={onFramingChange} />
+      )}
       {error && (
         <p id={errorId} role="alert" className="mt-2 flex items-start gap-1.5 text-xs font-medium text-rose-700">
           <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />

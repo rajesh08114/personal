@@ -74,7 +74,9 @@ export function MemoryEditor({
             <div className="grid gap-3 sm:grid-cols-[9rem_1fr]">
               <ImageUploader
                 value={m.image}
-                onChange={(image) => update(m.id, { image })}
+                onChange={(image) => update(m.id, { image, framing: undefined })}
+                framing={m.framing}
+                onFramingChange={(framing) => update(m.id, { framing })}
                 label={`${noun} ${i + 1} photo`}
                 emptyTitle={emptyPhotoTitle(i)}
                 aspect="aspect-[4/3] sm:aspect-square"

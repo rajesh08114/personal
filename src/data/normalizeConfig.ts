@@ -1,6 +1,7 @@
 import type {
   BirthdayConfig,
   Memory,
+  PhotoFraming,
   TemplateId,
   ThemePresetId,
   TimelineItem,
@@ -30,6 +31,9 @@ const optStr = (v: unknown): string | undefined => (typeof v === 'string' && v.l
 const hex = (v: unknown, fallback: string): string =>
   typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
 
+/** Templates that were retired or renamed, mapped to their successor so old links keep working. */
+const TEMPLATE_RENAMES: Record<string, TemplateId> = { aurora: 'birthday-edition' };
+
 export function isTemplateId(v: unknown): v is TemplateId {
   return typeof v === 'string' && (TEMPLATE_IDS as readonly string[]).includes(v);
 }
@@ -41,11 +45,33 @@ function mediaUrl(v: unknown): string | undefined {
   return /^(data:(image|audio)\/|blob:|https?:\/\/)/i.test(s) ? s : undefined;
 }
 
+const num = (v: unknown, min: number, max: number, fallback: number): number =>
+  typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
+
+const round = (v: number, k: number) => Math.round(v * k) / k;
+
+/** Clamps stored framing; returns undefined for missing/invalid or default (no-op) framing. */
+export function normalizeFraming(v: unknown): PhotoFraming | undefined {
+  if (!isObj(v)) return undefined;
+  const pos = isObj(v.position) ? v.position : {};
+  const f: PhotoFraming = {
+    fit: v.fit === 'contain' ? 'contain' : 'cover',
+    position: { x: round(num(pos.x, 0, 100, 50), 100), y: round(num(pos.y, 0, 100, 50), 100) },
+    zoom: round(num(v.zoom, 1, 4, 1), 1000),
+  };
+  const rotation = round(num(v.rotation, -45, 45, 0), 10);
+  if (rotation) f.rotation = rotation;
+  const isDefault = f.fit === 'cover' && f.position.x === 50 && f.position.y === 50 && f.zoom === 1 && !f.rotation;
+  return isDefault ? undefined : f;
+}
+
 function memory(v: unknown): Memory | null {
   if (!isObj(v)) return null;
+  const image = mediaUrl(v.image);
   return {
     id: str(v.id) || createId(8),
-    image: mediaUrl(v.image),
+    image,
+    framing: image ? normalizeFraming(v.framing) : undefined,
     title: str(v.title, '', 120),
     description: str(v.description, '', 400),
     date: optStr(str(v.date, '', 40)),
@@ -75,14 +101,18 @@ export function normalizeConfig(input: unknown): BirthdayConfig {
 
   return {
     version: 1,
-    templateId: isTemplateId(input.templateId) ? input.templateId : d.templateId,
+    templateId: isTemplateId(input.templateId)
+      ? input.templateId
+      : (TEMPLATE_RENAMES[String(input.templateId)] ?? d.templateId),
     birthdayPerson: str(input.birthdayPerson, '', 60),
     senderName: str(input.senderName, '', 60),
     relationship: str(input.relationship, '', 60),
     birthdayDate: date,
     age,
     heroImage: mediaUrl(input.heroImage),
+    heroFraming: mediaUrl(input.heroImage) ? normalizeFraming(input.heroFraming) : undefined,
     finalImage: mediaUrl(input.finalImage),
+    finalFraming: mediaUrl(input.finalImage) ? normalizeFraming(input.finalFraming) : undefined,
     messages: {
       intro: str(messages.intro, d.messages.intro, 200),
       main: str(messages.main, d.messages.main),

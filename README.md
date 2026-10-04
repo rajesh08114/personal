@@ -39,7 +39,7 @@ Requires Node 20.19+ (tested on Node 23).
 1. Go to **/templates**, then click **Preview** or **Use template**.
 2. In **/create**, fill in the steps: basics, photos, messages, memories, story, colours and music. Everything autosaves to your browser.
 3. Watch the live preview. Switch device sizes, replay the opening, or open it full screen.
-4. Click **Share**. The studio lists any personal touches still missing, then creates the link.
+4. Click **Share**. The studio lists any personal touches still missing, then gives you a link, plus a backup file you can move to another device (see [Sharing](#sharing-local-mode-and-server-mode)).
 
 Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY PERSON NAME]` or `[UPLOAD PHOTO]`. The site never invents personal details.
 
@@ -47,7 +47,7 @@ Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY P
 
 | | Template | Signature moment |
 | --- | --- | --- |
-| ✨ | Aurora Surprise | Magnetic opening, floating portrait, tilt gallery, blow-out cake, 3D gift box |
+| 📰 | The Birthday Edition (default) | A one-copy broadsheet: unfold the paper, the letter set in columns, tear-off wish tabs, a “stop the presses” late extra |
 | 🌙 | Starry Night | Name drawn as a constellation, moon phases, wish on a shooting star |
 | 📷 | Polaroid Memories | Memory box, draggable photos, clothesline story, photos spell "Happy Birthday" |
 | 🎬 | Cinematic Film | Projector countdown, scroll subtitles, film-strip gallery, end credits |
@@ -55,16 +55,18 @@ Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY P
 | 📒 | Birthday Scrapbook | Page-turning book, movable stickers, hidden notes, envelope |
 | 🕯️ | Minimal Luxury | Masked photography, editorial index, a single candle |
 | 🎮 | Game Night | Pop balloons, catch stars, boss charge, then "Level [AGE] unlocked" |
-| 🪩 | Neon Party | Neon signs, light board, audio visualizer, "drop the beat" |
+| 🪩 | Neon Party | Neon signs on a brick bar wall, light board, audio visualizer, an arcade button to drop the beat |
 | 🌸 | Garden of Wishes | Plant seeds that bloom into memory flowers; fireflies follow the cursor |
 | 🎞️ | Film Roll | Sideways film strip where each negative develops; flip the final print |
-| ⏳ | Time Capsule | Unseal the capsule, open memory pods, countdown to the next birthday |
+| ⏳ | Time Capsule | A biscuit tin dug up from the garden: peel the tape, unwrap photos from tissue, ticket stubs, “open last” envelope |
 | 💥 | Comic Book | Collectible cover, speech bubbles, POW! effects, splash page |
 | 🏰 | Fairytale | Parallax storybook, royal decree, hidden stars, birthday spell |
 | 🎪 | Festival of Memories | Ticket gate, zones, photo booth, wish lanterns, headline finale |
 | 🪐 | Cosmic Journey | Launch countdown, memories as orbiting planets, planet alignment |
 | ☕ | Coffee & Memories | Chalkboard menu, orders served to the table, cupcake candle, receipt |
-| 🛰️ | Digital Future | Boot sequence, holographic scan, decrypting logs, "Mission: complete" |
+| 🖥️ | Terminal 1983 | Amber CRT: boot and log in, the letter decodes on screen, memories as files, BIRTHDAY.EXE prints a text cake |
+
+Every template is modelled on a real object or medium (a newspaper, a biscuit tin, a CRT terminal, a paperback, an orrery) rather than a generic web layout. The concept, references and design audit for all 38 are in [docs/template-concepts.md](docs/template-concepts.md).
 
 ## The Love & Romance collection
 
@@ -74,7 +76,7 @@ A dedicated category (`/templates?c=love`) with its own mood filters: Romantic, 
 | --- | --- | --- |
 | 01 | The Love Letter | Ivory envelope, line-by-line handwriting, photos slide in, folds back up |
 | 02 | Our Story | Pinned film chapters; photos open from a small window to full screen |
-| 03 | Two Souls | YOU + ME = US; particles become a heart, then their name |
+| 03 | Two Souls | Two paper lanterns drift together on dark water; the light settles into a heart, then their name |
 | 04 | The Memory Gallery | One photo at a time with museum placards, distortion transitions, collage |
 | 05 | Midnight Date | Explore a moonlit city; windows light up to spell I LOVE YOU |
 | 06 | Rose Garden | Buds bloom into memories; the whole garden blooms at the end |
@@ -84,14 +86,14 @@ A dedicated category (`/templates?c=love`) with its own mood filters: Romantic, 
 | 10 | The Secret Garden | Four gates; catch fireflies for keys; a glowing clearing: “You.” |
 | 11 | Vinyl Love | Turntable plays a five-track story; needle lifts at the end |
 | 12 | Candlelight Dinner | Objects on the table open memories, the menu, a love note and a gift |
-| 13 | Parallel Universes | Four worlds collapse into one: “I’d still choose you.” |
+| 13 | Parallel Universes | Four vintage sci-fi paperbacks of the same story; every edition has the same last page: “I’d still choose you.” |
 | 14 | Message in the Stars | Each sentence becomes a star; the sky spells their name |
 | 15 | The Gift Box | 3D box, then five gifts that each unwrap differently |
 | 16 | Cinema Date | Private screening, scene menu, credits starring you both |
 | 17 | Digital Heartbeat | Live ECG reacts to cursor, clicks and music; becomes a heart |
 | 18 | Forever Letterbox | Pinned 21:9 frame, slow pans, dip-to-black: “To be continued…” |
 | 19 | Handwritten Journal | Notebook pages turn as you scroll; folded-corner secrets |
-| 20 | Our Little Universe | Drag-to-spin 3D orbits, six planets to explore, zoom-out finale |
+| 20 | Our Little Universe | A brass orrery you turn by hand; six painted planets, an engraved plaque finale |
 
 Every love template reads the same `BirthdayConfig`, so switching between them, or back to a birthday template, keeps all content. Memories and story chapters have optional **date** and **place** fields, used by placards, timelines and star captions. The upgraded Love Letter keeps its original id, so existing drafts that used it still load.
 
@@ -112,7 +114,9 @@ src/
 │   ├── sampleConfig.ts     Fictional sample content for template previews
 │   ├── sampleArt.ts        Generated "sample photo" art (no stock photos)
 │   ├── normalizeConfig.ts  Validates and repairs any stored, imported or API config
-│   ├── repository.ts       Persistence boundary (local IndexedDB or REST)
+│   ├── repository.ts       ExperienceRepository: local (IndexedDB) or server mode
+│   ├── api/birthdayApi.ts  REST client used in server mode
+│   ├── backup.ts           Self-contained JSON backup export / import
 │   └── storage/idb.ts      Small IndexedDB wrapper
 ├── store/DraftProvider.tsx Draft state and debounced autosave
 ├── themes/                 7 mood presets, custom colours, CSS variables
@@ -121,9 +125,9 @@ src/
 │   └── <id>/meta.tsx       Name, moods, fonts, palette, animated thumbnail
 │       <id>/index.tsx      The experience itself (separate lazy-loaded chunk)
 ├── components/
-│   ├── experience/         ExperienceShell, Lightbox, BirthdayCake, PhotoSlot, Fill, MusicPlayer…
-│   ├── effects/            Confetti/fireworks engine, Particles, PointerTrail, Magnetic, Tilt…
-│   ├── customization/      ImageUploader, MessageEditor, MemoryEditor, ThemeSelector, LivePreview…
+│   ├── experience/         ExperienceShell, Lightbox, BirthdayCake, PhotoSlot, photoFraming, Fill, MusicPlayer…
+│   ├── effects/            Confetti/fireworks engine, Particles, PointerTrail, MorphParticles, Tilt…
+│   ├── customization/      ImageUploader, PhotoEditor, MessageEditor, MemoryEditor, ShareDialog, LivePreview…
 │   └── ui/                 Button, Field, Modal, Toast, Layout primitives
 ├── hooks/                  device tier, media queries, focus trap, audio, typewriter/scramble
 ├── animations/tokens.ts    Shared timing, easing and reveal variants
@@ -138,7 +142,14 @@ src/
 - **Effects level:** particle density scales with the device and the chosen mood.
 - **Reduced motion:** the setting is passed to every template.
 
-Each template owns its own layout and story, so the contract is one lazy-loaded root component plus metadata, rather than fixed slots such as hero, gallery and timeline.
+**Templates are self-contained experiences.** The contract is one lazy-loaded root component plus metadata, not fixed slots such as hero, gallery and timeline. All templates read the same data model, but each decides:
+
+- which pieces of content it uses, and in what order (the newspaper puts the letter in columns; the time capsule hides photos in tissue paper);
+- its own opening interaction and final reveal;
+- its own typography, palette, photo treatment and motion language;
+- its own mobile composition (for example, the cinema templates switch to a vertical frame on phones instead of shrinking a widescreen strip).
+
+Switching templates never touches the content, so a creator can try all 38 without losing anything.
 
 **Live preview.** The studio renders the experience in an iframe (`/preview?embed=1`) and sends the config with `postMessage` on every change. Because it is a real iframe, phone and tablet breakpoints behave exactly as they will on a real device.
 
@@ -156,16 +167,18 @@ Everything the templates show comes from one `BirthdayConfig` (see `src/types/bi
   birthdayDate: '1999-10-12',        // used for date, age and countdowns
   age: 27,                           // optional override
   heroImage: 'data:image/webp;base64,…',
+  heroFraming: { fit: 'cover', position: { x: 50, y: 30 }, zoom: 1.4, rotation: 0 },
   finalImage: undefined,             // falls back to heroImage
+  finalFraming: undefined,
   messages: { intro, main, wish, surprise, final },
-  memories: [{ id, image, title, description, date?, place? }],   // up to 12
-  timeline: [{ id, image, title, description, date?, place? }],   // up to 6
+  memories: [{ id, image, framing?, title, description, date?, place? }],   // up to 12
+  timeline: [{ id, image, framing?, title, description, date?, place? }],   // up to 6
   theme: { preset: 'template' | 'romantic' | … | 'custom', primary, secondary, accent },
   music: { url, name, enabled, volume },
 }
 ```
 
-`src/data/sampleConfig.ts` is a complete sample. You can also download any birthday as a JSON backup from the Share dialog and import it again.
+`src/data/sampleConfig.ts` is a complete sample. Older configs are migrated on load by `normalizeConfig` (for example, the retired `aurora` template id becomes `birthday-edition`).
 
 ## Photos and music
 
@@ -173,31 +186,90 @@ Everything the templates show comes from one `BirthdayConfig` (see `src/types/bi
 - Music: MP3 or WAV, up to 12 MB. The file is checked for playability before it is accepted.
 - Drafts and links are stored in IndexedDB, because photos and music quickly exceed localStorage's ~5 MB limit.
 
-## Sharing and connecting a backend
+### Photo framing
 
-Without a backend, **share links only open in the browser that created them**. They are stored in that browser's IndexedDB, and the Share dialog says so. To send a birthday to another device today, use **Download backup** and **Import backup**.
+Every uploaded photo has an **Adjust** button that opens the photo editor:
 
-To make links work everywhere, set one environment variable:
+- **Drag** to reposition (touch drag on phones), **scroll or pinch** to zoom, or use the zoom slider.
+- **Fill frame** (`cover`) or **Show whole photo** (`contain`).
+- **Rotate** to straighten (−45° to 45°), **Reset**, then **Done**. Arrow keys move the photo and +/− zoom, so it works without a mouse.
+- Small previews show how the photo will sit in a square, a portrait print and a wide frame.
+
+Framing is stored per photo as `PhotoFraming { fit, position: { x, y }, zoom, rotation? }`, on `heroFraming`, `finalFraming` and each memory/timeline item's `framing`. It uses a **focal-point model**: the position is the point of the photo to keep in view, and zoom closes in on that point. That is why one setting works in every frame shape a template uses (square, 4:5 print, circle, 2.39:1 letterbox).
+
+Templates don't need to do anything: `ExperienceShell` builds a photo URL → framing map, and `<PhotoSlot>` applies it automatically. Templates that add their own look (halftone, phosphor, two-ink cover art) apply it on top of the framed image. The lightbox opts out with `framing={false}`, so the whole photo is always viewable. Replacing a photo resets its framing, and framing is included in backups.
+
+## Sharing: local mode and server mode
+
+The app picks its storage mode at build time, and the Share dialog says which one is active.
+
+### Local Share Mode (default, no backend)
+
+With no backend configured, a shared birthday is saved **only in the browser that created it** (IndexedDB). The link works on that device, but it won't open on anyone else's. The Share dialog makes this explicit:
+
+> Share your birthday experience. This version is stored only in this browser.
+> 1. Download the backup 2. Open the website on the other device 3. Import the backup
+
+with **Copy local link** and **Download backup** buttons.
+
+To move a birthday to another device (Browser A → backup file → Browser B → experience restored):
+
+- In the studio, open **Share → Import backup** and pick the file. The draft is replaced, and the original link id is restored in this browser, so the old local link works here too.
+- Or open the local link on the other device. When the birthday isn't found, the page offers **Import backup file**, which restores it under that same link.
+
+### Backup format
+
+A backup is one self-contained `.json` file (`<name>-experience.json`). Photos and music are embedded as data URLs, so the file alone rebuilds everything: names, messages, template, theme, photos, **photo framing**, memories with dates and places, timeline and music settings.
+
+```json
+{
+  "format": "birthday-studio-backup",
+  "version": 1,
+  "exportedAt": "2026-10-04T12:00:00.000Z",
+  "shareId": "abc123xyz0",
+  "config": { "version": 1, "templateId": "birthday-edition", "...": "..." }
+}
+```
+
+On import, the file goes through `normalizeConfig`, so unknown fields are dropped, unsafe URLs are rejected and values are clamped. Bare config files from older exports are also accepted. Backups from a newer format version are refused with a clear message.
+
+### Server mode
+
+Set one environment variable and rebuild:
 
 ```bash
 # .env.local
 VITE_BIRTHDAY_API_URL=https://api.example.com
 ```
 
-The app then uses `createRestRepository` in `src/data/repository.ts`, which expects:
+Share links now open on any device. The Share dialog switches to "Your birthday experience is ready to share" with **Copy share link** and **Open experience** buttons (and **Update with latest changes**). Backup download and import stay available.
 
-| Method | Path | Body | Returns |
-| --- | --- | --- | --- |
-| `POST` | `/birthdays` | `BirthdayConfig` | `{ id }` |
-| `PUT` | `/birthdays/:id` | `BirthdayConfig` | `{ id }` |
-| `GET` | `/birthdays/:id` | — | `BirthdayConfig` (404 if missing) |
+The client (`src/data/api/birthdayApi.ts`) expects:
 
-For Firebase, Supabase or Postgres, implement the small `BirthdayRepository` interface (`save`, `get`) and export it as `birthdayRepository`; no UI code needs to change. For production, consider uploading images to object storage and storing URLs instead of data URLs. `normalizeConfig` already accepts `https://` media URLs.
+| Function | Method | Path | Body | Returns |
+| --- | --- | --- | --- | --- |
+| `createExperience` | `POST` | `/birthdays` | `BirthdayConfig` | `{ id }` |
+| `updateExperience` | `PUT` | `/birthdays/:id` | `BirthdayConfig` | `{ id }` |
+| `getExperience` | `GET` | `/birthdays/:id` | — | `BirthdayConfig` (404 if missing) |
+
+Network failures and error statuses surface as friendly messages in the dialog.
+
+**Using a different backend.** UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts`:
+
+```ts
+interface ExperienceRepository {
+  readonly mode: 'local' | 'server';
+  save(config: BirthdayConfig, existingId?: string): Promise<string>;
+  get(id: string): Promise<BirthdayConfig | null>;
+}
+```
+
+For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes. For production, consider uploading images to object storage and storing `https://` URLs instead of data URLs (`normalizeConfig` already accepts them), so payloads stay small.
 
 ## Adding a template
 
 1. Create `src/templates/my-template/meta.tsx` with a `BirthdayTemplate` object (name, moods, palette, fonts, `Thumbnail`, `component: lazy(() => import('./index'))`).
-2. Build `index.tsx`. Use `useExperience()` and `useBirthdayText()` for content, `<Fill>` and `<PhotoSlot>` for placeholder-aware text and images, `getMemories` / `getTimeline` for lists, and call `open()` from your opening screen.
+2. Build `index.tsx`. Use `useExperience()` and `useBirthdayText()` for content, `<Fill>` and `<PhotoSlot>` for placeholder-aware text and images (`PhotoSlot` applies photo framing for you), `getMemories` / `getTimeline` for lists, and call `open()` from your opening screen. Start from a real-world reference and run the five audit questions in [docs/template-concepts.md](docs/template-concepts.md).
 3. Add the id to `TEMPLATE_IDS` in `src/data/templateIds.ts` (the single source of truth for `TemplateId` and validation). For a love template, add `'love'` to `categories` and set `loveTags`.
 4. Register it in `src/templates/registry.ts`.
 
@@ -221,4 +293,4 @@ It is a static single-page app. Run `npm run build` and deploy `dist/`.
 
 ## Testing
 
-`npm test` runs unit tests for config validation, age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way.
+`npm test` runs unit tests for config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way.

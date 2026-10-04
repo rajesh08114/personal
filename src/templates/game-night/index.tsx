@@ -81,7 +81,7 @@ function Attract() {
 function Hud({ score, level }: { score: number; level: number }) {
   const { name } = useBirthdayText();
   return (
-    <header className={`${pixel} fixed inset-x-0 top-0 z-40 border-b-4 border-[#2a1760] bg-[#140a2e]/90 backdrop-blur`}>
+    <header className={`${pixel} fixed inset-x-0 top-0 z-40 border-b-4 border-[#2a1760] bg-[#140a2e]/90`}>
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 text-[0.55rem] sm:text-[0.7rem]">
         <span className="truncate text-[var(--bd-secondary)]">P1 {name.toUpperCase()}</span>
         <span className="text-[var(--bd-accent)]" aria-live="polite">

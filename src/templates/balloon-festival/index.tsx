@@ -356,7 +356,7 @@ function GoldenBalloon() {
             <div className="mt-10 w-full max-w-lg overflow-hidden rounded-[2rem] border-8 border-white shadow-xl">
               <PhotoSlot src={image} alt={`A final photo for ${name}`} label="Add a final photo" tone="light" className="aspect-[4/3] w-full" />
             </div>
-            <div className="mt-8 max-w-xl rounded-3xl bg-white/80 p-6 text-xl leading-relaxed shadow-lg backdrop-blur">
+            <div className="mt-8 max-w-xl rounded-3xl bg-white/80 p-6 text-xl leading-relaxed shadow-lg">
               <Sparkles className="mx-auto mb-2 size-6 text-[var(--bd-accent)]" aria-hidden />
               <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
               <p className="mt-4 text-base font-semibold text-[#5b5287]">

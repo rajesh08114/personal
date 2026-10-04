@@ -1,6 +1,6 @@
 /** Every template id, in gallery order. The single source of truth for TemplateId. */
 export const TEMPLATE_IDS = [
-  'aurora',
+  'birthday-edition',
   'starry-night',
   'polaroid-memories',
   'cinematic-film',

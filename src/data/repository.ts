@@ -1,14 +1,22 @@
 import type { BirthdayConfig } from '@/types/birthday';
 import { normalizeConfig } from './normalizeConfig';
 import { idb, STORES } from './storage/idb';
+import { createBirthdayApi } from './api/birthdayApi';
 import { createId } from '@/utils/id';
 
 /**
- * Persistence boundary for shareable birthdays.
- * Swap the implementation (REST, Firebase, Supabase, Postgres…) without touching UI code.
+ * Where shareable birthdays live:
+ *  - 'local'  → this browser's IndexedDB. Links only open here; use backups to move devices.
+ *  - 'server' → the REST API at VITE_BIRTHDAY_API_URL. Links open anywhere.
  */
-export interface BirthdayRepository {
-  readonly kind: 'local' | 'remote';
+export type StorageMode = 'local' | 'server';
+
+/**
+ * Persistence boundary for shareable birthdays. UI code only talks to this,
+ * so the backend (REST, Firebase, Supabase, Postgres…) can change freely.
+ */
+export interface ExperienceRepository {
+  readonly mode: StorageMode;
   save(config: BirthdayConfig, existingId?: string): Promise<string>;
   get(id: string): Promise<BirthdayConfig | null>;
 }
@@ -20,15 +28,13 @@ interface StoredBirthday {
   updatedAt: string;
 }
 
-/** Stores birthdays in this browser's IndexedDB. Links only open on this device. */
-export const localRepository: BirthdayRepository = {
-  kind: 'local',
+export const localRepository: ExperienceRepository = {
+  mode: 'local',
   async save(config, existingId) {
     const id = existingId ?? createId(10);
     const now = new Date().toISOString();
     const prev = existingId ? await idb.get<StoredBirthday>(STORES.birthdays, existingId) : undefined;
-    const record: StoredBirthday = { id, config, createdAt: prev?.createdAt ?? now, updatedAt: now };
-    await idb.set(STORES.birthdays, id, record);
+    await idb.set(STORES.birthdays, id, { id, config, createdAt: prev?.createdAt ?? now, updatedAt: now } satisfies StoredBirthday);
     return id;
   },
   async get(id) {
@@ -37,41 +43,23 @@ export const localRepository: BirthdayRepository = {
   },
 };
 
-/**
- * REST implementation. Expected API:
- *   POST {base}/birthdays            body: BirthdayConfig   → { id }
- *   PUT  {base}/birthdays/:id        body: BirthdayConfig   → { id }
- *   GET  {base}/birthdays/:id                               → BirthdayConfig
- */
-export function createRestRepository(baseUrl: string): BirthdayRepository {
-  const base = baseUrl.replace(/\/$/, '');
+export function createServerRepository(baseUrl: string): ExperienceRepository {
+  const api = createBirthdayApi(baseUrl);
   return {
-    kind: 'remote',
-    async save(config, existingId) {
-      const res = await fetch(existingId ? `${base}/birthdays/${existingId}` : `${base}/birthdays`, {
-        method: existingId ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
-      });
-      if (!res.ok) throw new Error(`Saving failed (${res.status})`);
-      const data: unknown = await res.json();
-      const id = typeof data === 'object' && data && 'id' in data ? String((data as { id: unknown }).id) : '';
-      if (!id) throw new Error('The server did not return a birthday id.');
-      return id;
-    },
+    mode: 'server',
+    save: (config, existingId) => (existingId ? api.updateExperience(existingId, config) : api.createExperience(config)),
     async get(id) {
-      const res = await fetch(`${base}/birthdays/${encodeURIComponent(id)}`);
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`Loading failed (${res.status})`);
-      return normalizeConfig(await res.json());
+      const raw = await api.getExperience(id);
+      return raw === null ? null : normalizeConfig(raw);
     },
   };
 }
 
-const apiUrl = import.meta.env.VITE_BIRTHDAY_API_URL as string | undefined;
-export const birthdayRepository: BirthdayRepository = apiUrl ? createRestRepository(apiUrl) : localRepository;
+const apiUrl = (import.meta.env.VITE_BIRTHDAY_API_URL as string | undefined)?.trim();
+export const experienceRepository: ExperienceRepository = apiUrl ? createServerRepository(apiUrl) : localRepository;
+export const storageMode: StorageMode = experienceRepository.mode;
 
-/** Draft (work-in-progress) persistence for the /create builder. */
+/** Draft (work-in-progress) persistence for the /create builder — always local. */
 const DRAFT_KEY = 'current';
 export const draftStorage = {
   async load(): Promise<{ config: BirthdayConfig; shareId?: string } | null> {

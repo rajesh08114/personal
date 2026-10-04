@@ -1,107 +1,104 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Fingerprint, Heart, ScanLine, Unlock } from 'lucide-react';
-import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
+import { useBirthdayText, useExperience } from '@/components/experience/ExperienceContext';
 import { Fill } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems, type ResolvedMemory } from '@/components/experience/content';
-import { Particles } from '@/components/effects/Particles';
 import { useScramble } from '@/hooks/useText';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { cn } from '@/utils/cn';
 import './future.css';
 
-const mono = 'font-t-accent';
+/**
+ * Terminal 1983 — an amber-phosphor CRT in a beige case, late at night.
+ * Log in, read a message that decodes on screen, browse files, run BIRTHDAY.EXE.
+ */
+const vt = 'font-t-display';
 
 export default function DigitalFuture() {
-  const { opened, theme } = useExperience();
+  const { opened } = useExperience();
   return (
-    <div className="relative min-h-dvh bg-[#04060d] text-[#d8f7ff]">
-      <div aria-hidden className="pointer-events-none fixed inset-0">
-        <div className="df-grid absolute inset-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgb(var(--bd-primary-rgb)/0.18),transparent_60%),radial-gradient(ellipse_at_100%_100%,rgb(var(--bd-secondary-rgb)/0.15),transparent_55%)]" />
-        <Particles variant="dust" density={3} colors={[theme.primary, theme.secondary]} />
-      </div>
+    <div className="df-screen relative min-h-dvh">
+      <div aria-hidden className="df-scanlines pointer-events-none fixed inset-0 z-40" />
+      <div aria-hidden className="df-bezel pointer-events-none fixed inset-0 z-40" />
       <AnimatePresence>{!opened && <Boot key="boot" />}</AnimatePresence>
       {opened && (
-        <main className="relative z-10 mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <main className="relative z-10 mx-auto max-w-5xl px-5 py-14 sm:px-10">
           <Subject />
           <Transmission />
-          <DataLogs />
-          <MissionLog />
-          <Status />
+          <Files />
+          <Log />
+          <Run />
         </main>
       )}
     </div>
   );
 }
 
-function Panel({ children, className, title }: { children: ReactNode; className?: string; title?: string }) {
+/** A box drawn the way terminals drew them. */
+function Box({ children, className, title }: { children: ReactNode; className?: string; title?: string }) {
   return (
-    <div className={cn('df-panel relative border border-[var(--bd-primary)]/25 bg-[#071223]/70 p-5 backdrop-blur-md sm:p-7', className)}>
-      {['top-0 left-0 border-t-2 border-l-2', 'top-0 right-0 border-t-2 border-r-2', 'bottom-0 left-0 border-b-2 border-l-2', 'bottom-0 right-0 border-b-2 border-r-2'].map((c) => (
-        <span key={c} aria-hidden className={cn('absolute size-4 border-[var(--bd-primary)]', c)} />
-      ))}
-      {title && <p className={`${mono} mb-4 text-xs tracking-[0.3em] text-[var(--bd-primary)]`}>// {title}</p>}
+    <div className={cn('df-box relative p-5 sm:p-7', className)}>
+      {title && <p className={`${vt} df-box-title absolute -top-3.5 left-4 px-2 text-xl`}>{title}</p>}
       {children}
     </div>
   );
 }
 
-function Glitch({ text, className }: { text: string; className?: string }) {
-  return (
-    <span className={cn('df-glitch relative inline-block', className)} data-text={text}>
-      {text}
-    </span>
-  );
+const bar = (pct: number, width = 24) => {
+  const filled = Math.round((pct / 100) * width);
+  return '█'.repeat(filled) + '░'.repeat(width - filled);
+};
+
+function Cursor() {
+  return <span aria-hidden className="df-cursor ml-1 inline-block h-[1em] w-[0.55em] translate-y-[0.15em]" />;
 }
 
 function Boot() {
   const { config, open } = useExperience();
   const { name } = useBirthdayText();
   const lines = [
-    `YEAR ${new Date().getFullYear()}`,
-    config.messages.intro.trim() || 'BIRTHDAY PROTOCOL INITIATED',
-    'LOADING MEMORY BANKS ........ OK',
-    'CALIBRATING HAPPINESS ....... OK',
-    `SUBJECT: ${name.toUpperCase()}`,
+    'BIOS 2.1  (C) 1983',
+    'MEMORY TEST ........ 640K OK',
+    config.messages.intro.trim() || 'BIRTHDAY PROTOCOL LOADED',
+    `USER: ${name.toUpperCase()}`,
   ];
   const [shown, setShown] = useState(0);
-  const [leaving, setLeaving] = useState(false);
   useEffect(() => {
     if (shown >= lines.length) return;
-    const t = window.setTimeout(() => setShown((s) => s + 1), shown === 0 ? 400 : 650);
+    const t = window.setTimeout(() => setShown((s) => s + 1), shown === 0 ? 500 : 700);
     return () => window.clearTimeout(t);
   }, [shown, lines.length]);
   const ready = shown >= lines.length;
+
+  useEffect(() => {
+    if (!ready) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Enter' && open();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ready, open]);
+
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04060d] px-5" exit={{ opacity: 0, filter: 'blur(8px)', transition: { duration: 0.5 } }}>
-      <div className={cn('w-full max-w-xl', leaving && 'df-glitch-shake')}>
-        <div className={`${mono} min-h-44 space-y-2 text-sm sm:text-base`} aria-live="polite">
+    <motion.div className="df-screen fixed inset-0 z-30 flex items-center justify-center px-6" exit={{ scaleY: 0.004, opacity: 0, transition: { duration: 0.35, ease: [0.7, 0, 1, 1] } }}>
+      <div className="w-full max-w-xl">
+        <div className={`${vt} min-h-44 space-y-1 text-2xl sm:text-3xl`} aria-live="polite">
           {lines.slice(0, shown).map((l, i) => (
-            <motion.p key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className={i === lines.length - 1 ? 'text-[var(--bd-accent)]' : 'text-[var(--bd-primary)]'}>
-              &gt; {l}
-            </motion.p>
+            <p key={i}>{l}</p>
           ))}
-          {!ready && <span className="inline-block h-4 w-2 animate-pulse bg-[var(--bd-primary)]" />}
+          {!ready && <Cursor />}
         </div>
-        <div className="mt-6 h-1.5 bg-white/10">
-          <motion.div className="h-full bg-gradient-to-r from-[var(--bd-primary)] to-[var(--bd-secondary)]" animate={{ width: `${(shown / lines.length) * 100}%` }} />
-        </div>
-        <motion.button
+        <p className={`${vt} mt-4 text-2xl`} aria-hidden>
+          {bar((shown / lines.length) * 100)}
+        </p>
+        <button
           type="button"
-          disabled={!ready || leaving}
-          onClick={() => {
-            setLeaving(true);
-            window.setTimeout(open, 600);
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: ready ? 1 : 0.2 }}
-          className={`${mono} mt-10 inline-flex h-14 w-full items-center justify-center gap-3 border border-[var(--bd-primary)] text-sm tracking-[0.3em] text-[var(--bd-primary)] transition-colors hover:bg-[var(--bd-primary)] hover:text-[#04060d]`}
+          disabled={!ready}
+          onClick={open}
+          className={cn(`${vt} df-key mt-10 h-14 w-full text-2xl transition-opacity`, ready ? 'opacity-100' : 'opacity-30')}
         >
-          <Fingerprint className="size-5" aria-hidden /> AUTHENTICATE
-        </motion.button>
+          PRESS RETURN TO LOG IN{ready && <Cursor />}
+        </button>
       </div>
     </motion.div>
   );
@@ -111,41 +108,34 @@ function Subject() {
   const { config } = useExperience();
   const { name, age, hasAge } = useBirthdayText();
   const rows: Array<[string, ReactNode]> = [
-    ['DESIGNATION', <Fill key="n" value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} />],
-    ['LINK TO SENDER', <Fill key="r" value={config.relationship.toUpperCase()} placeholder={PLACEHOLDER.relationship} />],
-    ['CYCLES COMPLETED', <span key="a" className={cn(!hasAge && 'bd-placeholder')}>{age}</span>],
-    ['STATUS', 'AMAZING'],
-    ['THREAT LEVEL', 'DANGEROUSLY LOVABLE'],
+    ['NAME', <Fill key="n" value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} />],
+    ['KNOWN TO SENDER AS', <Fill key="r" value={config.relationship.toUpperCase()} placeholder={PLACEHOLDER.relationship} />],
+    ['YEARS IN SERVICE', <span key="a" className={cn(!hasAge && 'bd-placeholder')}>{age}</span>],
+    ['STATUS', 'EXCELLENT'],
   ];
   return (
-    <section aria-label="Subject profile" className="grid min-h-[90dvh] items-center gap-8 md:grid-cols-[0.9fr_1.1fr]">
-      <Panel title="SUBJECT SCAN">
-        <div className="relative overflow-hidden">
-          <PhotoSlot src={config.heroImage} alt={`Scan of ${name}`} label="Add hero photo" priority className="aspect-square w-full" imgClassName="saturate-[0.8] contrast-110" />
-          <div aria-hidden className="df-scan pointer-events-none absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-[rgb(var(--bd-primary-rgb)/0.45)] to-transparent" />
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgb(0_0_0/0.25)_0_1px,transparent_1px_3px)]" />
-          <ScanLine className="absolute top-3 right-3 size-6 text-[var(--bd-primary)]" aria-hidden />
-        </div>
-      </Panel>
+    <section aria-label="User profile" className="grid items-center gap-10 pt-6 md:grid-cols-[0.9fr_1.1fr]">
+      <Box title="USER.PIC">
+        <PhotoSlot src={config.heroImage} alt={`${name}`} label="Add hero photo" tone="dark" priority className="df-photo aspect-square w-full" />
+      </Box>
       <div>
-        <p className={`${mono} text-xs tracking-[0.35em] text-[var(--bd-secondary)]`}>SUBJECT IDENTIFIED</p>
-        <h1 className="mt-3 text-5xl leading-none font-bold sm:text-7xl">
-          <Glitch text="HAPPY BIRTHDAY," />
+        <p className={`${vt} text-2xl opacity-70`}>C:\&gt; WHOAMI</p>
+        <h1 className={`${vt} mt-2 text-6xl leading-[0.95] sm:text-8xl`}>
+          HAPPY BIRTHDAY,
           <br />
-          <span className="text-[var(--bd-primary)]">
-            <Fill value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} />
-          </span>
+          <Fill value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} />
+          <Cursor />
         </h1>
-        <Panel className="mt-8" title="PROFILE DATA">
-          <dl className={`${mono} space-y-3 text-sm`}>
-            {rows.map(([k, v], i) => (
-              <motion.div key={k} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.15 }} className="flex flex-wrap justify-between gap-2 border-b border-white/10 pb-2">
-                <dt className="text-[#d8f7ff]/50">{k}</dt>
-                <dd className="text-right text-[var(--bd-accent)]">{v}</dd>
-              </motion.div>
+        <Box className="mt-10" title="PROFILE">
+          <dl className={`${vt} space-y-1 text-xl sm:text-2xl`}>
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex flex-wrap justify-between gap-x-4">
+                <dt className="opacity-60">{k}</dt>
+                <dd className="text-right">{v}</dd>
+              </div>
             ))}
           </dl>
-        </Panel>
+        </Box>
       </div>
     </section>
   );
@@ -154,76 +144,71 @@ function Subject() {
 function Transmission() {
   const { config } = useExperience();
   const text = config.messages.main.trim() || PLACEHOLDER.message;
-  const [decrypted, setDecrypted] = useState(false);
-  const out = useScramble(text, decrypted, Math.min(4000, 800 + text.length * 8));
+  const [decoded, setDecoded] = useState(false);
+  const out = useScramble(text, decoded, Math.min(4000, 800 + text.length * 8));
   return (
-    <section aria-labelledby="df-msg" className="py-16">
-      <Panel title="ENCRYPTED TRANSMISSION">
+    <section aria-labelledby="df-msg" className="pt-24">
+      <Box title="MESSAGE.TXT">
         <h2 id="df-msg" className="sr-only">
           A message just for you
         </h2>
-        <p className={`${mono} text-xs text-[#d8f7ff]/50`}>
-          SOURCE: <Fill value={config.senderName.toUpperCase()} placeholder={PLACEHOLDER.sender} /> · PRIORITY: MAXIMUM
+        <p className={`${vt} text-xl opacity-60`}>
+          FROM: <Fill value={config.senderName.toUpperCase()} placeholder={PLACEHOLDER.sender} />
         </p>
-        <p className={cn('mt-6 text-lg leading-relaxed whitespace-pre-line sm:text-xl', !decrypted && `${mono} text-[#d8f7ff]/40`)} aria-hidden={!decrypted}>
+        <p className="df-body mt-5 text-lg leading-relaxed whitespace-pre-line sm:text-xl" aria-hidden={!decoded}>
           {out}
         </p>
-        {!decrypted && (
-          <button
-            type="button"
-            onClick={() => setDecrypted(true)}
-            className={`${mono} mt-8 inline-flex h-12 items-center gap-2 border border-[var(--bd-secondary)] px-6 text-xs tracking-[0.3em] text-[var(--bd-secondary)] hover:bg-[var(--bd-secondary)] hover:text-[#04060d]`}
-          >
-            <Unlock className="size-4" aria-hidden /> DECRYPT MESSAGE
+        {decoded ? <p className="sr-only">{text}</p> : (
+          <button type="button" onClick={() => setDecoded(true)} className={`${vt} df-key mt-8 h-12 px-6 text-2xl`}>
+            TYPE MESSAGE.TXT
           </button>
         )}
-      </Panel>
+      </Box>
     </section>
   );
 }
 
-function HoloCard({ m, onOpen }: { m: ResolvedMemory; onOpen: () => void }) {
+function FileCard({ m, onOpen }: { m: ResolvedMemory; onOpen: () => void }) {
   const [active, setActive] = useState(false);
-  const title = useScramble(m.titleText, active, 700);
+  const title = useScramble(m.titleText, active, 600);
   return (
     <button
       type="button"
       onClick={onOpen}
       onPointerEnter={() => setActive(true)}
       onFocus={() => setActive(true)}
-      aria-label={`Open data log: ${m.titleText}`}
-      className="df-holo group block w-full text-left"
+      aria-label={`Open file: ${m.titleText}`}
+      className="group block w-full text-left"
     >
-      <Panel className="!p-3 transition-transform duration-300 group-hover:-translate-y-1">
-        <div className="relative overflow-hidden">
-          <PhotoSlot src={m.image} alt={m.titleText} label={m.slotLabel} className="aspect-[4/3] w-full" imgClassName="transition-[filter] duration-500 hue-rotate-15 saturate-50 group-hover:hue-rotate-0 group-hover:saturate-100" />
-          <span aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgb(255_255_255/0.18)_50%,transparent_70%)] bg-[length:250%_100%] opacity-0 transition-all duration-700 group-hover:bg-[position:-50%_0] group-hover:opacity-100" />
-        </div>
-        <p className={`${mono} mt-3 text-[0.65rem] tracking-widest text-[var(--bd-primary)]`}>LOG_{String(m.index + 1).padStart(4, '0')}.MEM</p>
-        <p className="mt-1 font-semibold" aria-hidden>
-          {active ? title : m.titleText.replace(/\S/g, '▒')}
+      <Box className="!p-3 transition-colors group-hover:bg-[rgb(255_176_0/0.06)]">
+        <PhotoSlot src={m.image} alt={m.titleText} label={m.slotLabel} className="df-photo aspect-[4/3] w-full" />
+        <p className={`${vt} mt-3 text-lg opacity-60`}>
+          MEM{String(m.index + 1).padStart(4, '0')}.PIC {m.date ? `  ${m.date.toUpperCase()}` : ''}
         </p>
-        <p className="mt-1 text-sm text-[#d8f7ff]/60">{active ? m.captionText : 'Hover or focus to decrypt'}</p>
-      </Panel>
+        <p className={`${vt} text-2xl leading-tight`} aria-hidden>
+          {active ? title : m.titleText.toUpperCase()}
+        </p>
+        <p className="df-body mt-1 text-sm opacity-75">{m.captionText}</p>
+      </Box>
     </button>
   );
 }
 
-function DataLogs() {
+function Files() {
   const { config } = useExperience();
   const memories = getMemories(config);
   const [index, setIndex] = useState<number | null>(null);
   return (
-    <section aria-labelledby="df-logs" className="py-16">
-      <p className={`${mono} text-xs tracking-[0.35em] text-[var(--bd-secondary)]`}>ARCHIVE ACCESS GRANTED</p>
-      <h2 id="df-logs" className="mt-2 text-4xl font-bold sm:text-5xl">
-        Data logs: moments worth remembering
+    <section aria-labelledby="df-files" className="pt-24">
+      <p className={`${vt} text-2xl opacity-70`}>C:\&gt; DIR MEMORIES</p>
+      <h2 id="df-files" className={`${vt} mt-1 text-5xl sm:text-6xl`}>
+        {memories.length} FILE(S) FOUND
       </h2>
-      <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {memories.map((m, i) => (
-          <motion.li key={m.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 3) * 0.1 }}>
-            <HoloCard m={m} onOpen={() => setIndex(i)} />
-          </motion.li>
+          <li key={m.id}>
+            <FileCard m={m} onOpen={() => setIndex(i)} />
+          </li>
         ))}
       </ul>
       <Lightbox items={toLightboxItems(memories)} index={index} onIndexChange={setIndex} />
@@ -231,28 +216,22 @@ function DataLogs() {
   );
 }
 
-function MissionLog() {
+function Log() {
   const { config } = useExperience();
   const items = getTimeline(config);
   return (
-    <section aria-labelledby="df-mission" className="py-16">
-      <h2 id="df-mission" className="text-4xl font-bold sm:text-5xl">
-        Mission log
+    <section aria-labelledby="df-log" className="pt-24">
+      <p className={`${vt} text-2xl opacity-70`}>C:\&gt; TYPE HISTORY.LOG</p>
+      <h2 id="df-log" className="sr-only">
+        History
       </h2>
-      <ol className="mt-10 space-y-5">
+      <ol className={`${vt} mt-4 space-y-4 text-xl sm:text-2xl`}>
         {items.map((t, i) => (
-          <motion.li key={t.id} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.4 }} transition={{ duration: 0.6 }}>
-            <Panel className="grid items-center gap-5 sm:grid-cols-[10rem_1fr_auto]">
-              <PhotoSlot src={t.image} alt={t.titleText} label="Add photo" className="aspect-[4/3] w-full" />
-              <div>
-                <p className={`${mono} text-xs text-[var(--bd-primary)]`}>
-                  ENTRY {String(i + 1).padStart(4, '0')} // T+{(i + 1) * 365}D
-                </p>
-                <h3 className="mt-1 text-2xl font-semibold">{t.titleText}</h3>
-                <p className="text-[#d8f7ff]/65">{t.captionText}</p>
-              </div>
-              <span className={`${mono} text-xs text-[var(--bd-accent)]`}>[ARCHIVED]</span>
-            </Panel>
+          <motion.li key={t.id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.6 }} transition={{ duration: 0.15, delay: 0.1 }} className="grid gap-x-6 sm:grid-cols-[9rem_1fr]">
+            <span className="opacity-60">[{(t.date || `ENTRY ${i + 1}`).toUpperCase()}]</span>
+            <span>
+              {t.titleText.toUpperCase()} <span className="df-body text-base opacity-75 sm:text-lg">— {t.captionText}</span>
+            </span>
           </motion.li>
         ))}
       </ol>
@@ -260,77 +239,81 @@ function MissionLog() {
   );
 }
 
-function Status() {
-  const { config, fx, restart } = useExperience();
+const CAKE = [
+  '       (   (   (       ',
+  '       |   |   |       ',
+  '    .--+---+---+--.    ',
+  '    |  *  *  *  * |    ',
+  '  .-+-------------+-.  ',
+  '  |  HAPPY BIRTHDAY |  ',
+  '  `-----------------\'  ',
+];
+
+/** Final reveal: run the program, print a cake, then the surprise. */
+function Run() {
+  const { config, restart } = useExperience();
   const { name } = useBirthdayText();
-  const colors = useThemeColors(['#ffffff']);
   const [progress, setProgress] = useState<number | null>(null);
+  const [printed, setPrinted] = useState(0);
   const complete = progress !== null && progress >= 100;
 
   useEffect(() => {
     if (progress === null || progress >= 100) return;
-    const t = window.setTimeout(() => setProgress((p) => Math.min(100, (p ?? 0) + 4)), 45);
+    const t = window.setTimeout(() => setProgress((p) => Math.min(100, (p ?? 0) + 5)), 60);
     return () => window.clearTimeout(t);
   }, [progress]);
 
-  const fired = useRef(false);
   useEffect(() => {
-    if (!complete || fired.current) return;
-    fired.current = true;
-    fx.cannons({ colors, count: 220, shapes: ['pixel'] });
-    fx.fireworks({ colors, duration: 4, rockets: 10 });
-  }, [complete, fx, colors]);
+    if (!complete || printed >= CAKE.length) return;
+    const t = window.setTimeout(() => setPrinted((n) => n + 1), 120);
+    return () => window.clearTimeout(t);
+  }, [complete, printed]);
+
+  const done = complete && printed >= CAKE.length;
 
   return (
-    <section aria-labelledby="df-status" className="flex min-h-dvh flex-col justify-center py-16">
-      <Panel title="SYSTEM STATUS" className="mx-auto w-full max-w-3xl">
-        <h2 id="df-status" className={`${mono} text-lg sm:text-2xl`}>
-          MISSION: MAKE <Fill value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} /> SMILE
+    <section aria-labelledby="df-run" className="pt-24 pb-10">
+      <Box title="BIRTHDAY.EXE">
+        <h2 id="df-run" className={`${vt} text-2xl sm:text-3xl`}>
+          C:\&gt; RUN BIRTHDAY.EXE /FOR:<Fill value={config.birthdayPerson.toUpperCase()} placeholder={PLACEHOLDER.name} />
         </h2>
-        <div className="mt-6 h-3 bg-white/10" role="progressbar" aria-valuenow={progress ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Mission progress">
-          <div className="h-full bg-gradient-to-r from-[var(--bd-primary)] via-[var(--bd-secondary)] to-[var(--bd-accent)] transition-[width] duration-75" style={{ width: `${progress ?? 0}%` }} />
-        </div>
-        <p className={`${mono} mt-3 text-sm`} aria-live="polite">
-          STATUS:{' '}
-          {complete ? (
-            <span className="text-[var(--bd-accent)]">
-              COMPLETE <Heart className="inline size-4 fill-current" aria-label="love" />
-            </span>
-          ) : progress === null ? (
-            'AWAITING COMMAND'
-          ) : (
-            `EXECUTING… ${progress}%`
-          )}
-        </p>
-        {progress === null && (
-          <button
-            type="button"
-            onClick={() => setProgress(0)}
-            className={`${mono} mt-8 inline-flex h-14 w-full items-center justify-center border border-[var(--bd-accent)] text-sm tracking-[0.3em] text-[var(--bd-accent)] hover:bg-[var(--bd-accent)] hover:text-[#04060d]`}
-          >
-            EXECUTE BIRTHDAY.EXE
+        {progress === null ? (
+          <button type="button" onClick={() => setProgress(0)} className={`${vt} df-key mt-8 h-14 w-full text-2xl`}>
+            PRESS TO RUN
           </button>
+        ) : (
+          <p className={`${vt} mt-6 text-2xl`} role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Running">
+            {bar(progress)} {progress}%
+          </p>
+        )}
+        {complete && (
+          <pre className={`${vt} mt-6 overflow-x-auto text-lg leading-tight sm:text-2xl`} aria-label="A cake made of text">
+            {CAKE.slice(0, printed).join('\n')}
+          </pre>
         )}
         <AnimatePresence>
-          {complete && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-10 grid gap-6 md:grid-cols-2">
-              <PhotoSlot src={config.finalImage ?? config.heroImage} alt={`A final photo of ${name}`} label="Add a final photo" className="aspect-square w-full" />
+          {done && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="mt-8 grid gap-6 md:grid-cols-[1fr_1.2fr]" role="status">
+              <PhotoSlot src={config.finalImage ?? config.heroImage} alt={`A final photo of ${name}`} label="Add a final photo" className="df-photo aspect-square w-full" />
               <div className="flex flex-col justify-center">
-                <p className="text-3xl font-bold">
-                  <Glitch text="HAPPY BIRTHDAY" />
-                </p>
-                <p className="mt-4 text-lg leading-relaxed">
+                <p className="df-body text-xl leading-relaxed">
                   <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
                 </p>
-                <p className={`${mono} mt-4 text-xs text-[#d8f7ff]/50`}>{config.messages.final}</p>
+                <p className={`${vt} mt-6 text-2xl`}>
+                  {config.messages.final.trim() || 'HAPPY BIRTHDAY.'} — <Fill value={config.senderName.toUpperCase()} placeholder={PLACEHOLDER.sender} />
+                </p>
+                <p className={`${vt} mt-4 text-xl opacity-60`}>
+                  PROGRAM TERMINATED NORMALLY.
+                  <Cursor />
+                </p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </Panel>
+      </Box>
       <div className="mt-10 text-center">
-        <button type="button" onClick={restart} className={`${mono} h-11 text-xs tracking-[0.3em] text-[#d8f7ff]/50 hover:text-[#d8f7ff]`}>
-          &gt; REBOOT SYSTEM
+        <button type="button" onClick={restart} className={`${vt} h-11 text-xl opacity-60 hover:opacity-100`}>
+          C:\&gt; REBOOT
         </button>
       </div>
     </section>

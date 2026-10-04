@@ -12,6 +12,7 @@ import { FxLayer, noopFx, type FxApi } from '@/components/effects/FxLayer';
 import { ExperienceContext, type ExperienceValue } from './ExperienceContext';
 import { MusicPlayer } from './MusicPlayer';
 import { ErrorBoundary } from './ErrorBoundary';
+import { buildFramingMap, FramingContext } from './photoFraming';
 import { LoadingScreen } from '@/components/ui/Layout';
 
 const EFFECT_SCALE = { subtle: 0.55, normal: 1, lively: 1.4 } as const;
@@ -99,35 +100,62 @@ export function ExperienceShell({ config, mode, startOpened = false }: Experienc
       effectsScale,
       reducedMotion,
       age: getTurningAge(config),
-      audio: { available: audio.available, playing: audio.playing, getLevels: audio.getLevels, play: playMusic, pause: audio.pause },
+      audio: {
+        available: audio.available,
+        playing: audio.playing,
+        getLevels: audio.getLevels,
+        play: playMusic,
+        pause: audio.pause,
+      },
     }),
-    [config, template, mode, theme, opened, open, restart, fx, effectsScale, reducedMotion, audio.available, audio.playing, audio.getLevels, playMusic, audio.pause],
+    [
+      config,
+      template,
+      mode,
+      theme,
+      opened,
+      open,
+      restart,
+      fx,
+      effectsScale,
+      reducedMotion,
+      audio.available,
+      audio.playing,
+      audio.getLevels,
+      playMusic,
+      audio.pause,
+    ],
   );
 
+  const framingMap = useMemo(() => buildFramingMap(config), [config]);
   const Template = template.component;
 
   return (
     <MotionConfig reducedMotion="user">
       <ExperienceContext.Provider value={value}>
-        <div
-          className="relative min-h-dvh overflow-x-clip"
-          style={{
-            ...themeToCssVars(theme),
-            fontFamily: template.fonts.body,
-            ['--font-display-t' as string]: template.fonts.display,
-            ['--font-accent-t' as string]: template.fonts.accent ?? template.fonts.display,
-            ['--focus-color' as string]: theme.accent,
-          }}
-          data-template={template.id}
-        >
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingScreen />}>
-              <Template />
-            </Suspense>
-          </ErrorBoundary>
-          <FxLayer ref={fxRef} scale={TIER_SCALE[tier] * effectsScale} enabled={!reducedMotion} />
-          {audio.available && opened && <MusicPlayer audio={audio} tone={template.tone} songName={config.music.name} />}
-        </div>
+        <FramingContext.Provider value={framingMap}>
+          <div
+            className="relative min-h-dvh overflow-x-clip"
+            style={{
+              ...themeToCssVars(theme),
+              fontFamily: template.fonts.body,
+              ['--font-display-t' as string]: template.fonts.display,
+              ['--font-accent-t' as string]: template.fonts.accent ?? template.fonts.display,
+              ['--focus-color' as string]: theme.accent,
+            }}
+            data-template={template.id}
+          >
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingScreen />}>
+                <Template />
+              </Suspense>
+            </ErrorBoundary>
+            <FxLayer ref={fxRef} scale={TIER_SCALE[tier] * effectsScale} enabled={!reducedMotion} />
+            {audio.available && opened && (
+              <MusicPlayer audio={audio} tone={template.tone} songName={config.music.name} />
+            )}
+          </div>
+        </FramingContext.Provider>
       </ExperienceContext.Provider>
     </MotionConfig>
   );

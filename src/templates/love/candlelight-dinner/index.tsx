@@ -303,7 +303,7 @@ function ObjectView({ id, onClose }: { id: ObjectId; onClose: () => void }) {
   }
 
   return createPortal(
-    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#0d0306]/80 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#0d0306]/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div
         ref={ref}
         role="dialog"

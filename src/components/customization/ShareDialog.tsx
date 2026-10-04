@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
-import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, Link2, Share2 } from 'lucide-react';
+import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, HardDrive, Globe2, Share2 } from 'lucide-react';
 import type { BirthdayConfig } from '@/types/birthday';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { birthdayRepository } from '@/data/repository';
-import { normalizeConfig } from '@/data/normalizeConfig';
+import { experienceRepository, storageMode } from '@/data/repository';
+import { downloadBackup, readBackupFile, BackupError } from '@/data/backup';
 import { getReadiness } from '@/utils/readiness';
-import { errorMessage } from '@/utils/media';
+import { cn } from '@/utils/cn';
 
 interface ShareDialogProps {
   open: boolean;
@@ -15,86 +15,86 @@ interface ShareDialogProps {
   config: BirthdayConfig;
   shareId?: string;
   onSaved: (id: string) => void;
-  onImport: (config: BirthdayConfig) => void;
+  onImport: (config: BirthdayConfig, shareId?: string) => void;
   onJump: (section: string) => void;
 }
 
+const linkFor = (id: string) => `${window.location.origin}/birthday/${id}`;
+
 export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport, onJump }: ShareDialogProps) {
   const toast = useToast();
-  const [saving, setSaving] = useState(false);
-  const [link, setLink] = useState<string | null>(shareId ? `${window.location.origin}/birthday/${shareId}` : null);
+  const local = storageMode === 'local';
+  const [busy, setBusy] = useState(false);
+  const [savedId, setSavedId] = useState<string | undefined>(shareId);
   const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const missing = getReadiness(config).filter((r) => !r.done);
+  const link = savedId ? linkFor(savedId) : null;
 
-  const save = async () => {
-    setSaving(true);
+  /** Saves (or re-saves) the current draft and returns its id. */
+  const save = async (): Promise<string | null> => {
+    setBusy(true);
     try {
-      const id = await birthdayRepository.save(config, shareId);
+      const id = await experienceRepository.save(config, savedId);
+      setSavedId(id);
       onSaved(id);
-      setLink(`${window.location.origin}/birthday/${id}`);
-      toast(shareId ? 'Your birthday link has been updated.' : 'Your birthday link is ready!', 'success');
+      return id;
     } catch (err) {
-      toast(err instanceof Error ? err.message : errorMessage(err), 'error');
+      toast(err instanceof Error ? err.message : 'Saving failed. Please try again.', 'error');
+      return null;
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   };
 
-  const copy = async () => {
-    if (!link) return;
+  const copy = async (id?: string | null) => {
+    const target = id ?? savedId;
+    if (!target) return;
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(linkFor(target));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
+      toast(local ? 'Local link copied — it opens in this browser only.' : 'Share link copied.', 'success');
     } catch {
       toast('Copy failed — select the link and copy it manually.', 'error');
     }
   };
 
-  const nativeShare = async () => {
-    if (!link) return;
-    try {
-      await navigator.share({
-        title: config.birthdayPerson ? `Happy Birthday, ${config.birthdayPerson}!` : 'A birthday surprise',
-        text: 'Someone made something special for you…',
-        url: link,
-      });
-    } catch {
-      /* user cancelled */
-    }
-  };
-
-  const exportFile = () => {
-    const blob = new Blob([JSON.stringify(config)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `birthday-${(config.birthdayPerson || 'surprise').toLowerCase().replace(/\s+/g, '-')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const importFile = async (file?: File) => {
     if (!file) return;
     try {
-      const parsed: unknown = JSON.parse(await file.text());
-      onImport(normalizeConfig(parsed));
-      toast('Birthday imported.', 'success');
+      const { config: imported, shareId: importedId } = await readBackupFile(file);
+      onImport(imported, importedId);
+      toast(`Imported ${imported.birthdayPerson.trim() ? `${imported.birthdayPerson}’s` : 'the'} birthday.`, 'success');
       onClose();
-    } catch {
-      toast('That file isn’t a valid birthday backup.', 'error');
+    } catch (err) {
+      toast(err instanceof BackupError ? err.message : 'That backup couldn’t be imported.', 'error');
     } finally {
       if (fileRef.current) fileRef.current.value = '';
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Share birthday website" description="Create a private link to send to the birthday person.">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={local ? 'Share your birthday experience' : link ? 'Your birthday experience is ready to share' : 'Share your birthday experience'}
+      description={local || link ? undefined : 'Publish it to the server to get a link that works on any device.'}
+    >
+      <p
+        className={cn(
+          'mb-5 inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide uppercase',
+          local ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900',
+        )}
+      >
+        {local ? <HardDrive className="size-3.5" aria-hidden /> : <Globe2 className="size-3.5" aria-hidden />}
+        {local ? 'Local share mode' : 'Server mode'}
+      </p>
+
       {missing.length > 0 && (
-        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="mb-5 border-l-2 border-amber-400 bg-amber-50 py-3 pr-3 pl-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-            <CircleAlert className="size-4" aria-hidden /> A few personal touches are still placeholders
+            <CircleAlert className="size-4" aria-hidden /> Some details still show placeholders
           </p>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {missing.map((m) => (
@@ -105,84 +105,111 @@ export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport,
                     onJump(m.section);
                     onClose();
                   }}
-                  className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100"
+                  className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100"
                 >
                   {m.label}
                 </button>
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-amber-800">You can share anyway — anything missing shows as a visible placeholder.</p>
         </div>
       )}
 
-      {link ? (
-        <div className="space-y-3">
-          <label htmlFor="share-link" className="text-sm font-semibold text-ink-800">
-            Your birthday link
-          </label>
-          <div className="flex gap-2">
+      {local ? (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-ink-700">
+            This version is stored <strong>only in this browser</strong>. The link below will open here, but not on
+            anyone else’s phone or computer.
+          </p>
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-ink-700">
+            <li>Download the backup.</li>
+            <li>Open this website on the other device.</li>
+            <li>Choose “Import backup” and pick the file.</li>
+          </ol>
+          {link && (
             <input
-              id="share-link"
+              aria-label="Local link"
               readOnly
               value={link}
               onFocus={(e) => e.currentTarget.select()}
-              className="h-11 min-w-0 flex-1 rounded-xl border border-ink-200 bg-white px-3 font-mono text-sm text-ink-700"
+              className="h-11 w-full rounded-md border border-ink-200 bg-white px-3 font-mono text-xs text-ink-600"
             />
-            <Button variant="primary" onClick={copy} icon={copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}>
-              {copied ? 'Copied' : 'Copy'}
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              variant="secondary"
+              loading={busy}
+              onClick={async () => copy(await save())}
+              icon={copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+            >
+              {copied ? 'Copied' : 'Copy local link'}
+            </Button>
+            <Button variant="primary" onClick={() => downloadBackup(config, savedId)} icon={<Download className="size-4" aria-hidden />}>
+              Download backup
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {'share' in navigator && (
-              <Button variant="secondary" size="sm" onClick={nativeShare} icon={<Share2 className="size-4" aria-hidden />}>
-                Share…
-              </Button>
-            )}
+          <p className="text-xs leading-relaxed text-ink-500">
+            The backup is a single <code>.json</code> file with every photo, message, photo position and song inside it.
+            To make links work everywhere, connect a server (see README → Server mode).
+          </p>
+        </div>
+      ) : link ? (
+        <div className="space-y-3">
+          <input
+            aria-label="Share link"
+            readOnly
+            value={link}
+            onFocus={(e) => e.currentTarget.select()}
+            className="h-11 w-full rounded-md border border-ink-200 bg-white px-3 font-mono text-sm text-ink-700"
+          />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button variant="primary" onClick={() => copy()} icon={copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}>
+              {copied ? 'Copied' : 'Copy share link'}
+            </Button>
             <a
               href={link}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-ink-200 bg-white px-3.5 text-sm font-semibold text-ink-900 hover:bg-ink-100/60"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white text-sm font-semibold text-ink-900 hover:bg-ink-100/60"
             >
-              <ExternalLink className="size-4" aria-hidden /> Open
+              <ExternalLink className="size-4" aria-hidden /> Open experience
             </a>
-            <Button variant="ghost" size="sm" onClick={save} loading={saving}>
-              Update link with latest changes
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {'share' in navigator && (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Share2 className="size-4" aria-hidden />}
+                onClick={() => navigator.share({ title: config.birthdayPerson ? `For ${config.birthdayPerson}` : 'A birthday surprise', url: link }).catch(() => undefined)}
+              >
+                Share…
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" loading={busy} onClick={() => void save().then((id) => id && toast('Link updated with your latest changes.', 'success'))}>
+              Update with latest changes
             </Button>
           </div>
         </div>
       ) : (
-        <Button variant="brand" size="lg" className="w-full" onClick={save} loading={saving} icon={<Link2 className="size-5" aria-hidden />}>
-          Create birthday link
+        <Button variant="brand" size="lg" className="w-full" loading={busy} onClick={() => void save()} icon={<Globe2 className="size-5" aria-hidden />}>
+          Publish & create share link
         </Button>
-      )}
-
-      {birthdayRepository.kind === 'local' && (
-        <p className="mt-4 rounded-xl bg-paper-2 p-3 text-xs leading-relaxed text-ink-600">
-          Links are saved in this browser until a backend is connected (see README). To move a birthday to another device,
-          download a backup below and import it there.
-        </p>
       )}
 
       <div className="mt-6 border-t border-ink-200 pt-5">
         <p className="text-sm font-semibold text-ink-800">Backup</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={exportFile} icon={<Download className="size-4" aria-hidden />}>
-            Download backup
-          </Button>
+        <p className="mt-1 text-xs text-ink-500">Move a birthday between devices, or keep a copy safe.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {!local && (
+            <Button variant="secondary" size="sm" onClick={() => downloadBackup(config, savedId)} icon={<Download className="size-4" aria-hidden />}>
+              Download backup
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} icon={<FileUp className="size-4" aria-hidden />}>
             Import backup
           </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden
-            onChange={(e) => void importFile(e.target.files?.[0])}
-          />
+          <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => void importFile(e.target.files?.[0])} />
         </div>
       </div>
     </Modal>

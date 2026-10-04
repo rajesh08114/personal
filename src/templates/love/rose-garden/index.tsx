@@ -186,7 +186,7 @@ function MemoryCard({ memory, onClose }: { memory: ResolvedMemory; onClose: () =
   useFocusTrap(ref, true, onClose);
   useLockBodyScroll(true);
   return createPortal(
-    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#1c050b]/80 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#1c050b]/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}>
       <motion.div
         ref={ref}
         role="dialog"

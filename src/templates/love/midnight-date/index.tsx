@@ -88,7 +88,7 @@ function Midnight() {
   }, []);
   const midnight = time === '12:00';
   return (
-    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#030716]/85 px-6 text-center backdrop-blur-[2px]" exit={{ opacity: 0, transition: { duration: 1.2 } }}>
+    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#030716]/85 px-6 text-center" exit={{ opacity: 0, transition: { duration: 1.2 } }}>
       <motion.p key={time} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-6xl tracking-widest text-[var(--bd-primary)] tabular-nums sm:text-8xl" aria-live="polite">
         {time}
       </motion.p>
@@ -202,7 +202,7 @@ function City() {
               <span className="absolute inset-0 animate-ping rounded-full bg-[var(--bd-primary)]/40" />
               <span className={cn('relative size-4 rounded-full shadow-[0_0_20px_6px_rgb(255_210_122/0.6)]', visited.includes(s.id) ? 'bg-[var(--bd-accent)]' : 'bg-[var(--bd-primary)]')} />
             </span>
-            <span className="mt-1 rounded-full bg-[#050a1f]/70 px-3 py-1 text-xs whitespace-nowrap backdrop-blur transition-transform group-hover:-translate-y-1">{s.label}</span>
+            <span className="mt-1 rounded-full bg-[#050a1f]/70 px-3 py-1 text-xs whitespace-nowrap transition-transform group-hover:-translate-y-1">{s.label}</span>
           </motion.button>
         ))}
         <Lanterns />
@@ -238,7 +238,7 @@ function SpotCard({ spot, onClose }: { spot: Spot; onClose: () => void }) {
   useLockBodyScroll(true);
   const m = spot.kind === 'memory' ? getMemories(config)[spot.memoryIndex ?? 0] : null;
   return createPortal(
-    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#030716]/75 p-4 backdrop-blur" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-[85] flex items-center justify-center bg-[#030716]/75 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}>
       <motion.div
         ref={ref}
         role="dialog"
@@ -281,7 +281,7 @@ function Note() {
   const { config } = useExperience();
   return (
     <section aria-labelledby="md-note" className="px-6 py-24">
-      <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 1.2 }} className="mx-auto max-w-2xl rounded-[2rem] border border-white/10 bg-[#0b1638]/70 p-8 backdrop-blur sm:p-12">
+      <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 1.2 }} className="mx-auto max-w-2xl rounded-[2rem] border border-white/10 bg-[#0b1638]/70 p-8 sm:p-12">
         <h2 id="md-note" className={`${serif} text-3xl text-[var(--bd-primary)]`}>
           What I came to tell you
         </h2>

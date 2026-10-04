@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { ImageOff, ImagePlus } from 'lucide-react';
+import type { PhotoFraming } from '@/types/birthday';
 import { cn } from '@/utils/cn';
+import { framingStyle, useFraming } from './photoFraming';
 
 interface PhotoSlotProps {
   src?: string;
@@ -14,6 +16,11 @@ interface PhotoSlotProps {
   tone?: 'dark' | 'light';
   priority?: boolean;
   icon?: ReactNode;
+  /**
+   * Framing to apply. Defaults to the creator's saved framing for this photo
+   * (looked up by src); pass `false` to show the photo untouched (e.g. a lightbox).
+   */
+  framing?: PhotoFraming | false;
 }
 
 /**
@@ -30,7 +37,10 @@ export function PhotoSlot({
   tone = 'dark',
   priority = false,
   icon,
+  framing,
 }: PhotoSlotProps) {
+  const saved = useFraming(src);
+  const applied = framing === false ? undefined : (framing ?? saved);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const failed = Boolean(src) && failedSrc === src;
@@ -91,6 +101,7 @@ export function PhotoSlot({
         draggable={false}
         onLoad={() => setLoadedSrc(src)}
         onError={() => setFailedSrc(src)}
+        style={framingStyle(applied)}
         className={cn(
           'h-full w-full object-cover transition-opacity duration-700',
           loaded ? 'opacity-100' : 'opacity-0',

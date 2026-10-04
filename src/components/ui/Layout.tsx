@@ -40,9 +40,8 @@ export function LoadingScreen({ label = 'Preparing something special…', dark =
         dark ? 'bg-ink-950 text-ink-200' : 'bg-paper text-ink-600',
       )}
     >
-      <div className="relative size-14">
-        <span className="absolute inset-0 animate-ping rounded-full bg-gold-soft/30" />
-        <span className="absolute inset-2 rounded-full bg-gradient-to-br from-gold-soft to-brand" />
+      <div aria-hidden className={cn('relative h-px w-24 overflow-hidden', dark ? 'bg-white/15' : 'bg-ink-900/15')}>
+        <span className={cn('absolute inset-y-0 left-0 w-1/3 animate-[loading-slide_1.4s_ease-in-out_infinite]', dark ? 'bg-ink-200' : 'bg-ink-700')} />
       </div>
       <p className="font-display text-lg italic" role="status">
         {label}

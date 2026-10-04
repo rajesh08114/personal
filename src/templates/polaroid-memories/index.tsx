@@ -409,7 +409,7 @@ function FlyTogether() {
                     transition={{ type: 'spring', stiffness: 60, damping: 11, delay: idx * 0.04 }}
                   >
                     <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-[#e9d6c2]">
-                      {img && <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />}
+                      {img && <PhotoSlot src={img} alt="" className="absolute! inset-0 opacity-55" />}
                       <span className={`${hand} relative text-xl font-bold text-[#3a2a1e] sm:text-4xl`}>{ch}</span>
                     </div>
                   </motion.div>

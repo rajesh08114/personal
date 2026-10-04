@@ -75,7 +75,7 @@ function StringLights() {
 function ZoneNav() {
   return (
     <nav aria-label="Festival zones" className="sticky top-2 z-40 mx-auto w-fit max-w-[calc(100vw-1rem)]">
-      <ul className="no-scrollbar flex gap-1 overflow-x-auto rounded-full border border-white/15 bg-[#1a0b2e]/80 p-1 backdrop-blur">
+      <ul className="no-scrollbar flex gap-1 overflow-x-auto rounded-full border border-white/15 bg-[#1a0b2e]/80 p-1">
         {ZONES.map((z) => (
           <li key={z.id}>
             <a href={`#${z.id}`} className="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap text-white/80 transition-colors hover:bg-white/10 hover:text-white">
@@ -292,7 +292,7 @@ function Finale() {
             <div className="overflow-hidden rounded-3xl border-4 border-white/80">
               <PhotoSlot src={config.finalImage ?? config.heroImage} alt={`A final photo of ${name}`} label="Add a final photo" className="aspect-square w-full" />
             </div>
-            <div className="flex flex-col justify-center rounded-3xl bg-white/10 p-8 text-left backdrop-blur">
+            <div className="flex flex-col justify-center rounded-3xl bg-white/10 p-8 text-left">
               <p className="text-xl leading-relaxed">
                 <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
               </p>

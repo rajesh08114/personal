@@ -3,14 +3,11 @@ import type { BirthdayTemplate } from '@/types/template';
 
 function Thumbnail() {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#070b18]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-      <div className="absolute inset-0 bg-[linear-gradient(rgb(110_231_249/0.07)_1px,transparent_1px),linear-gradient(90deg,rgb(110_231_249/0.07)_1px,transparent_1px)] bg-[size:20px_20px]" />
-      <div className="relative flex size-24 items-center justify-center">
-        <span className="absolute inset-0 rounded-full border border-dashed border-[#6ee7f9]/60 animate-spin-slow" />
-        <span className="absolute inset-3 rounded-full border border-[#6ee7f9]/40 transition-transform duration-1000 group-hover:rotate-180" />
-        <span className="h-12 w-7 rounded-full bg-gradient-to-b from-[#6ee7f9] to-[#a78bfa] shadow-[0_0_24px_#6ee7f9]" />
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#d9cdb6]">
+      <div className="relative flex size-28 items-center justify-center rounded-full bg-[#4c6c65] shadow-[inset_0_0_0_6px_#44615a,0_10px_18px_-8px_rgb(40_30_20/0.6)] transition-transform duration-500 group-hover:-rotate-6">
+        <span className="bg-[#1f1e1c] px-2 py-0.5 text-[0.55rem] font-bold tracking-[0.18em] text-[#f4f1ea]">DO NOT OPEN</span>
+        <span className="absolute top-1/2 left-[-12%] h-5 w-[124%] -translate-y-1/2 -rotate-[8deg] bg-[#e8dcb5]/90" />
       </div>
-      <p className="absolute bottom-4 text-[0.55rem] tracking-[0.3em] text-[#6ee7f9]">TIME CAPSULE · SEALED</p>
     </div>
   );
 }
@@ -18,16 +15,16 @@ function Thumbnail() {
 export const timeCapsuleTemplate: BirthdayTemplate = {
   id: 'time-capsule',
   name: 'Time Capsule',
-  tagline: 'A message from today, for someday',
-  description: 'A softly glowing digital archive: unseal the capsule, open memory pods, scrub through a dated timeline and count down to next year.',
+  tagline: 'A tin buried a while ago, dug up today',
+  description: 'An old biscuit tin dug up from the garden: peel the tape, lift the lid, read a typed letter, unwrap photos from tissue paper, flip through ticket stubs, and open the envelope marked “open last”.',
   categories: ['memories', 'creative'],
-  moods: ['Meaningful', 'Reflective', 'Futuristic'],
+  moods: ['Meaningful', 'Reflective', 'Tactile'],
   bestFor: 'Emotional, meaningful, long-term friendships',
-  palette: { primary: '#6ee7f9', secondary: '#a78bfa', accent: '#fde68a' },
-  tone: 'dark',
-  fonts: { google: ['Sora:wght@300;400;600;700', 'IBM+Plex+Mono:wght@400;500'], display: "'Sora', system-ui, sans-serif", body: "'Sora', system-ui, sans-serif", accent: "'IBM Plex Mono', monospace" },
-  animations: { language: 'Unseal & decode', ambientDensity: 3 },
-  interactions: { highlights: ['Unseal the capsule', 'Open memory pods', 'Timeline scrubber', 'Countdown to next year'] },
+  palette: { primary: '#4c6c65', secondary: '#e7d9bd', accent: '#9b2c24' },
+  tone: 'light',
+  fonts: { google: ['Special+Elite', 'Caveat:wght@500', 'Lora:ital@0;1'], display: "'Special Elite', 'Courier New', monospace", body: "'Lora', Georgia, serif", accent: "'Caveat', cursive" },
+  animations: { language: 'Peel, lift, unwrap', ambientDensity: 0 },
+  interactions: { highlights: ['Peel the masking tape', 'Unwrap photos from tissue', 'Ticket-stub timeline', '“Open last” envelope'] },
   Thumbnail,
   component: lazy(() => import('./index')),
 };

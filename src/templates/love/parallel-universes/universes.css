@@ -1,12 +1,60 @@
-.pu-orb {
-  box-shadow:
-    inset -12px -16px 30px rgb(0 0 0 / 0.35),
-    inset 10px 10px 24px rgb(255 255 255 / 0.35),
-    0 0 50px rgb(255 255 255 / 0.18);
+/* Parallel Universes — a reading room, a shelf of 1960s–70s science-fiction paperbacks. */
+.pu-room {
+  background-color: #e8dfcc;
+  background-image: radial-gradient(rgb(70 50 30 / 0.06) 0.8px, transparent 1px);
+  background-size: 6px 6px;
 }
-.pu-rift {
-  background: conic-gradient(from 0deg, #ff9e6b, #ff9ad5, #38bdf8, #a78bfa, #ff9e6b);
-  filter: blur(60px);
-  opacity: 0.45;
-  animation: spin 18s linear infinite;
+
+.pu-serif {
+  font-family: var(--font-display-t);
+}
+.pu-jost {
+  font-family: var(--font-accent-t);
+}
+.pu-anton {
+  font-family: 'Anton', Impact, sans-serif;
+}
+
+.pu-cover {
+  box-shadow:
+    inset 3px 0 0 rgb(0 0 0 / 0.12),
+    inset 5px 0 0 rgb(255 255 255 / 0.12),
+    0 14px 22px -14px rgb(40 30 20 / 0.7);
+  /* Worn paper edges */
+  filter: saturate(0.88);
+}
+
+/* Cover art printed in two inks: the photo in black over a flat colour. */
+.pu-duo img {
+  filter: grayscale(1) contrast(1.15);
+  mix-blend-mode: multiply;
+}
+
+.pu-mono img {
+  filter: grayscale(1) contrast(1.05) brightness(1.1);
+}
+
+.pu-diagonal {
+  clip-path: polygon(0 28%, 100% 0, 100% 100%, 0 100%);
+}
+
+.pu-spine {
+  box-shadow: inset -3px 0 0 rgb(0 0 0 / 0.15), inset 2px 0 0 rgb(255 255 255 / 0.12);
+}
+
+.pu-shelf {
+  background: linear-gradient(#8a6a4a, #6e5238);
+  box-shadow: 0 8px 12px -6px rgb(40 30 20 / 0.6);
+}
+
+.pu-page {
+  background: #f6f0e2;
+  box-shadow: 0 16px 28px -18px rgb(40 30 20 / 0.6);
+}
+
+.pu-dropcap::first-letter {
+  float: left;
+  font-size: 3.2em;
+  line-height: 0.85;
+  padding: 0.05em 0.08em 0 0;
 }

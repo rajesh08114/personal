@@ -33,7 +33,7 @@ export default function Fairytale() {
         </div>
         <AnimatePresence mode="wait">{!opened ? <BookCover key="cover" /> : <Story key="story" />}</AnimatePresence>
         {opened && (
-          <p className="fixed right-4 bottom-4 z-40 inline-flex items-center gap-1.5 rounded-full border border-[#d4a64a]/40 bg-[#120d24]/80 px-3 py-1.5 text-sm backdrop-blur" aria-live="polite">
+          <p className="fixed right-4 bottom-4 z-40 inline-flex items-center gap-1.5 rounded-full border border-[#d4a64a]/40 bg-[#120d24]/80 px-3 py-1.5 text-sm" aria-live="polite">
             <Sparkle className="size-4 fill-[#d4a64a] text-[#d4a64a]" aria-hidden /> {found.length}/3 hidden stars
           </p>
         )}

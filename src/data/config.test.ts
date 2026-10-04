@@ -12,9 +12,13 @@ describe('normalizeConfig', () => {
     for (const bad of [null, undefined, 42, 'x', [], { templateId: 'nope' }]) {
       const c = normalizeConfig(bad);
       expect(c.version).toBe(1);
-      expect(c.templateId).toBe('aurora');
+      expect(c.templateId).toBe('birthday-edition');
       expect(Array.isArray(c.memories)).toBe(true);
     }
+  });
+
+  it('migrates retired template ids', () => {
+    expect(normalizeConfig({ templateId: 'aurora' }).templateId).toBe('birthday-edition');
   });
 
   it('round-trips a valid config unchanged', () => {

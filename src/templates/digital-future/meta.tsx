@@ -3,15 +3,12 @@ import type { BirthdayTemplate } from '@/types/template';
 
 function Thumbnail() {
   return (
-    <div className="relative flex h-full w-full flex-col justify-center overflow-hidden bg-[#04060d] px-5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-      <div className="absolute inset-0 bg-[linear-gradient(rgb(0_240_255/0.08)_1px,transparent_1px),linear-gradient(90deg,rgb(0_240_255/0.08)_1px,transparent_1px)] bg-[size:16px_16px]" />
-      <p className="relative text-[0.6rem] text-[#00f0ff]">&gt; BIRTHDAY PROTOCOL</p>
-      <p className="relative text-[0.6rem] text-[#00f0ff]/70">&gt; SUBJECT LOCATED</p>
-      <p className="relative mt-2 text-lg font-bold text-white transition-[letter-spacing] duration-500 group-hover:tracking-widest" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
-        STATUS: COMPLETE
-      </p>
-      <div className="relative mt-3 h-1.5 w-full bg-white/10">
-        <div className="h-full w-2/3 bg-gradient-to-r from-[#00f0ff] to-[#ff2bd6] transition-all duration-700 group-hover:w-full" />
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#d8cfb8]">
+      <div className="relative h-[76%] w-[82%] overflow-hidden rounded-md bg-[#140e04] px-4 py-3 text-[#ffb000] shadow-[inset_0_0_30px_8px_rgb(0_0_0/0.8)]" style={{ fontFamily: "'VT323', monospace", textShadow: '0 0 2px rgb(255 176 0 / 0.6)' }}>
+        <p className="text-sm leading-tight">C:\&gt; RUN BIRTHDAY.EXE</p>
+        <p className="text-sm leading-tight opacity-70">████████████░░░░ 75%</p>
+        <p className="mt-2 text-2xl leading-none">HAPPY BIRTHDAY<span className="ml-1 inline-block h-5 w-2.5 translate-y-0.5 bg-[#ffb000] group-hover:opacity-0" /></p>
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgb(0_0_0/0.25)_0_1px,transparent_1px_3px)]" />
       </div>
     </div>
   );
@@ -19,17 +16,17 @@ function Thumbnail() {
 
 export const digitalFutureTemplate: BirthdayTemplate = {
   id: 'digital-future',
-  name: 'Digital Future',
-  tagline: 'Birthday protocol initiated',
-  description: 'A holographic interface from the future: boot sequence, subject scan, decrypting data logs and a mission that completes with a smile.',
+  name: 'Terminal 1983',
+  tagline: 'An amber screen, late at night',
+  description: 'An amber-phosphor computer terminal in a beige case. It boots, you log in, your letter decodes on screen, memories are listed as files, and BIRTHDAY.EXE prints a cake made of text.',
   categories: ['creative'],
-  moods: ['Futuristic', 'Techy', 'Witty'],
-  bestFor: 'Tech enthusiasts and futuristic personalities',
-  palette: { primary: '#00f0ff', secondary: '#ff2bd6', accent: '#b4ff39' },
+  moods: ['Nostalgic', 'Techy', 'Witty'],
+  bestFor: 'Programmers, gamers and anyone who grew up with a beige computer',
+  palette: { primary: '#ffb000', secondary: '#140e04', accent: '#ffd27a' },
   tone: 'dark',
-  fonts: { google: ['Chakra+Petch:wght@400;600;700', 'JetBrains+Mono:wght@400;600'], display: "'Chakra Petch', system-ui, sans-serif", body: "'Chakra Petch', system-ui, sans-serif", accent: "'JetBrains Mono', monospace" },
-  animations: { language: 'Glitch & decrypt', ambientDensity: 4 },
-  interactions: { highlights: ['Boot sequence', 'Holographic scan', 'Decrypting logs', 'Mission complete'] },
+  fonts: { google: ['VT323', 'IBM+Plex+Mono:wght@400;500'], display: "'VT323', monospace", body: "'IBM Plex Mono', monospace" },
+  animations: { language: 'Phosphor — type, blink, power off', ambientDensity: 0 },
+  interactions: { highlights: ['Boot sequence & log in', 'Letter decodes on screen', 'Memories as files', 'BIRTHDAY.EXE prints a text cake'] },
   Thumbnail,
   component: lazy(() => import('./index')),
 };

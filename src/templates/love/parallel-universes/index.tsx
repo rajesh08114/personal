@@ -1,23 +1,32 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
+import { useBirthdayText, useExperience } from '@/components/experience/ExperienceContext';
 import { Fill, splitParagraphs } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { getMemories, getTimeline } from '@/components/experience/content';
-import { Particles } from '@/components/effects/Particles';
 import { PLACEHOLDER } from '@/data/placeholders';
-import { EASE } from '@/animations/tokens';
 import { cn } from '@/utils/cn';
 import './universes.css';
 
-const disp = 'font-t-display';
+/**
+ * Parallel Universes — four vintage science-fiction paperbacks on a shelf.
+ * Same two characters, four different editions of the story. Every one ends the same way.
+ */
 
-const WORLDS = [
-  { name: 'The Day We Met', bg: 'radial-gradient(ellipse at 30% 20%, #ff9e6b, #6b1d2a 55%, #12050a)', orb: 'from-[#ffd29a] via-[#ff9e6b] to-[#c2410c]', particle: 'embers' as const, colors: ['#ffd29a', '#ff9e6b'] },
-  { name: 'Our Funniest Memory', bg: 'radial-gradient(ellipse at 70% 30%, #ff9ad5, #3b1a5c 55%, #0a0618)', orb: 'from-[#ff9ad5] via-[#f472b6] to-[#5ee7df]', particle: 'bubbles' as const, colors: ['#ff9ad5', '#5ee7df'] },
-  { name: 'Our Best Day', bg: 'radial-gradient(ellipse at 50% 80%, #38bdf8, #0b2a5c 55%, #020814)', orb: 'from-[#bae6fd] via-[#38bdf8] to-[#1d4ed8]', particle: 'dust' as const, colors: ['#bae6fd', '#ffffff'] },
-  { name: 'The Life We Imagine', bg: 'radial-gradient(ellipse at 50% 20%, #a78bfa, #2a1660 55%, #07031a)', orb: 'from-[#ddd6fe] via-[#a78bfa] to-[#6d28d9]', particle: 'stars' as const, colors: ['#ddd6fe', '#5ee7df'] },
+interface Edition {
+  imprint: string;
+  title: string;
+  price: string;
+  /** Visual style of the cover. */
+  style: 'grid' | 'pulp' | 'double' | 'modern';
+}
+
+const EDITIONS: Edition[] = [
+  { imprint: 'Orbit Science Fiction', title: 'The Day We Met', price: '3/6', style: 'grid' },
+  { imprint: 'Astounding Paperbacks', title: 'The Funniest Planet', price: '35¢', style: 'pulp' },
+  { imprint: 'Double Star Books', title: 'Our Best Day', price: '40¢', style: 'double' },
+  { imprint: 'Meridian Modern Classics', title: 'The Life We Imagine', price: '£1.25', style: 'modern' },
 ];
 
 interface Entry {
@@ -33,183 +42,285 @@ function useEntries(): Entry[] {
   const t = getTimeline(config);
   const m = getMemories(config);
   const paras = splitParagraphs(config.messages.main);
-  const pick = (x?: { titleText: string; captionText: string; image?: string; date?: string; place?: string }): Entry => ({ title: x?.titleText ?? PLACEHOLDER.memoryTitle, text: x?.captionText ?? PLACEHOLDER.memoryCaption, image: x?.image, date: x?.date, place: x?.place });
+  const pick = (x?: { titleText: string; captionText: string; image?: string; date?: string; place?: string }): Entry => ({
+    title: x?.titleText ?? PLACEHOLDER.memoryTitle,
+    text: x?.captionText ?? PLACEHOLDER.memoryCaption,
+    image: x?.image,
+    date: x?.date,
+    place: x?.place,
+  });
   return [pick(t[0]), pick(m[1] ?? m[0]), pick(m[3] ?? m[0]), { title: 'The life we imagine', text: paras[paras.length - 1] ?? PLACEHOLDER.message, image: config.finalImage ?? config.heroImage }];
 }
 
 export default function ParallelUniverses() {
   const { opened } = useExperience();
   return (
-    <div className="relative min-h-dvh bg-[#05030d] text-white">
-      <AnimatePresence>{!opened && <Rift key="r" />}</AnimatePresence>
-      {opened && <Multiverse />}
+    <div className="pu-room min-h-dvh text-[#2b2520]">
+      <AnimatePresence>{!opened && <Spine key="spine" />}</AnimatePresence>
+      {opened && <Shelf />}
     </div>
   );
 }
 
-function Rift() {
+/** A paperback cover in one of four period styles. */
+function Cover({ edition, entry, names, className }: { edition: Edition; entry: Entry; names: string; className?: string }) {
+  const photo = <PhotoSlot src={entry.image} alt="" label="Add a cover photo" tone="light" className={cn(edition.style === 'grid' || edition.style === 'pulp' ? 'pu-duo' : 'pu-mono', 'h-full w-full')} />;
+  switch (edition.style) {
+    case 'grid':
+      return (
+        <div className={cn('pu-cover flex flex-col bg-[#f2ebdc]', className)}>
+          <div className="flex h-[18%] items-center justify-center bg-[#d9762b] px-2 text-center">
+            <span className="pu-jost text-[0.6em] font-medium tracking-[0.2em] text-[#f2ebdc] uppercase">{edition.imprint}</span>
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-[4%] px-[8%] py-[6%] text-center">
+            <p className="pu-jost text-[1.1em] leading-tight font-semibold">{edition.title}</p>
+            <div className="aspect-square w-[70%] overflow-hidden bg-[#d9762b]">{photo}</div>
+            <p className="pu-jost text-[0.6em] tracking-[0.15em] uppercase">{names}</p>
+          </div>
+          <div className="h-[8%] bg-[#d9762b]" />
+        </div>
+      );
+    case 'pulp':
+      return (
+        <div className={cn('pu-cover relative overflow-hidden bg-[#2f5d62]', className)}>
+          <div className="absolute inset-0">{photo}</div>
+          <div className="absolute inset-x-0 top-0 bg-[#2b2520] px-[6%] py-[4%]">
+            <p className="pu-anton text-[1.5em] leading-none text-[#f2c14e] uppercase">{edition.title}</p>
+          </div>
+          <span className="pu-jost absolute right-[5%] bottom-[16%] flex size-[2.6em] items-center justify-center rounded-full bg-[#c8442f] text-[0.6em] font-bold text-[#f2ebdc]">{edition.price}</span>
+          <p className="pu-jost absolute inset-x-0 bottom-0 bg-[#f2c14e] px-[6%] py-[3%] text-[0.55em] font-semibold tracking-[0.12em] uppercase">
+            Two strangers. One small planet.
+          </p>
+        </div>
+      );
+    case 'double':
+      return (
+        <div className={cn('pu-cover relative overflow-hidden bg-[#a8342b]', className)}>
+          <div className="pu-diagonal absolute inset-0 bg-[#1f4e79]">
+            <div className="absolute inset-[12%_8%_30%_30%]">{photo}</div>
+          </div>
+          <p className="pu-anton absolute top-[5%] left-[6%] max-w-[60%] text-[1.15em] leading-[1.05] text-[#f2ebdc] uppercase">{edition.title}</p>
+          <p className="pu-jost absolute right-[6%] bottom-[5%] text-right text-[0.55em] font-semibold tracking-[0.15em] text-[#f2ebdc] uppercase">
+            A Double Star novel
+            <br />
+            {edition.price}
+          </p>
+        </div>
+      );
+    default:
+      return (
+        <div className={cn('pu-cover flex flex-col items-center justify-between bg-[#1c1b19] px-[8%] py-[9%] text-center text-[#e9e2d3]', className)}>
+          <p className="pu-jost text-[0.55em] tracking-[0.3em] uppercase">{edition.imprint}</p>
+          <div className="aspect-square w-[72%] overflow-hidden rounded-full ring-[0.3em] ring-[#c9a34a]">{photo}</div>
+          <div>
+            <p className="pu-jost text-[1.1em] leading-tight font-light lowercase">{edition.title}</p>
+            <p className="pu-jost mt-[0.4em] text-[0.55em] tracking-[0.2em] text-[#c9a34a] uppercase">{names}</p>
+          </div>
+        </div>
+      );
+  }
+}
+
+/** Opening: a single spine poking out of the shelf. Pull it. */
+function Spine() {
   const { config, open } = useExperience();
   return (
-    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[#05030d] px-6 text-center" exit={{ opacity: 0, scale: 1.3, filter: 'blur(12px)', transition: { duration: 1 } }}>
-      <div aria-hidden className="pu-rift absolute size-[60vmin] rounded-full" />
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} className={`${disp} relative text-xs tracking-[0.5em] text-white/60`}>
-        A THEORY OF EVERYTHING
-      </motion.p>
-      <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 1.6 }} className={`${disp} relative mt-6 max-w-3xl text-3xl leading-tight font-light sm:text-5xl`}>
+    <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center" exit={{ opacity: 0, transition: { duration: 0.5 } }}>
+      <p className="pu-jost text-xs tracking-[0.3em] text-[#2b2520]/60 uppercase">A theory of everything</p>
+      <h1 className="pu-serif mt-4 max-w-2xl text-3xl leading-tight sm:text-5xl">
         {config.messages.intro.trim() || 'In every universe, I would still choose you.'}
-      </motion.h1>
-      <motion.button type="button" onClick={open} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }} className={`${disp} relative mt-14 h-13 rounded-full border border-white/30 bg-white/5 px-9 text-xs tracking-[0.4em] backdrop-blur transition-colors hover:bg-white hover:text-[#05030d]`}>
-        STEP THROUGH
+      </h1>
+      <motion.button
+        type="button"
+        onClick={open}
+        aria-label="Pull the books off the shelf"
+        className="group mt-12 flex h-60 items-end gap-1"
+        whileHover="pull"
+      >
+        {['#d9762b', '#2f5d62', '#a8342b', '#1c1b19'].map((c, i) => (
+          <motion.span
+            key={c}
+            variants={{ pull: { y: i === 1 ? -26 : -4 } }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+            className="pu-spine flex w-10 items-center justify-center sm:w-12"
+            style={{ background: c, height: `${[90, 100, 94, 86][i]}%` }}
+          >
+            <span className="pu-jost rotate-90 text-[0.6rem] tracking-[0.25em] whitespace-nowrap text-[#f2ebdc] uppercase">{EDITIONS[i].title}</span>
+          </motion.span>
+        ))}
       </motion.button>
+      <div className="pu-shelf h-4 w-64 sm:w-72" />
+      <p className="pu-serif mt-6 text-lg italic">Pull one off the shelf.</p>
     </motion.div>
   );
 }
 
-function Multiverse() {
-  const { config, fx, restart } = useExperience();
-  const colors = useThemeColors(['#ffffff']);
+function Shelf() {
+  const { config } = useExperience();
+  const { name, sender } = useBirthdayText();
   const entries = useEntries();
-  const [world, setWorld] = useState<number | null>(null);
-  const [visited, setVisited] = useState<number[]>([]);
-  const [stage, setStage] = useState<'map' | 'collapsing' | 'out' | 'choose'>('map');
+  const [book, setBook] = useState<number | null>(null);
+  const [read, setRead] = useState<number[]>([]);
+  const [ending, setEnding] = useState(false);
+  const names = `${name} & ${sender}`;
 
-  const enter = (i: number) => {
-    setWorld(i);
-    setVisited((v) => (v.includes(i) ? v : [...v, i]));
+  const openBook = (i: number) => {
+    setBook(i);
+    setRead((r) => (r.includes(i) ? r : [...r, i]));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const collapse = () => {
-    setWorld(null);
-    setStage('collapsing');
-    window.setTimeout(() => setStage('out'), 2200);
-    window.setTimeout(() => {
-      setStage('choose');
-      fx.fireworks({ colors, duration: 4, rockets: 9 });
-    }, 5200);
-  };
-
-  const backgrounds = ['radial-gradient(ellipse at 50% 40%, #1b1035, #05030d 70%)', ...WORLDS.map((w) => w.bg)];
-  const activeBg = world === null ? 0 : world + 1;
-
   return (
-    <main className="relative z-10 min-h-dvh">
-      {backgrounds.map((b, i) => (
-        <motion.div key={i} aria-hidden className="fixed inset-0" style={{ background: b }} initial={false} animate={{ opacity: activeBg === i ? 1 : 0 }} transition={{ duration: 1.4 }} />
-      ))}
-      <div aria-hidden className="pointer-events-none fixed inset-0">
-        <Particles key={world ?? 'map'} variant={world !== null ? WORLDS[world].particle : 'stars'} density={world !== null ? 5 : 8} colors={world !== null ? WORLDS[world].colors : ['#ffffff', '#c4b5fd']} />
-      </div>
-
+    <main className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
       <AnimatePresence mode="wait">
-        {world === null && stage === 'map' && (
-          <motion.section key="map" aria-labelledby="pu-map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.4, filter: 'blur(10px)' }} transition={{ duration: 0.9 }} className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-20 text-center">
-            <h1 id="pu-map" className={`${disp} text-3xl font-light sm:text-5xl`}>
-              Happy Birthday, <span className="font-bold"><Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /></span>
+        {book === null && !ending && (
+          <motion.section key="shelf" aria-labelledby="pu-title" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
+            <h1 id="pu-title" className="pu-serif text-4xl sm:text-6xl">
+              Happy birthday, <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} />.
             </h1>
-            <p className="mt-3 text-white/60">Four universes. Four versions of us. Step into each one.</p>
-            <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-4">
-              {WORLDS.map((w, i) => (
-                <li key={w.name}>
+            <p className="pu-serif mx-auto mt-3 max-w-xl text-lg text-[#2b2520]/75 italic">Four editions of the same story. Different covers, different worlds, the same two people.</p>
+            <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-10 lg:grid-cols-4">
+              {EDITIONS.map((e, i) => (
+                <li key={e.title}>
                   <motion.button
                     type="button"
-                    onClick={() => enter(i)}
-                    aria-label={`Enter universe ${i + 1}: ${w.name}`}
-                    className="group flex flex-col items-center gap-4"
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut' }}
+                    onClick={() => openBook(i)}
+                    aria-label={`Open edition ${i + 1}: ${e.title}`}
+                    whileHover={{ y: -8, rotate: i % 2 ? 1 : -1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="block w-full text-left"
                   >
-                    <span className={cn('pu-orb relative block size-28 rounded-full bg-gradient-to-br transition-transform duration-500 group-hover:scale-110 sm:size-36', w.orb)}>
-                      <span className="absolute inset-[18%] overflow-hidden rounded-full opacity-80 mix-blend-luminosity">
-                        <PhotoSlot src={entries[i].image} alt="" label=" " className="h-full w-full rounded-full" />
-                      </span>
-                      {visited.includes(i) && <span className="absolute -top-1 -right-1 size-4 rounded-full bg-white shadow-[0_0_12px_white]" aria-hidden />}
-                    </span>
-                    <span className={`${disp} text-[0.65rem] tracking-[0.3em] text-white/50`}>UNIVERSE {String(i + 1).padStart(2, '0')}</span>
-                    <span className="-mt-3 max-w-[10rem] text-sm">{w.name}</span>
+                    <Cover edition={e} entry={entries[i]} names={names} className="aspect-[2/3] w-full text-[clamp(0.8rem,2.6vw,1.05rem)]" />
                   </motion.button>
+                  <p className="pu-jost mt-3 text-xs tracking-[0.15em] text-[#2b2520]/60 uppercase">
+                    Edition {i + 1} {read.includes(i) && '· read'}
+                  </p>
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={collapse} className={cn(`${disp} mt-16 h-13 rounded-full px-9 text-xs tracking-[0.4em] transition-colors`, visited.length >= 2 ? 'bg-white text-[#05030d]' : 'border border-white/25 text-white/70 hover:border-white')}>
-              COLLAPSE THE UNIVERSES
+            <div className="pu-shelf mt-2 h-4 w-full" />
+            <button
+              type="button"
+              onClick={() => setEnding(true)}
+              className={cn(
+                'pu-jost mt-14 h-12 border-b-2 px-2 text-sm font-medium tracking-[0.2em] uppercase transition-colors',
+                read.length >= 2 ? 'border-[#2b2520]' : 'border-[#2b2520]/30 text-[#2b2520]/70',
+              )}
+            >
+              Turn to the last page
             </button>
           </motion.section>
         )}
 
-        {world !== null && (
-          <motion.section key={`w${world}`} aria-label={`Universe ${world + 1}: ${WORLDS[world].name}`} initial={{ opacity: 0, scale: 0.6, filter: 'blur(20px)' }} animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} exit={{ opacity: 0, scale: 1.3, filter: 'blur(14px)' }} transition={{ duration: 0.9, ease: EASE.out }} className="relative mx-auto flex min-h-dvh max-w-5xl flex-col justify-center px-5 py-20">
-            <p className={`${disp} text-xs tracking-[0.4em] text-white/60`}>UNIVERSE {String(world + 1).padStart(2, '0')}</p>
-            <h2 className={`${disp} mt-3 text-4xl font-bold sm:text-6xl`}>{WORLDS[world].name}</h2>
-            <div className="mt-10 grid items-center gap-10 md:grid-cols-[1fr_1fr]">
-              <div className="relative mx-auto aspect-square w-[min(80vw,24rem)]">
-                <span aria-hidden className={cn('pu-orb absolute inset-0 rounded-full bg-gradient-to-br', WORLDS[world].orb)} />
-                <div className="absolute inset-[7%] overflow-hidden rounded-full border border-white/40">
-                  <PhotoSlot src={entries[world].image} alt={entries[world].title} label="Add a photo" className="h-full w-full" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-2xl font-medium">{entries[world].title}</h3>
-                {(entries[world].date || entries[world].place) && <p className="mt-2 text-xs tracking-[0.3em] text-white/60 uppercase">{[entries[world].date, entries[world].place].filter(Boolean).join(' · ')}</p>}
-                <p className="mt-5 text-2xl leading-relaxed font-light">{entries[world].text}</p>
-                <p className="mt-6 text-white/60 italic">…and in this universe too, it was you.</p>
-              </div>
-            </div>
-            <nav aria-label="Travel between universes" className="mt-14 flex flex-wrap items-center justify-between gap-3">
-              <button type="button" onClick={() => setWorld(null)} className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm">
-                <ArrowLeft className="size-4" aria-hidden /> Back to the multiverse
+        {book !== null && (
+          <motion.section key={`book-${book}`} aria-label={`Edition ${book + 1}: ${EDITIONS[book].title}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <OpenBook edition={EDITIONS[book]} entry={entries[book]} names={names} index={book} />
+            <nav aria-label="Move between editions" className="mt-10 flex flex-wrap items-center justify-between gap-3">
+              <button type="button" onClick={() => setBook(null)} className="pu-jost inline-flex h-11 items-center gap-2 text-sm tracking-[0.1em] uppercase underline underline-offset-4">
+                <ArrowLeft className="size-4" aria-hidden /> Back to the shelf
               </button>
-              {world < WORLDS.length - 1 ? (
-                <button type="button" onClick={() => enter(world + 1)} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-[#05030d]">
-                  Jump to universe {String(world + 2).padStart(2, '0')} <ArrowRight className="size-4" aria-hidden />
+              {book < EDITIONS.length - 1 ? (
+                <button type="button" onClick={() => openBook(book + 1)} className="pu-jost inline-flex h-11 items-center gap-2 bg-[#2b2520] px-5 text-sm tracking-[0.1em] text-[#f2ebdc] uppercase">
+                  Next edition <ArrowRight className="size-4" aria-hidden />
                 </button>
               ) : (
-                <button type="button" onClick={collapse} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-[#05030d]">
-                  Collapse all universes <ArrowRight className="size-4" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBook(null);
+                    setEnding(true);
+                  }}
+                  className="pu-jost inline-flex h-11 items-center gap-2 bg-[#2b2520] px-5 text-sm tracking-[0.1em] text-[#f2ebdc] uppercase"
+                >
+                  The last page <ArrowRight className="size-4" aria-hidden />
                 </button>
               )}
             </nav>
           </motion.section>
         )}
 
-        {stage !== 'map' && world === null && (
-          <motion.section key="end" aria-labelledby="pu-final" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 text-center">
-            <div className="relative h-48 w-full max-w-lg" aria-hidden>
-              {WORLDS.map((w, i) => (
-                <motion.span
-                  key={w.name}
-                  className={cn('pu-orb absolute top-1/2 left-1/2 size-20 rounded-full bg-gradient-to-br', w.orb)}
-                  initial={{ x: `${(i - 1.5) * 160}%`, y: '-50%', opacity: 1, scale: 1 }}
-                  animate={{ x: '-50%', y: '-50%', scale: stage === 'collapsing' ? 0.6 : 0, opacity: stage === 'collapsing' ? 1 : 0 }}
-                  transition={{ duration: 2, ease: EASE.inOut }}
-                />
-              ))}
-              <motion.span className="absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_120px_60px_rgb(196_181_253/0.6)]" initial={{ scale: 0, opacity: 0 }} animate={{ scale: stage === 'collapsing' ? 0 : 1, opacity: stage === 'collapsing' ? 0 : 1 }} transition={{ duration: 1.2, delay: stage === 'out' ? 0 : 0 }} />
-            </div>
-            <AnimatePresence>
-              {(stage === 'out' || stage === 'choose') && (
-                <motion.p key="out" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4 }} className={`${disp} mt-10 text-2xl font-light sm:text-4xl`}>
-                  Out of every possible universe…
-                </motion.p>
-              )}
-              {stage === 'choose' && (
-                <motion.div key="choose" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.4, ease: EASE.out }} role="status">
-                  <h2 id="pu-final" className={`${disp} mt-6 text-4xl font-bold sm:text-6xl`}>
-                    I’d still choose you.
-                  </h2>
-                  <p className="mt-6 text-lg text-white/75">
-                    Happy birthday, <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} />. <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
-                  </p>
-                  <p className="mt-3 text-sm text-white/50">— {config.senderName.trim() || PLACEHOLDER.sender}, in this universe and every other</p>
-                  <button type="button" onClick={restart} className={`${disp} mt-10 h-11 text-xs tracking-[0.4em] text-white/50 hover:text-white`}>
-                    OPEN THE RIFT AGAIN
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.section>
-        )}
+        {ending && <Ending key="end" entries={entries} names={names} />}
       </AnimatePresence>
     </main>
+  );
+}
+
+/** The cover swings open on its spine to reveal the chapter. */
+function OpenBook({ edition, entry, names, index }: { edition: Edition; entry: Entry; names: string; index: number }) {
+  return (
+    <div className="mx-auto grid max-w-5xl md:grid-cols-2 [perspective:2000px]">
+      <div className="pu-page relative hidden p-8 md:block">
+        <div className="aspect-[4/3] w-full overflow-hidden">
+          <PhotoSlot src={entry.image} alt={entry.title} label="Add a photo" tone="light" className="h-full w-full" />
+        </div>
+        <p className="pu-serif mt-3 text-center text-sm italic">Plate {index + 1}. {entry.place || entry.title}</p>
+      </div>
+      <div className="relative">
+        <article className="pu-page min-h-[28rem] p-8 sm:p-12">
+          <p className="pu-jost text-xs tracking-[0.25em] text-[#2b2520]/60 uppercase">Chapter {index + 1}</p>
+          <h2 className="pu-serif mt-2 text-3xl leading-tight sm:text-4xl">{entry.title}</h2>
+          {(entry.date || entry.place) && <p className="pu-jost mt-2 text-xs tracking-[0.2em] uppercase">{[entry.date, entry.place].filter(Boolean).join(' · ')}</p>}
+          <div className="mt-5 aspect-[4/3] w-full overflow-hidden md:hidden">
+            <PhotoSlot src={entry.image} alt={entry.title} label="Add a photo" tone="light" className="h-full w-full" />
+          </div>
+          <p className="pu-serif pu-dropcap mt-6 text-xl leading-relaxed">{entry.text}</p>
+          <p className="pu-serif mt-6 text-[#2b2520]/70 italic">…and in this edition too, it was you.</p>
+        </article>
+        {/* The cover, hinged on the left, swings open. */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-0 origin-left [backface-visibility:hidden]"
+          initial={{ rotateY: 0 }}
+          animate={{ rotateY: -165, opacity: [1, 1, 0] }}
+          transition={{ duration: 1.1, ease: [0.45, 0, 0.2, 1], opacity: { times: [0, 0.8, 1], duration: 1.1 } }}
+        >
+          <Cover edition={edition} entry={entry} names={names} className="h-full w-full text-[1.4rem]" />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/** Final reveal: the four books stack, and the last page is the same in all of them. */
+function Ending({ entries, names }: { entries: Entry[]; names: string }) {
+  const { config, restart } = useExperience();
+  return (
+    <motion.section aria-labelledby="pu-final" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center text-center">
+      <div className="relative h-56 w-36 sm:h-64 sm:w-44" aria-hidden>
+        {EDITIONS.map((e, i) => (
+          <motion.div
+            key={e.title}
+            className="absolute inset-0"
+            initial={{ x: `${(i - 1.5) * 115}%`, rotate: 0 }}
+            animate={{ x: `${(i - 1.5) * 3}%`, y: -i * 3, rotate: (i - 1.5) * 2.5 }}
+            transition={{ delay: 0.3 + i * 0.12, duration: 0.8, ease: [0.3, 0, 0.2, 1] }}
+          >
+            <Cover edition={e} entry={entries[i]} names={names} className="h-full w-full text-[0.8rem] shadow-lg" />
+          </motion.div>
+        ))}
+      </div>
+      <motion.article
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.4, duration: 0.8 }}
+        className="pu-page mt-14 w-full max-w-2xl px-8 py-12 sm:px-14"
+        role="status"
+      >
+        <p className="pu-jost text-xs tracking-[0.25em] text-[#2b2520]/60 uppercase">The last page — every edition</p>
+        <h2 id="pu-final" className="pu-serif mt-4 text-4xl leading-tight sm:text-5xl">
+          Out of every possible universe, I’d still choose you.
+        </h2>
+        <p className="pu-serif mt-6 text-xl leading-relaxed">
+          <Fill value={config.messages.surprise} placeholder={PLACEHOLDER.surprise} />
+        </p>
+        <p className="pu-serif mt-8 italic">
+          — <Fill value={config.senderName} placeholder={PLACEHOLDER.sender} />, in this universe and every other
+        </p>
+        <p className="pu-jost mt-10 text-xs tracking-[0.3em] uppercase">The end · to be continued</p>
+      </motion.article>
+      <button type="button" onClick={restart} className="pu-jost mt-10 h-11 text-xs tracking-[0.2em] uppercase underline underline-offset-4">
+        Put the books back
+      </button>
+    </motion.section>
   );
 }

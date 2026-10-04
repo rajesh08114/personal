@@ -197,7 +197,7 @@ function Theater() {
       <section aria-label="The screening room" className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-3 pt-10 pb-6">
         <div aria-hidden className="cd-beam pointer-events-none absolute bottom-0 left-1/2 h-[85%] w-[120%] -translate-x-1/2" />
         <div className="relative w-full max-w-5xl">
-          <div className="cd-screen relative aspect-video w-full overflow-hidden bg-[#141011]">
+          <div className="cd-screen relative aspect-[4/5] w-full overflow-hidden bg-[#141011] sm:aspect-video">
             <AnimatePresence mode="wait">
               {credits ? (
                 <motion.div key="credits" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

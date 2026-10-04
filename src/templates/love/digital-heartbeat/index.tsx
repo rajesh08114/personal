@@ -205,7 +205,7 @@ function Story() {
   const paras = splitParagraphs(config.messages.main);
   return (
     <main className="relative z-10">
-      <div className="sticky top-0 z-30 border-b border-[var(--bd-primary)]/15 bg-[#070204]/80 backdrop-blur">
+      <div className="sticky top-0 z-30 border-b border-[var(--bd-primary)]/15 bg-[#070204]/80">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
           <ECG className="h-12 flex-1" height={48} />
           <Bpm />

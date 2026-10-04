@@ -109,7 +109,9 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
             <p className="text-sm font-semibold text-ink-800">Hero photo</p>
             <ImageUploader
               value={config.heroImage}
-              onChange={(heroImage) => patch({ heroImage })}
+              onChange={(heroImage) => patch({ heroImage, heroFraming: undefined })}
+              framing={config.heroFraming}
+              onFramingChange={(heroFraming) => patch({ heroFraming })}
               label="Hero photo"
               emptyTitle="Add your hero photo"
               aspect="aspect-square"
@@ -119,7 +121,9 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
             <p className="text-sm font-semibold text-ink-800">Final photo</p>
             <ImageUploader
               value={config.finalImage}
-              onChange={(finalImage) => patch({ finalImage })}
+              onChange={(finalImage) => patch({ finalImage, finalFraming: undefined })}
+              framing={config.finalFraming}
+              onFramingChange={(finalFraming) => patch({ finalFraming })}
               label="Final photo"
               emptyTitle="Add a closing photo"
               emptyHint="Optional — uses the hero photo if empty"

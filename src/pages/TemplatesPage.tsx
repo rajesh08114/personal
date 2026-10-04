@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ArrowRight, Eye, Heart, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { LoveTag, TemplateCategory } from '@/types/template';
 import { CATEGORIES, LOVE_TAGS, TEMPLATES } from '@/templates/registry';
 import { useDraft } from '@/store/DraftProvider';
-import { Particles } from '@/components/effects/Particles';
 import { cn } from '@/utils/cn';
 
-/** `/templates` — "Choose your birthday experience". */
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** `/templates` — the catalogue, laid out like a printed exhibition catalogue. */
 export default function TemplatesPage() {
   const [category, setCategory] = useState<TemplateCategory | 'all'>(() =>
     new URLSearchParams(window.location.search).get('c') === 'love' ? 'love' : 'all',
@@ -18,63 +19,42 @@ export default function TemplatesPage() {
   const navigate = useNavigate();
   const byCategory = category === 'all' ? TEMPLATES : TEMPLATES.filter((t) => t.categories.includes(category));
   const list = category === 'love' && loveTag !== 'all' ? byCategory.filter((t) => t.loveTags?.includes(loveTag)) : byCategory;
-  const loveCount = TEMPLATES.filter((t) => t.categories.includes('love')).length;
 
   useEffect(() => {
     document.title = 'Choose your birthday experience — Birthday Studio';
   }, []);
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-ink-950 text-white">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[38rem] overflow-hidden">
-        <div className="absolute -top-40 left-1/2 size-[50rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgb(184_58_100/0.35),transparent_60%)]" />
-        <div className="absolute top-20 -right-40 size-[30rem] rounded-full bg-[radial-gradient(circle,rgb(124_58_237/0.25),transparent_60%)]" />
-        <Particles variant="stars" density={4} colors={['#ffffff', '#f6c66a']} />
-      </div>
-
-      <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
+    <div className="min-h-dvh bg-[#f4efe6] text-[#24201b]">
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
         <Link to="/templates" className="flex items-center gap-2 font-display text-lg font-semibold">
           <img src="/favicon.svg" alt="" className="size-8" /> Birthday Studio
         </Link>
-        <nav className="flex items-center gap-2" aria-label="Main">
-          <Link to="/" className="inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold text-white/75 hover:bg-white/10 hover:text-white max-sm:hidden">
+        <nav className="flex items-center gap-1" aria-label="Main">
+          <Link to="/" className="inline-flex h-10 items-center px-3 text-sm font-semibold text-[#5b5348] hover:text-[#24201b] max-sm:hidden">
             My website
           </Link>
-          <Link to="/create" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-ink-900 hover:bg-white/90">
+          <Link to="/create" className="inline-flex h-10 items-center gap-1.5 rounded-md bg-[#24201b] px-4 text-sm font-semibold text-[#f4efe6] hover:bg-[#3a342c]">
             Open studio <ArrowRight className="size-4" aria-hidden />
           </Link>
         </nav>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl px-4 pb-24 sm:px-8">
-        <section className="mx-auto max-w-3xl pt-10 pb-12 text-center sm:pt-16">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold tracking-[0.2em] text-gold-soft uppercase"
-          >
-            <Sparkles className="size-3.5" aria-hidden /> {TEMPLATES.length} handcrafted experiences
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 font-display text-5xl leading-[1.05] font-light tracking-tight text-balance sm:text-7xl"
-          >
-            Choose your <em className="text-gold-soft">birthday</em> experience
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mx-auto mt-5 max-w-xl text-lg text-ink-300 text-pretty"
-          >
-            Not colour swaps — each one has its own story, layout, motion and celebration. Your photos and words carry over
-            to every template.
-          </motion.p>
+      <main className="mx-auto max-w-7xl px-4 pb-24 sm:px-8">
+        <section className="grid gap-6 border-b border-[#24201b] pt-10 pb-8 sm:pt-16 md:grid-cols-[1.4fr_1fr] md:items-end">
+          <div>
+            <p className="font-mono text-xs tracking-[0.2em] text-[#8a7f70] uppercase">Catalogue · {TEMPLATES.length} works</p>
+            <h1 className="mt-4 font-display text-5xl leading-[1.02] font-light tracking-tight text-balance sm:text-7xl">
+              Choose how the story is told.
+            </h1>
+          </div>
+          <p className="max-w-md text-base leading-relaxed text-[#5b5348] md:justify-self-end">
+            A newspaper, a film, a letter, a scrapbook, a night sky. Pick one; your names, photos and words move with you if
+            you change your mind.
+          </p>
         </section>
 
-        <div className="no-scrollbar sticky top-0 z-20 -mx-4 mb-8 flex gap-2 overflow-x-auto bg-ink-950/80 px-4 py-3 backdrop-blur sm:justify-center" role="tablist" aria-label="Filter by category">
+        <div className="no-scrollbar sticky top-0 z-20 -mx-4 flex gap-5 overflow-x-auto border-b border-[#24201b]/15 bg-[#f4efe6] px-4 sm:gap-7" role="tablist" aria-label="Filter by category">
           {CATEGORIES.map((c) => (
             <button
               key={c.id}
@@ -86,38 +66,26 @@ export default function TemplatesPage() {
                 setLoveTag('all');
               }}
               className={cn(
-                'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-5 text-sm font-semibold transition-colors duration-200',
-                category === c.id
-                  ? c.id === 'love'
-                    ? 'bg-[#c2185b] text-white'
-                    : 'bg-white text-ink-900'
-                  : 'bg-white/5 text-white/75 ring-1 ring-white/10 hover:bg-white/10 hover:text-white',
+                '-mb-px h-12 shrink-0 border-b-2 text-sm font-semibold transition-colors',
+                category === c.id ? 'border-[#24201b] text-[#24201b]' : 'border-transparent text-[#8a7f70] hover:text-[#24201b]',
               )}
             >
-              {c.id === 'love' && <Heart className="size-3.5 fill-current" aria-hidden />}
               {c.label}
             </button>
           ))}
         </div>
 
         {category === 'love' && (
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            aria-labelledby="love-collection"
-            className="relative mb-10 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_20%_0%,rgb(194_24_91/0.35),transparent_60%),radial-gradient(ellipse_at_100%_100%,rgb(124_58_237/0.25),transparent_55%)] p-6 sm:p-10"
-          >
-            <p className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.3em] text-[#ff8fb1] uppercase">
-              <Heart className="size-3.5 fill-current" aria-hidden /> The love collection · {loveCount} experiences
-            </p>
-            <h2 id="love-collection" className="mt-3 max-w-2xl font-display text-3xl leading-tight sm:text-5xl">
-              An interactive love story, made for two people.
-            </h2>
-            <p className="mt-3 max-w-xl text-white/65">
-              Letters that unfold, two souls that drift together, a midnight city that spells it out. Every one tells your
-              story in its own way.
-            </p>
-            <div className="no-scrollbar -mx-1 mt-6 flex gap-2 overflow-x-auto px-1" role="group" aria-label="Filter love templates by mood">
+          <section aria-labelledby="love-collection" className="grid gap-4 border-b border-[#24201b]/15 py-8 md:grid-cols-[1fr_1.2fr]">
+            <div>
+              <h2 id="love-collection" className="font-display text-3xl leading-tight sm:text-4xl">
+                For two people.
+              </h2>
+              <p className="mt-2 max-w-md text-[#5b5348]">
+                Written for a partner: the story of how you met, the places you’ve been, and what you’d like to say out loud.
+              </p>
+            </div>
+            <div className="flex flex-wrap content-end gap-2" role="group" aria-label="Filter love templates by mood">
               {LOVE_TAGS.map((t) => (
                 <button
                   key={t.id}
@@ -125,70 +93,57 @@ export default function TemplatesPage() {
                   aria-pressed={loveTag === t.id}
                   onClick={() => setLoveTag(t.id)}
                   className={cn(
-                    'h-9 shrink-0 rounded-full px-4 text-xs font-semibold transition-colors',
-                    loveTag === t.id ? 'bg-white text-ink-900' : 'bg-white/5 text-white/70 ring-1 ring-white/10 hover:text-white',
+                    'h-9 rounded-md border px-3 text-xs font-semibold transition-colors',
+                    loveTag === t.id ? 'border-[#24201b] bg-[#24201b] text-[#f4efe6]' : 'border-[#24201b]/20 text-[#5b5348] hover:border-[#24201b]/50',
                   )}
                 >
                   {t.label}
                 </button>
               ))}
             </div>
-          </motion.section>
+          </section>
         )}
 
-        {list.length === 0 && <p className="py-16 text-center text-white/60">No templates match that mood yet — try another filter.</p>}
+        {list.length === 0 && <p className="py-16 text-center text-[#8a7f70]">Nothing in this mood yet. Try another filter.</p>}
 
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-10 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((t, i) => {
             const current = t.id === config.templateId;
+            const number = TEMPLATES.indexOf(t) + 1;
             return (
               <motion.li
                 key={t.id}
-                layout
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.04, 0.4), duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="group flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_30px_80px_-30px_rgb(184_58_100/0.5)]"
+                transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+                className="group flex flex-col"
               >
-                <Link to={`/templates/${t.id}`} className="relative block aspect-[16/11] overflow-hidden" aria-label={`Preview ${t.name}`}>
-                  <div className="h-full w-full transition-transform duration-700 group-hover:scale-[1.04]">
-                    <t.Thumbnail />
-                  </div>
-                  {current && (
-                    <span className="absolute top-3 left-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-ink-900">In use</span>
-                  )}
-                  <span className="absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs font-semibold opacity-0 backdrop-blur transition-opacity duration-300 group-hover:opacity-100 max-md:opacity-100">
-                    <Eye className="size-3.5" aria-hidden /> Preview
-                  </span>
+                <Link to={`/templates/${t.id}`} className="relative block aspect-[16/11] overflow-hidden rounded-sm bg-[#e4dccd]" aria-label={`Preview ${t.name}`}>
+                  <t.Thumbnail />
+                  {current && <span className="absolute top-3 left-3 bg-[#f4efe6] px-2 py-0.5 font-mono text-[0.65rem] tracking-[0.15em] uppercase">In use</span>}
                 </Link>
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h2 className="font-display text-2xl">{t.name}</h2>
-                    <span className="shrink-0 text-xs text-white/40">{t.animations.language}</span>
-                  </div>
-                  <p className="mt-1 text-sm text-white/60">{t.tagline}</p>
-                  <p className="mt-3 text-xs font-semibold tracking-wide text-gold-soft">{t.moods.join(' • ')}</p>
-                  <p className="mt-2 text-xs text-white/50">
-                    <span className="text-white/70">Best for:</span> {t.bestFor}
-                  </p>
-                  <div className="mt-5 flex gap-2 pt-1">
-                    <Link
-                      to={`/templates/${t.id}`}
-                      className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 text-sm font-semibold hover:bg-white/15"
-                    >
-                      <Eye className="size-4" aria-hidden /> Preview
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        patch({ templateId: t.id });
-                        navigate('/create');
-                      }}
-                      className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-white text-sm font-semibold text-ink-900 hover:bg-white/90"
-                    >
-                      Use template
-                    </button>
-                  </div>
+                <div className="mt-4 flex items-baseline gap-3 border-t border-[#24201b]/20 pt-3">
+                  <span className="font-mono text-xs text-[#8a7f70]">No. {pad(number)}</span>
+                  <h2 className="font-display text-2xl leading-tight">{t.name}</h2>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-[#5b5348]">{t.tagline}</p>
+                <p className="mt-2 text-xs text-[#8a7f70]">
+                  {t.moods.join(', ')} · Best for {t.bestFor.charAt(0).toLowerCase() + t.bestFor.slice(1)}
+                </p>
+                <div className="mt-4 flex gap-4 text-sm font-semibold">
+                  <Link to={`/templates/${t.id}`} className="inline-flex h-10 items-center underline decoration-[#24201b]/30 underline-offset-4 hover:decoration-[#24201b]">
+                    Preview
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patch({ templateId: t.id });
+                      navigate('/create');
+                    }}
+                    className="inline-flex h-10 items-center gap-1 underline decoration-[#24201b]/30 underline-offset-4 hover:decoration-[#24201b]"
+                  >
+                    Use this one <ArrowRight className="size-3.5" aria-hidden />
+                  </button>
                 </div>
               </motion.li>
             );

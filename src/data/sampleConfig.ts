@@ -33,7 +33,7 @@ const LOVE_TIMELINE: Copy[] = [
  * Fictional sample content used ONLY for template previews.
  * Real birthdays start from createDefaultConfig() with visible placeholders.
  */
-export function createSampleConfig(templateId: TemplateId = 'aurora', opts: { love?: boolean } = {}): BirthdayConfig {
+export function createSampleConfig(templateId: TemplateId = 'birthday-edition', opts: { love?: boolean } = {}): BirthdayConfig {
   const base = createDefaultConfig();
   const love = Boolean(opts.love);
   const memories = love ? LOVE_MEMORIES : FRIEND_MEMORIES;

@@ -104,7 +104,7 @@ function Film() {
     <main>
       <div ref={ref} style={{ height: `${total * 120}vh` }} className="relative">
         <div className="sticky top-0 flex h-dvh items-center justify-center overflow-hidden px-0">
-          <div className="relative aspect-[2.39/1] w-full max-w-[min(100vw,calc(100dvh*2.39))] overflow-hidden bg-[#050505]">
+          <div className="relative aspect-[3/4] max-h-[86dvh] w-full overflow-hidden bg-[#050505] sm:aspect-[2.39/1] sm:max-h-none sm:max-w-[min(100vw,calc(100dvh*2.39))]">
             <AnimatePresence initial={false}>
               {!closing && (
                 <motion.div key={idx} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>

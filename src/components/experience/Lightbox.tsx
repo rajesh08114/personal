@@ -104,6 +104,7 @@ function LightboxView({ items, index, onIndexChange, captionClassName, className
                 src={item.src}
                 alt={item.title}
                 priority
+                framing={false}
                 className="max-h-full max-w-full rounded-xl"
                 imgClassName="!h-auto max-h-[72dvh] !w-auto max-w-full !object-contain"
               />

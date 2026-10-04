@@ -17,19 +17,19 @@ const neonFont = 'font-t-display';
 const LIGHTS = [
   { id: 'pink', label: 'Pink', color: '#ff3ea5' },
   { id: 'cyan', label: 'Cyan', color: '#3ef4ff' },
-  { id: 'violet', label: 'Violet', color: '#8b5cf6' },
+  { id: 'amber', label: 'Amber', color: '#ff9f43' },
   { id: 'gold', label: 'Gold', color: '#ffd23f' },
 ];
 
 export default function NeonParty() {
   const { opened } = useExperience();
-  const [lights, setLights] = useState<Record<string, boolean>>({ pink: true, cyan: true, violet: false, gold: false });
+  const [lights, setLights] = useState<Record<string, boolean>>({ pink: true, cyan: true, amber: false, gold: false });
   const [dropped, setDropped] = useState(false);
   const active = LIGHTS.filter((l) => lights[l.id]);
   const beamColors = active.length ? active.map((l) => l.color) : ['#3a3a4a'];
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#07040f] text-[#f2ecff]">
+    <div className="np-wall relative min-h-dvh overflow-hidden text-[#f2ecff]">
       <div aria-hidden className="pointer-events-none fixed inset-0">
         {[0, 1, 2, 3].map((i) => (
           <span
@@ -151,9 +151,8 @@ function Hero() {
   return (
     <section aria-label="Happy birthday" className="relative flex min-h-dvh flex-col items-center justify-center px-5 pt-20 pb-10 text-center">
       <div className="relative size-52 sm:size-64">
-        <div aria-hidden className="np-ring absolute -inset-1.5 rounded-full blur-[2px]" />
-        <div aria-hidden className="np-ring absolute -inset-1.5 rounded-full opacity-60 blur-xl" />
-        <div className="absolute inset-0 overflow-hidden rounded-full border-4 border-[#07040f]">
+        <div aria-hidden className="np-tube absolute -inset-2 rounded-full" />
+        <div className="absolute inset-0 overflow-hidden rounded-full border-4 border-[#120d10]">
           <PhotoSlot src={config.heroImage} alt={`Portrait of ${name}`} label="Add your hero photo" priority className="h-full w-full" />
         </div>
       </div>
@@ -219,15 +218,8 @@ function LightBoard({ lights, onToggle }: { lights: Record<string, boolean>; onT
 
 function GlowCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('relative overflow-hidden rounded-[2rem] p-[2px]', className)}>
-      <motion.div
-        aria-hidden
-        className="absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-x-1/2 -translate-y-1/2"
-        style={{ background: 'conic-gradient(var(--bd-primary), var(--bd-secondary), var(--bd-accent), var(--bd-primary))' }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-      />
-      <div className="relative rounded-[calc(2rem-2px)] bg-[#0d0820]/95 p-7 backdrop-blur sm:p-12">{children}</div>
+    <div className={cn('np-tube relative rounded-xl', className)}>
+      <div className="np-panel relative rounded-xl p-7 sm:p-12">{children}</div>
     </div>
   );
 }
@@ -270,7 +262,7 @@ function Gallery() {
                 type="button"
                 onClick={() => setIndex(i)}
                 aria-label={`Open highlight: ${m.titleText}`}
-                className="np-glass group block w-full overflow-hidden rounded-3xl text-left transition-shadow duration-300 hover:shadow-[0_0_0_1px_var(--bd-primary),0_0_40px_rgb(var(--bd-primary-rgb)/0.5)]"
+                className="np-glass group block w-full overflow-hidden rounded-3xl text-left transition-shadow duration-300 hover:shadow-[0_0_0_2px_var(--bd-primary)]"
               >
                 <PhotoSlot src={m.image} alt={m.titleText} label={m.slotLabel} className="aspect-[4/3] w-full" imgClassName="transition-transform duration-700 group-hover:scale-110" />
                 <div className="p-5">
@@ -356,7 +348,7 @@ function Drop({ dropped, onDrop }: { dropped: boolean; onDrop: () => void }) {
             onClick={drop}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
-            className="mt-8 inline-flex size-48 flex-col items-center justify-center gap-2 rounded-full bg-[radial-gradient(circle,var(--bd-primary),var(--bd-secondary))] text-xl font-extrabold tracking-widest text-white uppercase shadow-[0_0_60px_rgb(var(--bd-primary-rgb)/0.8)]"
+            className="np-arcade mt-8 inline-flex size-48 flex-col items-center justify-center gap-2 rounded-full text-xl font-extrabold tracking-widest text-white uppercase"
           >
             <Zap className="size-10" aria-hidden />
             Drop the beat

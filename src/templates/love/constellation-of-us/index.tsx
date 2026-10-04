@@ -249,7 +249,7 @@ function StarDrawer({ memory, onClose }: { memory: ResolvedMemory; onClose: () =
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', stiffness: 220, damping: 30 }}
-        className="absolute inset-y-0 right-0 w-full max-w-md overflow-y-auto border-l border-[var(--bd-primary)]/25 bg-[#050a1f]/95 p-6 backdrop-blur-xl max-sm:top-auto max-sm:h-[85dvh] max-sm:rounded-t-3xl max-sm:border-t max-sm:border-l-0"
+        className="absolute inset-y-0 right-0 w-full max-w-md overflow-y-auto border-l border-[var(--bd-primary)]/25 bg-[#050a1f]/95 p-6 max-sm:top-auto max-sm:h-[85dvh] max-sm:rounded-t-3xl max-sm:border-t max-sm:border-l-0"
       >
         <button type="button" onClick={onClose} aria-label="Back to the sky" className="ml-auto flex size-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
           <X className="size-4" aria-hidden />

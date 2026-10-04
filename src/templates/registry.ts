@@ -1,6 +1,6 @@
 import type { TemplateId } from '@/types/birthday';
 import type { BirthdayTemplate, LoveTag, TemplateCategory } from '@/types/template';
-import { auroraTemplate } from './aurora/meta';
+import { birthdayEditionTemplate } from './birthday-edition/meta';
 import { starryNightTemplate } from './starry-night/meta';
 import { polaroidMemoriesTemplate } from './polaroid-memories/meta';
 import { cinematicFilmTemplate } from './cinematic-film/meta';
@@ -43,12 +43,12 @@ import { ourLittleUniverseTemplate } from './love/our-little-universe/meta';
  * Every available birthday experience. Metadata + thumbnails load eagerly (they're tiny);
  * each template's actual experience is code-split and loaded on demand.
  */
-export const TEMPLATES: BirthdayTemplate[] = [auroraTemplate, starryNightTemplate, polaroidMemoriesTemplate, cinematicFilmTemplate, balloonFestivalTemplate, scrapbookTemplate, minimalLuxuryTemplate, gameNightTemplate, loveLetterTemplate, neonPartyTemplate, gardenOfWishesTemplate, filmRollTemplate, timeCapsuleTemplate, comicBookTemplate, fairytaleTemplate, festivalTemplate, cosmicJourneyTemplate, coffeeMemoriesTemplate, digitalFutureTemplate, ourStoryTemplate, twoSoulsTemplate, memoryGalleryTemplate, midnightDateTemplate, roseGardenTemplate, polaroidWallTemplate, foreverTimelineTemplate, constellationOfUsTemplate, secretGardenTemplate, vinylLoveTemplate, candlelightDinnerTemplate, parallelUniversesTemplate, messageInTheStarsTemplate, giftBoxTemplate, cinemaDateTemplate, digitalHeartbeatTemplate, foreverLetterboxTemplate, handwrittenJournalTemplate, ourLittleUniverseTemplate];
+export const TEMPLATES: BirthdayTemplate[] = [birthdayEditionTemplate, starryNightTemplate, polaroidMemoriesTemplate, cinematicFilmTemplate, balloonFestivalTemplate, scrapbookTemplate, minimalLuxuryTemplate, gameNightTemplate, loveLetterTemplate, neonPartyTemplate, gardenOfWishesTemplate, filmRollTemplate, timeCapsuleTemplate, comicBookTemplate, fairytaleTemplate, festivalTemplate, cosmicJourneyTemplate, coffeeMemoriesTemplate, digitalFutureTemplate, ourStoryTemplate, twoSoulsTemplate, memoryGalleryTemplate, midnightDateTemplate, roseGardenTemplate, polaroidWallTemplate, foreverTimelineTemplate, constellationOfUsTemplate, secretGardenTemplate, vinylLoveTemplate, candlelightDinnerTemplate, parallelUniversesTemplate, messageInTheStarsTemplate, giftBoxTemplate, cinemaDateTemplate, digitalHeartbeatTemplate, foreverLetterboxTemplate, handwrittenJournalTemplate, ourLittleUniverseTemplate];
 
 const BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
 
 export function getTemplate(id: TemplateId): BirthdayTemplate {
-  return BY_ID.get(id) ?? auroraTemplate;
+  return BY_ID.get(id) ?? birthdayEditionTemplate;
 }
 
 export const CATEGORIES: Array<{ id: TemplateCategory | 'all'; label: string }> = [
