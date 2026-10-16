@@ -9,7 +9,7 @@ import { Reveal } from '@/components/experience/Motion';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { PLACEHOLDER } from '@/data/placeholders';
-import { EASE } from '@/animations/tokens';
+import { EASE, SPRING } from '@/animations/tokens';
 
 const hand = 'font-t-display';
 const INK = '#4a3729';
@@ -258,18 +258,22 @@ function MemoryTable() {
             return (
               <motion.div
                 key={`${m.id}-${seed}`}
-                initial={seed > 1 ? { left: '40%', top: 40, rotate: 0 } : false}
                 drag
                 dragConstraints={deskRef}
                 dragElastic={0.15}
                 dragMomentum={false}
                 onDragStart={() => setOrder((o) => [...o.filter((x) => x !== m.id), m.id])}
                 onTap={() => setIndex(i)}
-                whileDrag={{ scale: 1.08, rotate: 0, boxShadow: '0 30px 50px -10px rgba(74,55,41,0.5)' }}
-                animate={{ left: `${pos.left}%`, top: pos.top, rotate: pos.rotate }}
-                transition={{ type: 'spring', stiffness: 120, damping: 16 }}
-                className="absolute w-[44%] cursor-grab touch-none active:cursor-grabbing sm:w-[21%]"
-                style={{ zIndex: z }}
+                // Photos are dropped onto the desk one after another, each landing with a small settle.
+                initial={{ y: -160, opacity: 0, rotate: pos.rotate + (i % 2 ? 14 : -14) }}
+                whileInView={{ y: 0, opacity: 1, rotate: pos.rotate }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ ...SPRING.paper, delay: i * 0.09, opacity: { duration: 0.2, delay: i * 0.09 } }}
+                // Picking a photo up: it lifts towards you, tilts a little and rises above the others.
+                whileHover={{ y: -8, scale: 1.04, rotateX: 7, rotateY: -5, zIndex: 40, transition: SPRING.snappy }}
+                whileDrag={{ scale: 1.08, rotate: 0, rotateX: 0, rotateY: 0, zIndex: 50, boxShadow: '0 30px 50px -10px rgba(74,55,41,0.5)' }}
+                className="absolute w-[44%] cursor-grab touch-none will-change-transform active:cursor-grabbing sm:w-[21%]"
+                style={{ zIndex: z, left: `${pos.left}%`, top: pos.top, transformPerspective: 900 }}
                 role="button"
                 tabIndex={0}
                 aria-label={`Memory: ${m.titleText}. Press Enter to enlarge.`}

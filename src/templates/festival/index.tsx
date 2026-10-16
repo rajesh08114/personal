@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Camera, Send, Ticket } from 'lucide-react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
@@ -7,7 +7,7 @@ import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { PLACEHOLDER } from '@/data/placeholders';
-import { EASE } from '@/animations/tokens';
+import { EASE, SPRING } from '@/animations/tokens';
 import { cn } from '@/utils/cn';
 import './festival.css';
 
@@ -89,10 +89,13 @@ function ZoneNav() {
 }
 
 function TicketGate() {
-  const { config, open } = useExperience();
+  const { config, open, fx } = useExperience();
+  const colors = useThemeColors(['#ffffff']);
   const [torn, setTorn] = useState(false);
   const tear = () => {
     setTorn(true);
+    // The gates open: two confetti cannons fire as you walk in.
+    window.setTimeout(() => fx.cannons({ colors, count: 140 }), 350);
     window.setTimeout(open, 900);
   };
   return (
@@ -143,8 +146,14 @@ function MemoryBooth() {
   const memories = getMemories(config);
   const [index, setIndex] = useState<number | null>(null);
   const [flash, setFlash] = useState(0);
+  // Each "Say cheese!" re-deals the snaps across the strips; layout animation slides them to their new slots.
+  const order = useMemo(() => {
+    const ids = memories.map((m) => m.index);
+    for (let k = 0; k < flash; k++) ids.push(ids.splice((k * 2 + 1) % Math.max(1, ids.length), 1)[0]);
+    return ids;
+  }, [memories, flash]);
   const strips: number[][] = [];
-  for (let i = 0; i < memories.length; i += 3) strips.push(memories.slice(i, i + 3).map((m) => m.index));
+  for (let i = 0; i < order.length; i += 3) strips.push(order.slice(i, i + 3));
   return (
     <section id="fs-booth" aria-labelledby="fs-booth-title" className="relative scroll-mt-16 px-4 py-20">
       <h2 id="fs-booth-title" className={`${fun} text-center text-4xl sm:text-6xl`}>
@@ -162,16 +171,16 @@ function MemoryBooth() {
             {strip.map((idx) => {
               const m = memories[idx];
               return (
-                <button key={m.id} type="button" onClick={() => setIndex(idx)} className="mb-2.5 block w-full" aria-label={`Open memory: ${m.titleText}`}>
+                <motion.button layout layoutId={`snap-${m.id}`} transition={SPRING.gentle} key={m.id} type="button" onClick={() => setIndex(idx)} className="mb-2.5 block w-full" aria-label={`Open memory: ${m.titleText}`}>
                   <PhotoSlot src={m.image} alt={m.titleText} label="Snap" tone="light" className="aspect-[4/3] w-full" />
-                </button>
+                </motion.button>
               );
             })}
             <p className={`${fun} -mb-6 text-center text-lg text-[#1a0b2e]`}>{memories[strip[0]].titleText}</p>
           </motion.li>
         ))}
       </ul>
-      <AnimatePresence>{flash > 0 && <motion.div key={flash} aria-hidden className="pointer-events-none fixed inset-0 z-[90] bg-white" initial={{ opacity: 0.85 }} animate={{ opacity: 0 }} transition={{ duration: 0.6 }} />}</AnimatePresence>
+      <AnimatePresence>{flash > 0 && <motion.div key={flash} aria-hidden className="pointer-events-none fixed inset-0 z-[90] bg-white" initial={{ opacity: 0.5 }} animate={{ opacity: 0 }} transition={{ duration: 0.6 }} />}</AnimatePresence>
       <Lightbox items={toLightboxItems(memories)} index={index} onIndexChange={setIndex} captionClassName={fun} />
     </section>
   );

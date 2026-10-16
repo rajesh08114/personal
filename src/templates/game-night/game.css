@@ -22,6 +22,15 @@
   z-index: 45;
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 3px);
+  /* A faint, irregular tube flicker. Low amplitude and well under 3 flashes/second. */
+  animation: gn-flicker 5s steps(1) infinite;
+}
+@keyframes gn-flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 0.82; }
+  43% { opacity: 1; }
+  77% { opacity: 0.9; }
+  79% { opacity: 1; }
 }
 .gn-frame {
   box-shadow:

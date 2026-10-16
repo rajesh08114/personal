@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AnimatePresence, motion, type PanInfo } from 'motion/react';
+import { AnimatePresence, animate, motion, useMotionValue, useTransform, type PanInfo } from 'motion/react';
 import { ChevronLeft, ChevronRight, Heart, Mail, Star } from 'lucide-react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
 import { Fill, Paragraphs } from '@/components/experience/Fill';
@@ -73,7 +73,16 @@ function Page({ children, className }: { children: ReactNode; className?: string
 function Taped({ children, rotate = -2, className }: { children: ReactNode; rotate?: number; className?: string }) {
   return (
     <div className={cn('relative bg-white p-2 pb-3 shadow-[0_8px_18px_-8px_rgb(0_0_0/0.4)]', className)} style={{ transform: `rotate(${rotate}deg)` }}>
-      <span className="tape -top-3 left-1/2 z-10 -translate-x-1/2 rotate-[-5deg]" aria-hidden />
+      {/* The tape is pulled across from one side as the photo comes into view. */}
+      <motion.span
+        className="tape -top-3 left-1/2 z-10 -translate-x-1/2 rotate-[-5deg]"
+        aria-hidden
+        style={{ originX: 0 }}
+        initial={{ scaleX: 0, opacity: 0.4 }}
+        whileInView={{ scaleX: 1, opacity: 1 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ duration: 0.45, ease: EASE.out, delay: 0.15 }}
+      />
       {children}
     </div>
   );
@@ -367,18 +376,9 @@ function FlipBook({ pages }: { pages: Array<{ label: string; node: ReactNode }> 
         </motion.div>
         <AnimatePresence>
           {flip && (
-            <motion.div
-              key={`flip-${flip.index}-${flip.dir}`}
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{ transformOrigin: 'left center', backfaceVisibility: 'hidden', transformStyle: 'preserve-3d' }}
-              initial={{ rotateY: flip.dir === 1 ? 0 : -180 }}
-              animate={{ rotateY: flip.dir === 1 ? -180 : 0 }}
-              transition={{ duration: 0.85, ease: EASE.inOut }}
-              onAnimationComplete={() => setFlip(null)}
-            >
+            <TurningPage key={`flip-${flip.index}-${flip.dir}`} dir={flip.dir} onDone={() => setFlip(null)}>
               {pages[flip.index].node}
-            </motion.div>
+            </TurningPage>
           )}
         </AnimatePresence>
       </div>
@@ -408,5 +408,38 @@ function FlipBook({ pages }: { pages: Array<{ label: string; node: ReactNode }> 
       </nav>
       <p className="mt-3 text-base text-[#3a2f28]/70">Swipe, use the arrows or your keyboard to turn the page</p>
     </motion.main>
+  );
+}
+
+/**
+ * A page turning on the spine. As it rises towards 90° it darkens (light falls off the curved
+ * sheet) and it casts a shadow onto the page underneath, which fades as it lands.
+ */
+function TurningPage({ dir, onDone, children }: { dir: 1 | -1; onDone: () => void; children: ReactNode }) {
+  const from = dir === 1 ? 0 : -180;
+  const to = dir === 1 ? -180 : 0;
+  const rotateY = useMotionValue(from);
+  const shade = useTransform(rotateY, [0, -90, -180], [0, 0.32, 0]);
+  const cast = useTransform(rotateY, [0, -60, -120, -180], [0, 0.28, 0.12, 0]);
+  const bend = useTransform(rotateY, [0, -90, -180], [0, -4, 0]);
+
+  useEffect(() => {
+    const controls = animate(rotateY, to, { duration: 0.85, ease: EASE.inOut, onComplete: onDone });
+    return () => controls.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <>
+      <motion.div aria-hidden className="pointer-events-none absolute inset-0 rounded-r-2xl bg-linear-to-r from-black to-transparent" style={{ opacity: cast }} />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ rotateY, skewY: bend, transformOrigin: 'left center', backfaceVisibility: 'hidden', transformStyle: 'preserve-3d' }}
+      >
+        {children}
+        <motion.div className="absolute inset-0 bg-linear-to-l from-black/80 to-black/10" style={{ opacity: shade }} />
+      </motion.div>
+    </>
   );
 }

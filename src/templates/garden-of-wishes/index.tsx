@@ -117,7 +117,15 @@ function Hero() {
   const { config } = useExperience();
   const { name } = useBirthdayText();
   return (
-    <section aria-label="Happy birthday" className="relative flex min-h-dvh flex-col items-center justify-center px-5 py-20 text-center">
+    <section aria-label="Happy birthday" className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 py-20 text-center">
+      {/* Morning mist lifting off the garden: the scene comes into focus as the haze rises and thins. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-20 bg-linear-to-t from-[#fdf2e3] via-[#fdf2e3]/85 to-[#fdf2e3]/40"
+        initial={{ opacity: 1, y: '0%' }}
+        animate={{ opacity: 0, y: '-35%' }}
+        transition={{ duration: 3.2, ease: EASE.silk }}
+      />
       <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.4, ease: EASE.out }} className="relative size-64 [--r:104px] sm:size-80 sm:[--r:130px]">
         {Array.from({ length: 14 }, (_, i) => (
           <span
@@ -164,10 +172,10 @@ function GardenFlower({ grown, color, src, title, label, onPlant, onOpen, delay 
                 rx="15"
                 ry="30"
                 fill={color}
-                opacity={0.92}
                 initial={false}
-                animate={{ scale: grown ? 1 : 0 }}
-                transition={{ delay: delay + 0.9 + i * 0.04, type: 'spring', stiffness: 180, damping: 12 }}
+                animate={{ scale: grown ? 1 : 0, opacity: grown ? 0.92 : 0 }}
+                // Petals unfurl slowly, each a beat after the last, like watercolour spreading.
+                transition={{ delay: delay + 0.9 + i * 0.07, type: 'spring', stiffness: 70, damping: 13, opacity: { duration: 0.9, delay: delay + 0.9 + i * 0.07 } }}
                 style={{ transformOrigin: '50% 100%' }}
               />
             </g>

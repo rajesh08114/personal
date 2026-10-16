@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useAnimate } from 'motion/react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
 import { Fill, Paragraphs } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
@@ -7,6 +7,7 @@ import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { cn } from '@/utils/cn';
+import { SPRING } from '@/animations/tokens';
 
 const bang = 'font-t-display tracking-wide';
 const halftone = 'bg-[radial-gradient(rgb(0_0_0/0.18)_1px,transparent_1.6px)] bg-[size:9px_9px]';
@@ -38,20 +39,31 @@ export function Burst({ text, className, color = '#ffe14d' }: { text: string; cl
   );
 }
 
-function Panel({ children, className, delay = 0, onClick, label }: { children: ReactNode; className?: string; delay?: number; onClick?: () => void; label?: string }) {
+function Panel({ children, className, delay = 0, onClick, label, from }: { children: ReactNode; className?: string; delay?: number; onClick?: () => void; label?: string; from?: 'left' | 'right' }) {
   const Comp = onClick ? motion.button : motion.div;
+  const dir = (from ?? (Math.round(delay * 20) % 2 ? 'right' : 'left')) === 'left' ? -1 : 1;
   return (
     <Comp
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       aria-label={label}
-      initial={{ opacity: 0, scale: 1.25, rotate: -3 }}
-      whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+      // Panels slam in from the side. The skew is the comic artist's "speed smear"; it snaps straight on impact.
+      initial={{ opacity: 0, x: dir * 90, skewX: dir * -10, scale: 1.06, rotate: dir * 2 }}
+      whileInView={{ opacity: 1, x: 0, skewX: 0, scale: 1, rotate: 0 }}
       viewport={{ once: true, amount: 0.25 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 18, delay }}
-      className={cn('relative overflow-hidden border-4 border-black bg-white text-left shadow-[6px_6px_0_#000]', className)}
+      transition={{ ...SPRING.impact, delay, opacity: { duration: 0.12, delay } }}
+      className={cn('relative overflow-hidden border-4 border-black bg-white text-left shadow-[6px_6px_0_#000] will-change-transform', className)}
     >
       {children}
+      {/* Halftone dots wash across the panel on arrival, then drop away, like a fresh print. */}
+      <motion.span
+        aria-hidden
+        className={cn('pointer-events-none absolute inset-0 z-20 bg-white/40', halftone)}
+        initial={{ opacity: 0.9, scale: 1 }}
+        whileInView={{ opacity: 0, scale: 1.6 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.55, delay: delay + 0.12, ease: 'easeOut' }}
+      />
     </Comp>
   );
 }
@@ -97,7 +109,7 @@ function Cover() {
 }
 
 function Issue() {
-  const { config, fx } = useExperience();
+  const { config, fx, reducedMotion } = useExperience();
   const { name } = useBirthdayText();
   const colors = useThemeColors(['#000000']);
   const memories = getMemories(config);
@@ -105,13 +117,16 @@ function Issue() {
   const [index, setIndex] = useState<number | null>(null);
   const [sfx, setSfx] = useState<{ id: number; text: string; x: number; y: number } | null>(null);
 
+  const [scope, animatePage] = useAnimate();
   const pow = (x: number, y: number) => {
     setSfx({ id: Date.now(), text: SFX[Math.floor(Math.random() * SFX.length)], x, y });
     fx.burst({ x, y, shape: 'star', colors, count: 14, speed: 300, size: 14 });
+    // A short impact jolt: a few pixels, a quarter of a second, nothing under reduced motion.
+    if (!reducedMotion && scope.current) void animatePage(scope.current, { x: [0, -5, 4, -2, 0], y: [0, 2, -2, 1, 0] }, { duration: 0.26 });
   };
 
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+    <motion.main ref={scope} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
       <section aria-label="Meet our hero" className="grid gap-5 md:grid-cols-5">
         <Panel className="md:col-span-3">
           <CaptionBox className="top-3 left-3">MEET OUR HERO!</CaptionBox>

@@ -5,14 +5,22 @@ export const EASE = {
   out: [0.16, 1, 0.3, 1] as const,
   soft: [0.22, 1, 0.36, 1] as const,
   inOut: [0.65, 0, 0.35, 1] as const,
+  /** Very long, soft deceleration, for slow editorial reveals. */
+  silk: [0.25, 0.1, 0.1, 1] as const,
 };
 
 export const DURATION = { fast: 0.2, base: 0.45, slow: 0.8, cinematic: 1.4 };
 
-export const SPRING: Record<'gentle' | 'snappy' | 'bouncy', Transition> = {
+export const SPRING: Record<'gentle' | 'snappy' | 'bouncy' | 'heavy' | 'paper' | 'impact', Transition> = {
   gentle: { type: 'spring', stiffness: 120, damping: 20 },
   snappy: { type: 'spring', stiffness: 380, damping: 30 },
   bouncy: { type: 'spring', stiffness: 260, damping: 14 },
+  /** Something with real weight: a tin lid, a book, a record platter. Slow to start, settles without bounce. */
+  heavy: { type: 'spring', stiffness: 90, damping: 18, mass: 2.2 },
+  /** Light paper landing on a surface: a quick drop and a tiny settle. */
+  paper: { type: 'spring', stiffness: 210, damping: 19, mass: 0.7 },
+  /** A comic-panel slam: arrives fast, overshoots once, stops hard. */
+  impact: { type: 'spring', stiffness: 520, damping: 22, mass: 0.9 },
 };
 
 export type RevealKind = 'fade' | 'up' | 'down' | 'left' | 'right' | 'scale' | 'blur';

@@ -6,6 +6,7 @@ import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems, type ResolvedMemory } from '@/components/experience/content';
 import { useScramble } from '@/hooks/useText';
+import { TypeOn } from '@/components/experience/Motion';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { cn } from '@/utils/cn';
 import './future.css';
@@ -84,7 +85,9 @@ function Boot() {
       <div className="w-full max-w-xl">
         <div className={`${vt} min-h-44 space-y-1 text-2xl sm:text-3xl`} aria-live="polite">
           {lines.slice(0, shown).map((l, i) => (
-            <p key={i}>{l}</p>
+            <p key={i}>
+              <TypeOn text={l} perChar={0.014} />
+            </p>
           ))}
           {!ready && <Cursor />}
         </div>

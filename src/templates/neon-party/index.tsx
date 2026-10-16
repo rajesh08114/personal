@@ -64,7 +64,7 @@ export default function NeonParty() {
 
 function NeonSign({ text, className, alt }: { text: string; className?: string; alt?: boolean }) {
   return (
-    <span className={cn(alt ? 'np-neon-alt' : 'np-neon', className)} aria-label={text}>
+    <span className={cn(alt ? 'np-neon-alt' : 'np-neon', 'np-beat inline-block', className)} aria-label={text}>
       {[...text].map((ch, i) => (
         <span key={i} aria-hidden className="np-flicker inline-block whitespace-pre" style={{ ['--d' as string]: `${(i * 0.09) % 1.4}s` }}>
           {ch}

@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useId, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Coffee, ConciergeBell } from 'lucide-react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
@@ -35,6 +35,14 @@ export default function CoffeeMemories() {
       <AnimatePresence>{!opened && <Doorway key="d" />}</AnimatePresence>
       {opened && (
         <main className="relative z-10">
+          {/* Stepping in from the street: the room is dim at first, then your eyes adjust to the warm light. */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 z-50 bg-[#2a1a10]"
+            initial={{ opacity: 0.7 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 2.2, ease: EASE.silk }}
+          />
           <Welcome />
           <Menu served={served} onOrder={order} onOrderAll={() => setServed(MENU.map((m) => m.id))} />
           <div className="cm-table">
@@ -56,20 +64,43 @@ export default function CoffeeMemories() {
   );
 }
 
+/**
+ * Steam rising off a cup: three S-curved wisps that drift up, sway and thin out.
+ * A static turbulence filter roughens their edges so they read as vapour, not lines.
+ */
 function Steam({ className }: { className?: string }) {
+  const id = useId().replace(/:/g, '');
   return (
-    <span aria-hidden className={cn('pointer-events-none absolute flex gap-2', className)}>
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="cm-steam block h-10 w-2 rounded-full bg-white/70 blur-[2px]" style={{ animationDelay: `${i * 0.6}s` }} />
-      ))}
-    </span>
+    <svg aria-hidden viewBox="0 0 60 80" className={cn('pointer-events-none absolute h-16 w-12 overflow-visible', className)}>
+      <defs>
+        <filter id={`steam-${id}`} x="-50%" y="-20%" width="200%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04 0.09" numOctaves="2" seed="3" />
+          <feDisplacementMap in="SourceGraphic" scale="7" />
+          <feGaussianBlur stdDeviation="1.2" />
+        </filter>
+      </defs>
+      <g filter={`url(#steam-${id})`}>
+        {[14, 30, 46].map((x, i) => (
+          <path
+            key={x}
+            className="cm-wisp"
+            d={`M${x} 78 C ${x - 8} 62, ${x + 8} 50, ${x} 36 S ${x - 6} 14, ${x + 2} 2`}
+            stroke="white"
+            strokeWidth="5"
+            strokeLinecap="round"
+            fill="none"
+            style={{ animationDelay: `${i * 0.9}s` }}
+          />
+        ))}
+      </g>
+    </svg>
   );
 }
 
 function Cup({ className }: { className?: string }) {
   return (
     <span aria-hidden className={cn('relative block', className)}>
-      <Steam className="-top-14 left-1/2 -translate-x-1/2" />
+      <Steam className="-top-16 left-1/2 -translate-x-1/2" />
       <span className="relative block h-20 w-24 rounded-b-[2.5rem] bg-white shadow-[0_10px_20px_-6px_rgb(59_42_30/0.4)]">
         <span className="absolute inset-x-2 top-1.5 h-4 rounded-[50%] bg-[#6f4a32]" />
         <span className="absolute top-4 -right-5 h-10 w-7 rounded-r-full border-[6px] border-white" />

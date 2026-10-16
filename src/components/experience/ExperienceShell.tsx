@@ -10,9 +10,12 @@ import { useAudioController } from '@/hooks/useAudioController';
 import { getTurningAge } from '@/utils/date';
 import { FxLayer, noopFx, type FxApi } from '@/components/effects/FxLayer';
 import { ExperienceContext, type ExperienceValue } from './ExperienceContext';
-import { MusicPlayer } from './MusicPlayer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { buildFramingMap, FramingContext } from './photoFraming';
+import { lazyChunk } from '@/utils/lazyChunk';
+
+// Most birthdays have no song, so the player is fetched only when one is configured.
+const MusicPlayer = lazyChunk(() => import('./MusicPlayer').then((m) => ({ default: m.MusicPlayer })));
 import { LoadingScreen } from '@/components/ui/Layout';
 
 const EFFECT_SCALE = { subtle: 0.55, normal: 1, lively: 1.4 } as const;
@@ -152,7 +155,9 @@ export function ExperienceShell({ config, mode, startOpened = false }: Experienc
             </ErrorBoundary>
             <FxLayer ref={fxRef} scale={TIER_SCALE[tier] * effectsScale} enabled={!reducedMotion} />
             {audio.available && opened && (
-              <MusicPlayer audio={audio} tone={template.tone} songName={config.music.name} />
+              <Suspense fallback={null}>
+                <MusicPlayer audio={audio} tone={template.tone} songName={config.music.name} />
+              </Suspense>
             )}
           </div>
         </FramingContext.Provider>

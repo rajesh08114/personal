@@ -4,6 +4,7 @@ import type { TemplateId } from '@/types/birthday';
 import { CATEGORIES, TEMPLATES } from '@/templates/registry';
 import type { TemplateCategory } from '@/types/template';
 import { cn } from '@/utils/cn';
+import { prefetchTemplate, TemplateThumbnail } from '@/components/ui/TemplateThumbnail';
 
 interface TemplatePickerProps {
   value: TemplateId;
@@ -43,6 +44,8 @@ export function TemplatePicker({ value, onChange }: TemplatePickerProps) {
               <button
                 type="button"
                 onClick={() => onChange(t.id)}
+                onPointerEnter={() => prefetchTemplate(t)}
+                onFocus={() => prefetchTemplate(t)}
                 aria-pressed={active}
                 className={cn(
                   'block w-full overflow-hidden rounded-2xl border text-left transition-all duration-200',
@@ -50,7 +53,7 @@ export function TemplatePicker({ value, onChange }: TemplatePickerProps) {
                 )}
               >
                 <div className="aspect-[4/3] w-full overflow-hidden">
-                  <t.Thumbnail />
+                  <TemplateThumbnail template={t} />
                 </div>
                 <div className="flex items-center justify-between gap-2 bg-white px-3 py-2">
                   <span className="truncate text-xs font-semibold text-ink-900">{t.name}</span>
@@ -62,7 +65,7 @@ export function TemplatePicker({ value, onChange }: TemplatePickerProps) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`Preview ${t.name} with sample content`}
-                className="absolute top-2 right-2 inline-flex size-9 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+                className="absolute top-2 right-2 inline-flex size-9 items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
               >
                 <Eye className="size-4" aria-hidden />
               </a>

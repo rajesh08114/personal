@@ -7,6 +7,7 @@ import { getMemories, getTimeline } from '@/components/experience/content';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { nextBirthday } from '@/utils/date';
 import { cn } from '@/utils/cn';
+import { SPRING } from '@/animations/tokens';
 import './capsule.css';
 
 /**
@@ -58,16 +59,29 @@ function Tin() {
 
   const lift = () => {
     setLifting(true);
-    window.setTimeout(open, 900);
+    window.setTimeout(open, 1700);
   };
 
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6" exit={{ opacity: 0, transition: { duration: 0.5 } }}>
-      <div className="relative">
+      <div className="relative [perspective:1100px]">
+        {/* The open tin underneath: dark inside, revealed as the lid comes away. */}
+        <div aria-hidden className="absolute inset-[4%] rounded-full bg-[radial-gradient(circle_at_50%_45%,#2c3a36,#141c1a_70%)] shadow-[inset_0_8px_24px_rgb(0_0_0/0.7)]" />
+        {/* The lid's shadow on the table spreads and softens as it rises. */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-0 rounded-full bg-black/40"
+          initial={false}
+          animate={lifting ? { opacity: 0.18, scale: 1.12, y: 26 } : { opacity: 0, scale: 1, y: 0 }}
+          transition={SPRING.heavy}
+        />
         <motion.div
           className="tc-tin relative flex size-[min(78vw,22rem)] items-center justify-center rounded-full"
-          animate={lifting ? { y: -40, scale: 1.04, rotate: 4 } : { y: 0 }}
-          transition={{ duration: 0.8, ease: [0.3, 0, 0.2, 1] }}
+          style={{ transformOrigin: '50% 100%' }}
+          initial={false}
+          // A tight metal lid: it resists, pops free, then lifts and tips back on one edge.
+          animate={lifting ? { y: [0, 2, -70], rotateX: [0, 0, 38], scale: [1, 1, 1.04] } : { y: 0, rotateX: 0, scale: 1 }}
+          transition={{ duration: 1.3, times: [0, 0.18, 1], ease: [0.3, 0, 0.15, 1] }}
         >
           <div className="tc-tin-inner flex size-[78%] flex-col items-center justify-center rounded-full text-center">
             <p className="tc-type text-xs tracking-[0.25em] text-[#f2ead8]/80 uppercase">Do not open until</p>
@@ -93,6 +107,7 @@ function Tin() {
             )}
           </AnimatePresence>
         </motion.div>
+        {lifting && <Dust />}
       </div>
       <div className="mt-10 h-14">
         {peeled && (
@@ -329,5 +344,30 @@ function OpenLast() {
         Put everything back in the tin
       </button>
     </section>
+  );
+}
+
+/** A few motes of dust kicked up from the rim when the lid comes off, drifting slowly up and away. */
+function Dust() {
+  const { reducedMotion } = useExperience();
+  if (reducedMotion) return null;
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      {Array.from({ length: 18 }, (_, i) => {
+        const angle = (i / 18) * Math.PI * 2;
+        const x = 50 + Math.cos(angle) * 44;
+        const y = 50 + Math.sin(angle) * 44;
+        return (
+          <motion.span
+            key={i}
+            className="absolute size-1 rounded-full bg-[#e9dcc0]"
+            style={{ left: `${x}%`, top: `${y}%` }}
+            initial={{ opacity: 0, x: 0, y: 0, scale: 0.6 }}
+            animate={{ opacity: [0, 0.8, 0], x: Math.cos(angle) * (18 + (i % 4) * 8), y: -40 - (i % 5) * 14, scale: [0.6, 1, 1.3] }}
+            transition={{ duration: 2.4 + (i % 3) * 0.5, delay: 0.25 + (i % 6) * 0.05, ease: 'easeOut' }}
+          />
+        );
+      })}
+    </div>
   );
 }

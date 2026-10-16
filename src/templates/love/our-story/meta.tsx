@@ -1,19 +1,8 @@
 import { lazy } from 'react';
 import type { BirthdayTemplate } from '@/types/template';
+import { lazyChunk, loadChunk } from '@/utils/lazyChunk';
 
-function Thumbnail() {
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0b0a08]">
-      <div className="absolute inset-[22%_18%] bg-gradient-to-br from-[#5a4632] to-[#1c1712] transition-all duration-1000 group-hover:inset-0" />
-      <p className="absolute top-4 left-5 text-4xl text-[#c8a96a]" style={{ fontFamily: "'Italiana', serif" }}>
-        01
-      </p>
-      <p className="absolute right-5 bottom-4 text-sm tracking-[0.4em] text-[#efe6d6]" style={{ fontFamily: "'Italiana', serif" }}>
-        OUR STORY
-      </p>
-    </div>
-  );
-}
+const load = loadChunk(() => import('./index'));
 
 export const ourStoryTemplate: BirthdayTemplate = {
   id: 'our-story',
@@ -29,6 +18,7 @@ export const ourStoryTemplate: BirthdayTemplate = {
   fonts: { google: ['Italiana', 'Libre+Caslon+Text:ital,wght@0,400;1,400'], display: "'Italiana', Georgia, serif", body: "'Libre Caslon Text', Georgia, serif" },
   animations: { language: 'Mask & zoom', ambientDensity: 0 },
   interactions: { highlights: ['Pinned chapters', 'Expanding photo masks', 'Slow parallax', 'Cinematic finale'] },
-  Thumbnail,
-  component: lazy(() => import('./index')),
+  Thumbnail: lazyChunk(() => import('./thumbnail')),
+  load,
+  component: lazy(load),
 };

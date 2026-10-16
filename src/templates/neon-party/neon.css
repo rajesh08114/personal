@@ -100,3 +100,17 @@
     0 0 0 10px #241b22,
     0 0 0 12px rgb(255 255 255 / 0.12);
 }
+
+/*
+ * Once lit, each sign "breathes" on a slow lub-dub, like a transformer under load.
+ * Opacity only (compositor-friendly), and gentle: the dip is 12%, once per second.
+ */
+.np-beat {
+  animation: np-beat 1.05s ease-in-out 2.6s infinite;
+}
+@keyframes np-beat {
+  0%, 30%, 100% { opacity: 1; }
+  8% { opacity: 0.88; }
+  14% { opacity: 1; }
+  21% { opacity: 0.93; }
+}

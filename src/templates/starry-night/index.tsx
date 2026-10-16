@@ -9,6 +9,7 @@ import { Reveal } from '@/components/experience/Motion';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { Particles } from '@/components/effects/Particles';
 import { PointerTrail } from '@/components/effects/PointerTrail';
+import { ParallaxSky } from '@/components/effects/ParallaxSky';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { formatBirthday } from '@/utils/date';
@@ -22,7 +23,13 @@ export default function StarryNight() {
   return (
     <div className="relative text-[#e9ecff]">
       <div className="sn-sky" aria-hidden>
-        <Particles variant="stars" density={14} colors={['#ffffff', '#cfd8ff', '#ffe7a3']} />
+        <ParallaxSky
+          layers={[
+            { depth: 6, density: 9, colors: ['#cfd8ff', '#ffffff'] },
+            { depth: 16, density: 4, colors: ['#ffffff', '#ffe7a3'] },
+            { depth: 30, density: 1.5, colors: ['#ffffff'] },
+          ]}
+        />
         <span className="sn-shooting" style={{ top: '12%', right: '-10%', animationDelay: '2s' }} />
         <span className="sn-shooting" style={{ top: '30%', right: '-15%', animationDelay: '6.5s' }} />
       </div>
@@ -200,9 +207,10 @@ function Hero() {
               stroke="#cdd8ff"
               strokeOpacity={0.45}
               strokeWidth={1.1}
+              strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ delay: 0.6 + i * 0.025, duration: 0.5 }}
+              transition={{ delay: 0.6 + i * 0.025, duration: 0.7, ease: EASE.inOut }}
             />
           ))}
           {data?.points.map(([x, y], i) => (

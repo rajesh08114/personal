@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from 'motion/react';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring } from 'motion/react';
 import { Aperture, Camera, RotateCw } from 'lucide-react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
 import { Fill, splitParagraphs } from '@/components/experience/Fill';
@@ -16,7 +16,7 @@ export default function FilmRoll() {
   const { opened } = useExperience();
   const [flash, setFlash] = useState(0);
   return (
-    <div className="relative min-h-dvh bg-[#0f0d0c] text-[#efe7dc]">
+    <div className="film-grain relative min-h-dvh bg-[#0f0d0c] text-[#efe7dc]">
       <div aria-hidden className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_85%_10%,rgb(var(--bd-primary-rgb)/0.22),transparent_50%)]" />
       <AnimatePresence>{!opened && <LoadFilm key="load" />}</AnimatePresence>
       {opened && (
@@ -31,7 +31,15 @@ export default function FilmRoll() {
       )}
       <AnimatePresence>
         {flash > 0 && (
-          <motion.div key={flash} aria-hidden className="pointer-events-none fixed inset-0 z-[90] bg-white" initial={{ opacity: 0.9 }} animate={{ opacity: 0 }} transition={{ duration: 0.5 }} />
+          // A light leak: warm light spills in from the edge of the gate, then fades. Gentler than a white flash.
+          <motion.div
+            key={flash}
+            aria-hidden
+            className="pointer-events-none fixed inset-0 z-[90] bg-[radial-gradient(ellipse_at_0%_40%,rgb(255_140_60/0.85),rgb(255_70_40/0.35)_35%,transparent_70%)] mix-blend-screen"
+            initial={{ opacity: 0, x: '-12%' }}
+            animate={{ opacity: [0, 0.75, 0], x: ['-12%', '0%', '8%'] }}
+            transition={{ duration: 0.9, times: [0, 0.2, 1], ease: 'easeOut' }}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -170,7 +178,11 @@ function Strip({ onShot }: { onShot: () => void }) {
   const [dist, setDist] = useState(0);
   const [active, setActive] = useState(0);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] });
-  const x = useTransform(scrollYProgress, (v) => -v * dist);
+  // The strip glides with a little inertia, like film running through a transport, instead of tracking the wheel 1:1.
+  const x = useSpring(
+    useTransform(scrollYProgress, (v) => -v * dist),
+    { stiffness: 120, damping: 26, mass: 0.6 },
+  );
 
   useLayoutEffect(() => {
     const measure = () => setDist(Math.max(0, (trackRef.current?.scrollWidth ?? 0) - window.innerWidth));

@@ -58,22 +58,50 @@ function Meeting() {
   }, [met]);
   return (
     <motion.div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0b0d12] px-6" exit={{ opacity: 0, transition: { duration: 1.2 } }}>
-      <motion.div className="absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-4" initial={{ left: '12%' }} animate={{ left: met ? 'calc(50% - 22px)' : '38%' }} transition={{ duration: met ? 1.2 : 4.5, ease: EASE.inOut }}>
-        <Orb color="var(--bd-primary)" />
-        <motion.span animate={{ opacity: met ? 0 : 1 }} className={`${syne} text-xs tracking-[0.5em]`}>
-          YOU
-        </motion.span>
-      </motion.div>
-      <motion.div className="absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-4" initial={{ right: '12%' }} animate={{ right: met ? 'calc(50% - 22px)' : '38%' }} transition={{ duration: met ? 1.2 : 4.5, ease: EASE.inOut }}>
-        <Orb color="var(--bd-accent)" />
-        <motion.span animate={{ opacity: met ? 0 : 1 }} className={`${syne} text-xs tracking-[0.5em]`}>
-          ME
-        </motion.span>
-      </motion.div>
+      {/* The river: a darker band of water the lanterns float on. */}
+      <div aria-hidden className="absolute inset-x-0 top-[58%] bottom-0 bg-linear-to-b from-[#10141c] to-[#0b0d12]" />
+      {(['you', 'me'] as const).map((who) => {
+        const side = who === 'you' ? -1 : 1;
+        return (
+          <motion.div
+            key={who}
+            className="absolute top-[52%] left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-4"
+            initial={{ x: `${side * 40}vw`, y: 0 }}
+            // Before they meet, each lantern drifts on the current: an unhurried S-curve with a gentle bob.
+            animate={
+              met
+                ? { x: `${side * 1.2}vw`, y: 0, transition: { type: 'spring', stiffness: 40, damping: 14, mass: 1.6 } }
+                : {
+                    x: [`${side * 40}vw`, `${side * 31}vw`, `${side * 22}vw`, `${side * 14}vw`],
+                    y: who === 'you' ? [0, -14, 8, -4] : [0, 10, -12, 3],
+                    transition: { duration: 4.5, ease: 'easeInOut', times: [0, 0.35, 0.7, 1] },
+                  }
+            }
+          >
+            <Orb />
+            <motion.span animate={{ opacity: met ? 0 : 1 }} className={`${syne} text-xs tracking-[0.5em]`}>
+              {who.toUpperCase()}
+            </motion.span>
+          </motion.div>
+        );
+      })}
+      {/* When they touch, rings spread out across the water from where they met. */}
+      {met && !reducedMotion && (
+        <div aria-hidden className="pointer-events-none absolute top-[54%] left-1/2 size-0" style={{ transform: 'scaleY(0.32)' }}>
+          {[0, 1, 2, 3].map((i) => (
+            <motion.span
+              key={i}
+              className="absolute -top-20 -left-20 size-40 rounded-full border border-[#f1e7d6]/40"
+              initial={{ scale: 0.15, opacity: 0 }}
+              animate={{ scale: [0.15, 4.2], opacity: [0, 0.7, 0] }}
+              transition={{ duration: 3.2, delay: 0.9 + i * 0.45, ease: 'easeOut', times: [0, 0.15, 1] }}
+            />
+          ))}
+        </div>
+      )}
       <AnimatePresence>
         {met && (
           <motion.div key="us" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 1.4 }} className="relative mt-48 flex flex-col items-center text-center">
-            <span className="absolute -top-52 size-6 rounded-full bg-[#fff4dc] shadow-[0_0_24px_6px_rgb(var(--bd-primary-rgb)/0.5)]" aria-hidden />
             <p className={`${syne} text-5xl font-bold tracking-[0.4em]`}>US</p>
             <p className="mt-4 max-w-sm text-white/60">{config.messages.intro.trim() || 'Some lights are meant to find each other.'}</p>
             <button type="button" onClick={open} className={`${syne} mt-10 h-12 rounded-full border border-white/30 px-8 text-xs tracking-[0.4em] transition-colors hover:border-white hover:bg-white hover:text-[#0b0d12]`}>
@@ -279,7 +307,7 @@ function Finale() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      textPoints(name, { fontFamily: "'Syne', sans-serif", weight: 700 }),
+      textPoints(name, { fontFamily: "'Cormorant Garamond', serif", weight: 600 }),
       textPoints('HAPPY\nBIRTHDAY', { fontFamily: "'Syne', sans-serif", weight: 700 }),
     ]).then(([n, b]) => {
       if (!cancelled) setTargets((t) => ({ ...t, name: { ...n, fill: 0.86 }, birthday: { ...b, fill: 0.8 } }));

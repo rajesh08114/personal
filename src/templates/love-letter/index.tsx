@@ -132,6 +132,50 @@ function InkLine({ children, className, delay = 0, inView = true }: { children: 
   );
 }
 
+/**
+ * Text written out word by word in reading order, so it follows the line breaks the way a pen
+ * would. Each word is uncovered left to right, then the ink darkens as it soaks into the paper.
+ */
+function Handwriting({ text, className }: { text: string; className?: string }) {
+  const words = text.split(/(\s+)/);
+  let t = 0;
+  const timings = words.map((w) => {
+    if (/^\s+$/.test(w)) return 0;
+    const start = t;
+    t += Math.min(0.55, 0.06 + w.length * 0.04);
+    return start;
+  });
+  return (
+    <motion.p className={className} aria-label={text} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
+      {words.map((w, i) =>
+        /^\s+$/.test(w) ? (
+          <span key={i}>{w}</span>
+        ) : (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="inline-block"
+            custom={timings[i]}
+            variants={{
+              hidden: { clipPath: 'inset(0 100% 0 0)', opacity: 0.45 },
+              show: (d: number) => ({
+                clipPath: 'inset(0 0% 0 0)',
+                opacity: [0.45, 0.75, 1],
+                transition: {
+                  clipPath: { delay: d, duration: Math.min(0.5, 0.05 + w.length * 0.04), ease: 'linear' },
+                  opacity: { delay: d, duration: 1.4, ease: 'easeOut' },
+                },
+              }),
+            }}
+          >
+            {w}
+          </motion.span>
+        ),
+      )}
+    </motion.p>
+  );
+}
+
 function Letter() {
   const { config, fx, restart } = useExperience();
   const { name } = useBirthdayText();
@@ -226,9 +270,15 @@ function Letter() {
         <div className="relative mt-10 space-y-8 text-[1.45rem] leading-[1.8] sm:text-[1.6rem]">
           {paras.map((p, i) => (
             <div key={i}>
-              <InkLine>
-                <p>{p || <Fill value="" placeholder={PLACEHOLDER.message} />}</p>
-              </InkLine>
+              {p ? (
+                <Handwriting text={p} />
+              ) : (
+                <InkLine>
+                  <p>
+                    <Fill value="" placeholder={PLACEHOLDER.message} />
+                  </p>
+                </InkLine>
+              )}
               {photoAfter(i).map((m, k) => (
                 <motion.figure
                   key={m.id}

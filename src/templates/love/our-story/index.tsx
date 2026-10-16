@@ -91,6 +91,10 @@ function ChapterScene({ chapter, index }: { chapter: Chapter; index: number }) {
   const textX = useTransform(scrollYProgress, [0.35, 0.7], [index % 2 ? -80 : 80, 0]);
   const textO = useTransform(scrollYProgress, [0.35, 0.65, 0.95, 1], [0, 1, 1, 0.6]);
   const numY = useTransform(scrollYProgress, [0, 1], [60, -60]);
+  // The photo starts as a black-and-white print and colour comes up as it fills the frame.
+  const monoO = useTransform(scrollYProgress, [0.15, 0.6], [1, 0]);
+  // The title arrives large and settles to reading size as you scroll on.
+  const titleScale = useTransform(scrollYProgress, [0.35, 0.75], [1.18, 1]);
 
   return (
     <section ref={ref} aria-label={`Chapter ${index + 1}: ${chapter.title}`} className="relative h-[230vh]">
@@ -98,6 +102,12 @@ function ChapterScene({ chapter, index }: { chapter: Chapter; index: number }) {
         <motion.div style={reducedMotion ? undefined : { clipPath: clip }} className="absolute inset-0">
           <motion.div style={reducedMotion ? undefined : { scale }} className="h-full w-full">
             <PhotoSlot src={chapter.image} alt={chapter.title} label="Add a chapter photo" className="h-full w-full" imgClassName="brightness-[0.62] saturate-[0.85]" />
+            {/* Cross-fading a grayscale copy (opacity only) is far cheaper than animating a filter on a full-screen image. */}
+            {chapter.image && !reducedMotion && (
+              <motion.div aria-hidden className="absolute inset-0" style={{ opacity: monoO }}>
+                <PhotoSlot src={chapter.image} alt="" className="h-full w-full" imgClassName="brightness-[0.6] grayscale" />
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
         <motion.span aria-hidden style={{ y: numY }} className={cn(display, 'pointer-events-none absolute top-[8%] text-[28vw] leading-none text-[#c8a96a]/20 sm:text-[18vw]', index % 2 ? 'right-[4%]' : 'left-[4%]')}>
@@ -105,7 +115,9 @@ function ChapterScene({ chapter, index }: { chapter: Chapter; index: number }) {
         </motion.span>
         <motion.div style={reducedMotion ? undefined : { x: textX, opacity: textO }} className={cn('relative z-10 mx-6 max-w-xl sm:mx-16', index % 2 ? 'ml-auto text-right' : '')}>
           <p className="text-xs tracking-[0.5em] text-[#c8a96a] uppercase">Chapter {String(index + 1).padStart(2, '0')}</p>
-          <h2 className={`${display} mt-3 text-5xl leading-none sm:text-7xl`}>{chapter.title}</h2>
+          <motion.h2 style={reducedMotion ? undefined : { scale: titleScale }} className={cn(display, 'mt-3 text-5xl leading-none sm:text-7xl', index % 2 ? 'origin-right' : 'origin-left')}>
+            {chapter.title}
+          </motion.h2>
           <p className="mt-6 text-xl leading-relaxed italic text-[#efe6d6]/90">{chapter.text}</p>
           {(chapter.date || chapter.place) && (
             <p className="mt-6 text-xs tracking-[0.35em] text-[#efe6d6]/60 uppercase">{[chapter.date, chapter.place].filter(Boolean).join('  ·  ')}</p>

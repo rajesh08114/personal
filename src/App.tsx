@@ -4,20 +4,21 @@ import { DraftProvider } from '@/store/DraftProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { LoadingScreen } from '@/components/ui/Layout';
 import { ErrorBoundary } from '@/components/experience/ErrorBoundary';
+import { pageLoaders } from '@/routes';
 
-const ExperiencePage = lazy(() => import('@/pages/ExperiencePage'));
-const CreatePage = lazy(() => import('@/pages/CreatePage'));
-const PreviewPage = lazy(() => import('@/pages/PreviewPage'));
-const TemplatesPage = lazy(() => import('@/pages/TemplatesPage'));
-const TemplatePreviewPage = lazy(() => import('@/pages/TemplatePreviewPage'));
-const BirthdayPage = lazy(() => import('@/pages/BirthdayPage'));
+const ExperiencePage = lazy(pageLoaders.experience);
+const CreatePage = lazy(pageLoaders.create);
+const PreviewPage = lazy(pageLoaders.preview);
+const TemplatesPage = lazy(pageLoaders.templates);
+const TemplatePreviewPage = lazy(pageLoaders.templatePreview);
+const BirthdayPage = lazy(pageLoaders.birthday);
 
 function NotFound() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-ink-950 px-6 text-center">
-      <p className="font-display text-6xl text-white">404</p>
-      <p className="text-ink-300">This page wandered off to a party somewhere.</p>
-      <Link to="/templates" className="mt-2 rounded-full bg-white px-6 py-3 font-semibold text-ink-900">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#f4efe6] px-6 text-center text-[#24201b]">
+      <p className="font-display text-6xl">404</p>
+      <p className="text-[#5b5348]">This page wandered off to a party somewhere.</p>
+      <Link to="/templates" className="mt-2 rounded-md bg-[#24201b] px-6 py-3 font-semibold text-[#f4efe6]">
         Browse birthday templates
       </Link>
     </main>

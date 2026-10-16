@@ -1,0 +1,5 @@
+User-agent: *
+# Personal birthday pages and the editor preview are private.
+Disallow: /birthday/
+Disallow: /preview
+Disallow: /create

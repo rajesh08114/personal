@@ -7,6 +7,7 @@ import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { Particles } from '@/components/effects/Particles';
+import { PointerTrail } from '@/components/effects/PointerTrail';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { EASE } from '@/animations/tokens';
 import { cn } from '@/utils/cn';
@@ -163,6 +164,8 @@ function Story() {
 
   return (
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2 }} className="relative z-10">
+      {/* Gold dust shaken loose wherever the pointer passes. */}
+      <PointerTrail colors={[GOLD, '#fff3c4']} size={2} rate={1} />
       <Scene label="Once upon a time">
         <HiddenStar id="s1" className="top-[12%] left-[10%]" />
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} className="text-2xl italic sm:text-3xl">
@@ -173,7 +176,17 @@ function Story() {
             <PhotoSlot src={config.heroImage} alt={`Portrait of ${name}`} label="Add your hero photo" priority className="aspect-[3/4] w-full" />
           </GoldFrame>
         </motion.div>
-        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.4, duration: 1.4 }} className="mx-auto mt-10 max-w-3xl text-3xl leading-snug sm:text-5xl">
+        {/* The line is uncovered left to right behind a soft edge, like candlelight moving across a page. */}
+        <motion.h1
+          initial={{ ['--reveal' as string]: '-25%' }}
+          animate={{ ['--reveal' as string]: '125%' }}
+          transition={{ delay: 2.2, duration: 2.8, ease: EASE.silk }}
+          style={{
+            maskImage: 'linear-gradient(90deg, #000 var(--reveal), transparent calc(var(--reveal) + 25%))',
+            WebkitMaskImage: 'linear-gradient(90deg, #000 var(--reveal), transparent calc(var(--reveal) + 25%))',
+          }}
+          className="mx-auto mt-10 max-w-3xl text-3xl leading-snug sm:text-5xl"
+        >
           a wonderful person named{' '}
           <span className={`${deco} text-[#f3d98e]`}>
             <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} />

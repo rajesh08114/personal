@@ -42,7 +42,10 @@ export interface BirthdayTemplate {
   fonts: TemplateFonts;
   animations: AnimationConfig;
   interactions: InteractionConfig;
-  Thumbnail: ComponentType;
+  /** Animated gallery thumbnail. Its own lazy chunk, so pages that only play a template never download it. */
+  Thumbnail: LazyExoticComponent<ComponentType>;
+  /** Starts downloading the experience chunk (e.g. on hover) without rendering it. */
+  load: () => Promise<{ default: ComponentType }>;
   /**
    * Each template owns its full section arrangement and storytelling,
    * so the presentation is a single lazily-loaded root component.

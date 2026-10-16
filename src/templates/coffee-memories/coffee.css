@@ -7,13 +7,18 @@
   min-height: 40vh;
   padding-bottom: 4rem;
 }
-.cm-steam {
-  animation: cm-steam 2.4s ease-in-out infinite;
+/* Each wisp rises, sways and thins out, then the next one follows. Transform and opacity only. */
+.cm-wisp {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: cm-wisp 2.7s ease-out infinite;
+  opacity: 0;
 }
-@keyframes cm-steam {
-  0% { transform: translateY(10px) scaleY(0.6); opacity: 0; }
-  40% { opacity: 0.8; }
-  100% { transform: translateY(-24px) scaleY(1.2) translateX(6px); opacity: 0; }
+@keyframes cm-wisp {
+  0% { transform: translateY(14px) scaleY(0.7); opacity: 0; }
+  30% { opacity: 0.75; }
+  70% { transform: translate(4px, -10px) scaleY(1.1); opacity: 0.35; }
+  100% { transform: translate(-3px, -22px) scaleY(1.25); opacity: 0; }
 }
 .cm-receipt {
   --scallop: radial-gradient(circle at 10px 100%, transparent 7px, black 7.5px);

@@ -49,7 +49,7 @@ function Opening() {
           {config.birthdayPerson.trim() ? name : <span className="bd-placeholder text-[0.45em]">{name}</span>}
         </motion.span>
       </h1>
-      <motion.span className="mt-8 block h-px bg-[#b8975a]" initial={{ width: 0 }} animate={{ width: 96 }} transition={{ delay: 1.4, duration: 1.4, ease: EASE.inOut }} />
+      <motion.span className="mt-8 block h-px w-24 origin-center bg-[#b8975a]" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.4, duration: 1.6, ease: EASE.silk }} />
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2, duration: 1.4 }} className={`${label} mt-8`}>
         {config.messages.intro.trim() || 'Today is your day.'}
       </motion.p>
@@ -125,10 +125,10 @@ function Letter() {
             paras.map((p, i) => (
               <motion.p
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 1.4, ease: EASE.out }}
+                transition={{ duration: 1.6, ease: EASE.silk }}
                 className={cn(i === 0 && 'first-letter:float-left first-letter:mr-3 first-letter:text-[5.2rem] first-letter:leading-[0.8] first-letter:text-[#b8975a]')}
               >
                 {p}
@@ -168,10 +168,10 @@ function Moments() {
           {memories.map((m, i) => (
             <motion.li
               key={m.id}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 1.3, ease: EASE.out, delay: (i % 2) * 0.15 }}
+              transition={{ duration: 1.6, ease: EASE.silk, delay: (i % 2) * 0.15 }}
               className={cn(SPANS[i % SPANS.length].replace(/aspect-\S+/, ''))}
             >
               <button type="button" onClick={() => setIndex(i)} className="group block w-full text-left" aria-label={`View ${m.titleText}`}>
@@ -182,7 +182,7 @@ function Moments() {
                     label={m.slotLabel}
                     tone="light"
                     className={cn('w-full bg-[#e8e0d2]', SPANS[i % SPANS.length].match(/aspect-\S+/)?.[0])}
-                    imgClassName="grayscale-[0.6] transition-all duration-[1.6s] ease-out group-hover:scale-105 group-hover:grayscale-0"
+                    imgClassName="grayscale-[0.6] transition-[scale,filter] duration-[1.6s] ease-out group-hover:scale-105 group-hover:grayscale-0"
                   />
                 </div>
                 <div className="mt-4 flex items-baseline gap-4">

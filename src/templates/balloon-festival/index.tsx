@@ -207,11 +207,19 @@ function BalloonField() {
                   <motion.button
                     type="button"
                     aria-label={`Pop balloon ${i + 1}`}
-                    initial={{ y: 200, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
+                    // Each balloon rises on its own spring (different buoyancy and drag), then bobs at rest.
+                    initial={{ y: 220, opacity: 0, rotate: (i % 2 ? 1 : -1) * (6 + (i % 4) * 2) }}
+                    whileInView={{ y: 0, opacity: 1, rotate: 0 }}
                     viewport={{ once: true }}
-                    exit={{ scale: [1, 1.3, 0], opacity: [1, 1, 0], transition: { duration: 0.25 } }}
-                    transition={{ delay: (i % 6) * 0.12, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+                    exit={{ scale: [1, 1.25, 0.2], opacity: [1, 1, 0], transition: { duration: 0.18, ease: 'easeIn' } }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 38 + ((i * 17) % 30),
+                      damping: 7 + ((i * 7) % 6),
+                      mass: 0.8 + ((i * 13) % 7) / 10,
+                      delay: (i % 6) * 0.11 + ((i * 29) % 10) / 40,
+                      opacity: { duration: 0.4, delay: (i % 6) * 0.11 },
+                    }}
                     whileHover={{ scale: 1.08 }}
                     onClick={(e) => {
                       pop(e, s.color);

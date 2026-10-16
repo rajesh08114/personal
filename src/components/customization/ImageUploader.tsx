@@ -1,8 +1,11 @@
-import { useId, useRef, useState, type DragEvent } from 'react';
+import { Suspense, useId, useRef, useState, type DragEvent } from 'react';
 import { Crop, ImagePlus, LoaderCircle, RefreshCw, Trash2, TriangleAlert } from 'lucide-react';
 import type { PhotoFraming } from '@/types/birthday';
 import { framingStyle } from '@/components/experience/photoFraming';
-import { PhotoEditor } from './PhotoEditor';
+import { lazyChunk } from '@/utils/lazyChunk';
+
+// The editor (pointer/pinch/wheel handling) loads the first time someone presses Adjust.
+const PhotoEditor = lazyChunk(() => import('./PhotoEditor').then((m) => ({ default: m.PhotoEditor })));
 import { compressImage, errorMessage, IMAGE_ACCEPT } from '@/utils/media';
 import { cn } from '@/utils/cn';
 
@@ -44,6 +47,8 @@ export function ImageUploader({
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editorMounted, setEditorMounted] = useState(false);
+  if (editing && !editorMounted) setEditorMounted(true);
   const errorId = useId();
 
   const handleFile = async (file: File | undefined) => {
@@ -94,7 +99,12 @@ export function ImageUploader({
       >
         {value ? (
           <>
-            <img src={value} alt={`${label} preview`} className="h-full w-full object-cover" style={framingStyle(framing)} />
+            <img
+              src={value}
+              alt={`${label} preview`}
+              className="h-full w-full object-cover"
+              style={framingStyle(framing)}
+            />
             <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-linear-to-t from-black/60 to-transparent p-2 pt-8">
               {onFramingChange && (
                 <button
@@ -142,28 +152,48 @@ export function ImageUploader({
             aria-label={`${emptyTitle} (${label})`}
             className={cn(
               'flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center transition-colors duration-200',
-              dragging ? 'border-brand bg-brand-soft' : 'border-ink-200 bg-paper-2/60 hover:border-brand/50 hover:bg-brand-soft/50',
+              dragging
+                ? 'border-brand bg-brand-soft'
+                : 'border-ink-200 bg-paper-2/60 hover:border-brand/50 hover:bg-brand-soft/50',
             )}
           >
             <span className="inline-flex size-10 items-center justify-center rounded-full bg-white text-brand shadow-sm transition-transform duration-200 group-hover:scale-110">
               <ImagePlus className="size-5" aria-hidden />
             </span>
-            <span className={cn('font-semibold text-ink-800', compact ? 'text-xs' : 'text-sm')}>{emptyTitle}</span>
+            <span className={cn('font-semibold text-ink-800', compact ? 'text-xs' : 'text-sm')}>
+              {emptyTitle}
+            </span>
             {!compact && <span className="text-xs text-ink-500">{emptyHint}</span>}
           </button>
         )}
         {busy && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/80 backdrop-blur-sm" role="status">
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/80 backdrop-blur-sm"
+            role="status"
+          >
             <LoaderCircle className="size-6 animate-spin text-brand" aria-hidden />
             <span className="text-xs font-semibold text-ink-700">Optimising photo…</span>
           </div>
         )}
       </div>
-      {onFramingChange && (
-        <PhotoEditor open={editing} src={value} framing={framing} label={label} onClose={() => setEditing(false)} onSave={onFramingChange} />
+      {onFramingChange && editorMounted && (
+        <Suspense fallback={null}>
+          <PhotoEditor
+            open={editing}
+            src={value}
+            framing={framing}
+            label={label}
+            onClose={() => setEditing(false)}
+            onSave={onFramingChange}
+          />
+        </Suspense>
       )}
       {error && (
-        <p id={errorId} role="alert" className="mt-2 flex items-start gap-1.5 text-xs font-medium text-rose-700">
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-2 flex items-start gap-1.5 text-xs font-medium text-rose-700"
+        >
           <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
           {error}
         </p>

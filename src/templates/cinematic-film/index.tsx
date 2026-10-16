@@ -4,6 +4,7 @@ import { Clapperboard, Film, Play } from 'lucide-react';
 import { useBirthdayText, useExperience, useThemeColors } from '@/components/experience/ExperienceContext';
 import { Fill } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
+import { KenBurns } from '@/components/effects/KenBurns';
 import { Lightbox } from '@/components/experience/Lightbox';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { PLACEHOLDER } from '@/data/placeholders';
@@ -42,11 +43,12 @@ export default function CinematicFilm() {
   );
 }
 
-function Letterbox({ visible }: { visible: boolean }) {
+function Letterbox({ visible, fromClosed = false }: { visible: boolean; fromClosed?: boolean }) {
   return (
     <>
-      <motion.div aria-hidden className="fixed inset-x-0 top-0 z-[55] bg-black" animate={{ height: visible ? '11vh' : 0 }} transition={{ duration: 1.2, ease: EASE.inOut }} />
-      <motion.div aria-hidden className="fixed inset-x-0 bottom-0 z-[55] bg-black" animate={{ height: visible ? '11vh' : 0 }} transition={{ duration: 1.2, ease: EASE.inOut }} />
+      {/* Bars start closed (a black frame) and open out to 2.39:1-style mattes. scaleY only, no layout. */}
+      <motion.div aria-hidden className="fixed inset-x-0 top-0 z-[55] h-[50vh] origin-top bg-black will-change-transform" initial={{ scaleY: fromClosed ? 1 : 0 }} animate={{ scaleY: visible ? 0.22 : 0 }} transition={{ duration: 1.6, ease: EASE.inOut }} />
+      <motion.div aria-hidden className="fixed inset-x-0 bottom-0 z-[55] h-[50vh] origin-bottom bg-black will-change-transform" initial={{ scaleY: fromClosed ? 1 : 0 }} animate={{ scaleY: visible ? 0.22 : 0 }} transition={{ duration: 1.6, ease: EASE.inOut }} />
     </>
   );
 }
@@ -55,7 +57,7 @@ function TitleScreen() {
   const { config, open } = useExperience();
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black px-6 text-center" exit={{ opacity: 0, transition: { duration: 0.8 } }}>
-      <Letterbox visible />
+      <Letterbox visible fromClosed />
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -191,8 +193,10 @@ function ChapterOne() {
   return (
     <section id="cf-ch1" ref={ref} aria-label="Chapter one: the beginning" className="relative flex min-h-dvh items-center justify-center overflow-hidden">
       <motion.div className="absolute inset-0" style={{ scale }}>
-        <motion.div className="h-full w-full" initial={{ scale: 1.2, opacity: 0 }} animate={{ scale: 1, opacity: 0.55 }} transition={{ duration: 6, ease: 'easeOut' }}>
-          <PhotoSlot src={config.heroImage} alt={`Portrait of ${name}`} label="Add your hero photo" priority className="h-full w-full" />
+        <motion.div className="h-full w-full" initial={{ opacity: 0 }} animate={{ opacity: 0.55 }} transition={{ duration: 3, ease: 'easeOut' }}>
+          <KenBurns duration={26}>
+            <PhotoSlot src={config.heroImage} alt={`Portrait of ${name}`} label="Add your hero photo" priority className="h-full w-full" />
+          </KenBurns>
         </motion.div>
       </motion.div>
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,#050505_85%)]" />
@@ -296,13 +300,11 @@ function ChapterHighlights() {
           {memories.map((m, i) => (
             <li key={m.id} className="w-[78vw] shrink-0 snap-center sm:w-[30rem]">
               <button type="button" onClick={() => setIndex(i)} className="group relative block w-full overflow-hidden text-left" aria-label={`Open highlight: ${m.titleText}`}>
-                <PhotoSlot
-                  src={m.image}
-                  alt={m.titleText}
-                  label={m.slotLabel}
-                  className="aspect-[16/9] w-full"
-                  imgClassName="sepia-[0.35] transition-all duration-700 group-hover:scale-110 group-hover:sepia-0"
-                />
+                <div className="aspect-[16/9] w-full overflow-hidden">
+                  <KenBurns seed={i} duration={18 + (i % 3) * 4}>
+                    <PhotoSlot src={m.image} alt={m.titleText} label={m.slotLabel} className="h-full w-full" imgClassName="sepia-[0.35] transition-[filter] duration-700 group-hover:sepia-0" />
+                  </KenBurns>
+                </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-4 pt-12">
                   <p className={`${display} text-2xl`}>
                     {String(i + 1).padStart(2, '0')} — {m.titleText}
@@ -376,8 +378,8 @@ function Finale() {
         Chapter {ROMAN[4]}
       </motion.p>
       <motion.h2
-        initial={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
-        whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+        initial={{ opacity: 0, scale: 1.1 }}
+        whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, amount: 0.6 }}
         transition={{ duration: 1.8, ease: EASE.out }}
         className={`${display} mt-2 text-6xl leading-none sm:text-9xl`}

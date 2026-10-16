@@ -1,4 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { isChunkLoadError, reloadOncePerSession } from '@/utils/lazyChunk';
+import { reportError } from '@/utils/reportError';
 
 interface Props {
   children: ReactNode;
@@ -13,7 +15,9 @@ export class ErrorBoundary extends Component<Props, { error: Error | null }> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    if (import.meta.env.DEV) console.warn('Experience error', error, info.componentStack);
+    // A chunk from a previous deploy: one reload fixes it, so don't report or show an error.
+    if (isChunkLoadError(error) && reloadOncePerSession()) return;
+    reportError(error, info.componentStack?.split('\n').slice(0, 6).join('\n'));
   }
 
   reset = () => this.setState({ error: null });

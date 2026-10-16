@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { useBirthdayText, useExperience } from '@/components/experience/ExperienceContext';
 import { Fill, Paragraphs } from '@/components/experience/Fill';
 import { PhotoSlot } from '@/components/experience/PhotoSlot';
 import { Lightbox } from '@/components/experience/Lightbox';
+import { TypeOn } from '@/components/experience/Motion';
+import { EASE, SPRING } from '@/animations/tokens';
 import { getMemories, getTimeline, toLightboxItems } from '@/components/experience/content';
 import { PLACEHOLDER } from '@/data/placeholders';
 import { formatBirthday, nextBirthday } from '@/utils/date';
@@ -30,45 +32,86 @@ function useEditionDate(): string {
   return (day ?? new Date()).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-/** Opening: the paper lies folded on the doormat. Tap to unfold it. */
+/**
+ * Opening: the paper lies folded on the doormat, masthead up. Tapping it lifts the bottom half
+ * out from underneath and swings it down on the fold. The shadow the top half casts on the
+ * bottom half fades as the angle opens, which is what sells the paper as a physical sheet.
+ */
 function FoldedPaper() {
-  const { open, config } = useExperience();
-  const { name } = useBirthdayText();
+  const { open, reducedMotion } = useExperience();
+  const { name, age, hasAge, hasName } = useBirthdayText();
+  const [unfolding, setUnfolding] = useState(false);
+  const angle = useMotionValue(-180);
+  const shade = useTransform(angle, [-180, -90, 0], [0.6, 0.45, 0]);
+  const crease = useTransform(angle, [-180, 0], [0.35, 0.08]);
+  const headline = `${hasName ? name : PLACEHOLDER.name} ${hasAge ? `turns ${age}` : 'celebrates'}`.toUpperCase();
+
+  const unfold = () => {
+    if (unfolding) return;
+    setUnfolding(true);
+    if (reducedMotion) {
+      angle.set(0);
+      open();
+      return;
+    }
+    void animate(angle, 0, { type: 'spring', stiffness: 70, damping: 14, mass: 1.4 }).then(() => window.setTimeout(open, 650));
+  };
+
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
-      exit={{ opacity: 0, transition: { duration: 0.6, delay: 0.5 } }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto px-6 py-10"
+      exit={{ opacity: 0, transition: { duration: 0.45 } }}
     >
       <motion.button
         type="button"
-        onClick={open}
+        onClick={unfold}
         aria-label={`Unfold today’s paper for ${name}`}
-        className="be-folded group relative w-full max-w-sm text-left [perspective:1200px]"
+        className="group relative w-full max-w-sm text-left [perspective:1400px]"
         initial={{ y: 30, rotate: -4, opacity: 0 }}
-        animate={{ y: 0, rotate: -3, opacity: 1 }}
-        exit={{ rotateX: -8, y: -20, transition: { duration: 0.5 } }}
-        transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
-        whileHover={{ rotate: -1.5, y: -4 }}
+        animate={unfolding ? { y: 0, rotate: 0, opacity: 1 } : { y: 0, rotate: -3, opacity: 1 }}
+        exit={{ scale: 1.08, y: -24, transition: { duration: 0.45, ease: EASE.out } }}
+        transition={SPRING.paper}
+        whileHover={unfolding ? undefined : { rotate: -1.5, y: -4 }}
       >
-        <div className="be-paper relative px-6 pt-5 pb-8 shadow-[0_18px_30px_-12px_rgb(40_30_20/0.45)]">
+        {/* Top half: masthead, always facing up. */}
+        <div className="be-paper relative z-10 px-6 pt-5 pb-6 shadow-[0_18px_30px_-12px_rgb(40_30_20/0.45)]">
           <p className="be-masthead text-center text-4xl leading-none">The Birthday Edition</p>
           <div className="mt-2 border-y-2 border-double border-[#1d1b18] py-1 text-center text-[0.6rem] tracking-[0.2em] uppercase">
             One copy printed · Delivered by hand
           </div>
-          <p className="be-head mt-4 text-center text-2xl leading-tight font-bold uppercase">
-            <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} />
-          </p>
           <div aria-hidden className="mt-3 space-y-1.5">
-            {[100, 92, 96, 70].map((w, i) => (
+            {[100, 92, 96].map((w, i) => (
               <div key={i} className="h-1 bg-[#1d1b18]/15" style={{ width: `${w}%` }} />
             ))}
           </div>
-          {/* The fold line */}
-          <div aria-hidden className="absolute inset-x-0 top-1/2 h-px bg-[#1d1b18]/20 shadow-[0_1px_0_rgb(255_255_255/0.6)]" />
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#1d1b18] px-3 py-1 text-[0.65rem] font-bold tracking-[0.2em] text-[#efe9dc] uppercase transition-transform group-hover:-translate-y-0.5">
-            Unfold the paper
-          </div>
+          {/* The crease darkens while the sheet is folded. */}
+          <motion.div aria-hidden className="absolute inset-x-0 bottom-0 h-3 bg-linear-to-t from-[#1d1b18] to-transparent" style={{ opacity: crease }} />
+          {!unfolding && (
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#1d1b18] px-3 py-1 text-[0.65rem] font-bold tracking-[0.2em] text-[#efe9dc] uppercase transition-transform group-hover:-translate-y-0.5">
+              Unfold the paper
+            </div>
+          )}
         </div>
+        {/* Bottom half: hinged on the fold, swings down from behind the top half. */}
+        <motion.div
+          aria-hidden={!unfolding}
+          className="be-paper relative origin-top px-6 pt-4 pb-6 [backface-visibility:hidden] [transform-style:preserve-3d]"
+          style={{ rotateX: angle }}
+        >
+          <p className="be-head text-2xl leading-tight font-bold">
+            {unfolding ? <TypeOn text={headline} delay={0.35} perChar={0.035} /> : headline}
+          </p>
+          <div className="mt-3 grid grid-cols-[1.4fr_1fr] gap-3">
+            <div className="be-photo aspect-[4/3] bg-[#cfc6b4]" />
+            <div aria-hidden className="space-y-1.5">
+              {[100, 90, 96, 80, 92, 60].map((w, i) => (
+                <div key={i} className="h-1 bg-[#1d1b18]/15" style={{ width: `${w}%` }} />
+              ))}
+            </div>
+          </div>
+          {/* Shadow cast by the top half; it lifts away as the sheet opens. */}
+          <motion.div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#1d1b18] to-[#1d1b18]/30" style={{ opacity: shade }} />
+        </motion.div>
       </motion.button>
       <p className="mt-10 text-sm text-[#1d1b18]/60 italic">Left on your doorstep this morning.</p>
     </motion.div>
@@ -77,7 +120,7 @@ function FoldedPaper() {
 
 function FrontPage() {
   const { config, restart } = useExperience();
-  const { name, age, hasAge, sender, relationship } = useBirthdayText();
+  const { name, age, hasAge, hasName, sender, relationship } = useBirthdayText();
   const date = useEditionDate();
   const memories = getMemories(config, 3);
   const timeline = getTimeline(config);
@@ -89,7 +132,7 @@ function FrontPage() {
       initial={{ opacity: 0, rotateX: 12, y: 40 }}
       animate={{ opacity: 1, rotateX: 0, y: 0 }}
       transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
-      style={{ transformOrigin: '50% 0%' }}
+      style={{ transformOrigin: '50% 0%', transformPerspective: 1600 }}
       className="be-paper mx-auto max-w-6xl px-4 pt-6 pb-16 shadow-[0_30px_60px_-30px_rgb(40_30_20/0.5)] sm:my-8 sm:px-10"
     >
       {/* Masthead */}
@@ -110,7 +153,13 @@ function FrontPage() {
       <section aria-labelledby="be-headline" className="mt-6 grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <h2 id="be-headline" className="be-head text-[clamp(2.2rem,7vw,5rem)] leading-[0.95] font-bold uppercase">
-            <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /> {hasAge ? `turns ${age}` : 'celebrates a birthday'}
+            {hasName ? (
+              <TypeOn text={`${name} ${hasAge ? `turns ${age}` : 'celebrates a birthday'}`} delay={0.5} perChar={0.03} />
+            ) : (
+              <>
+                <Fill value={config.birthdayPerson} placeholder={PLACEHOLDER.name} /> {hasAge ? `turns ${age}` : 'celebrates a birthday'}
+              </>
+            )}
           </h2>
           <p className="be-head mt-3 text-lg leading-snug italic sm:text-2xl">
             {config.messages.intro.trim() || 'Friends and family report widespread happiness; celebrations expected to continue all day.'}

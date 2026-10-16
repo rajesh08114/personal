@@ -6,6 +6,8 @@ import type { LoveTag, TemplateCategory } from '@/types/template';
 import { CATEGORIES, LOVE_TAGS, TEMPLATES } from '@/templates/registry';
 import { useDraft } from '@/store/DraftProvider';
 import { cn } from '@/utils/cn';
+import { prefetchPagesWhenIdle } from '@/routes';
+import { prefetchTemplate, TemplateThumbnail } from '@/components/ui/TemplateThumbnail';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -23,6 +25,9 @@ export default function TemplatesPage() {
   useEffect(() => {
     document.title = 'Choose your birthday experience — Birthday Studio';
   }, []);
+
+  // The next click is almost always "Preview" or "Use this one".
+  useEffect(() => prefetchPagesWhenIdle('templatePreview', 'create'), []);
 
   return (
     <div className="min-h-dvh bg-[#f4efe6] text-[#24201b]">
@@ -118,8 +123,14 @@ export default function TemplatesPage() {
                 transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
                 className="group flex flex-col"
               >
-                <Link to={`/templates/${t.id}`} className="relative block aspect-[16/11] overflow-hidden rounded-sm bg-[#e4dccd]" aria-label={`Preview ${t.name}`}>
-                  <t.Thumbnail />
+                <Link
+                  to={`/templates/${t.id}`}
+                  onPointerEnter={() => prefetchTemplate(t)}
+                  onFocus={() => prefetchTemplate(t)}
+                  className="relative block aspect-[16/11] overflow-hidden rounded-sm bg-[#e4dccd]"
+                  aria-label={`Preview ${t.name}`}
+                >
+                  <TemplateThumbnail template={t} />
                   {current && <span className="absolute top-3 left-3 bg-[#f4efe6] px-2 py-0.5 font-mono text-[0.65rem] tracking-[0.15em] uppercase">In use</span>}
                 </Link>
                 <div className="mt-4 flex items-baseline gap-3 border-t border-[#24201b]/20 pt-3">

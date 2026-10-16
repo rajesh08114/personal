@@ -19,11 +19,17 @@ export default function GameNight() {
   const [level, setLevel] = useState(1);
   const add = useCallback((n: number) => setScore((s) => s + n), []);
   const complete = useCallback((l: number) => setLevel((cur) => Math.max(cur, l + 1)), []);
+  // A blocky 8-bit screen wipe whenever the game starts or a new level unlocks.
+  const [wipe, setWipe] = useState(0);
+  useEffect(() => {
+    if (opened) setWipe((w) => w + 1);
+  }, [opened, level]);
 
   return (
     <div className="gn-root relative min-h-dvh overflow-hidden bg-[#140a2e] text-[22px] leading-snug text-[#e9e4ff]">
       <div className="gn-grid" aria-hidden />
       <div className="gn-scanlines" aria-hidden />
+      <AnimatePresence>{wipe > 0 && <PixelWipe key={wipe} onDone={() => setWipe(0)} />}</AnimatePresence>
       <AnimatePresence>{!opened && <Attract key="a" />}</AnimatePresence>
       {opened && (
         <>
@@ -539,5 +545,37 @@ function Ending({ unlocked, score }: { unlocked: boolean; score: number }) {
         CONTINUE? ▶ PLAY AGAIN
       </button>
     </section>
+  );
+}
+
+const WIPE_COLS = 12;
+const WIPE_ROWS = 8;
+
+/**
+ * An 8-bit screen transition: blocks snap in along a diagonal, hold for a beat and snap out.
+ * Stepped timing (no easing) is what makes it read as a console, not a web page.
+ */
+function PixelWipe({ onDone }: { onDone: () => void }) {
+  const { reducedMotion } = useExperience();
+  useEffect(() => {
+    const t = window.setTimeout(onDone, reducedMotion ? 0 : 900);
+    return () => window.clearTimeout(t);
+  }, [onDone, reducedMotion]);
+  if (reducedMotion) return null;
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[60] grid" style={{ gridTemplateColumns: `repeat(${WIPE_COLS}, 1fr)`, gridTemplateRows: `repeat(${WIPE_ROWS}, 1fr)` }}>
+      {Array.from({ length: WIPE_COLS * WIPE_ROWS }, (_, i) => {
+        const diag = (i % WIPE_COLS) + Math.floor(i / WIPE_COLS);
+        return (
+          <motion.span
+            key={i}
+            className="bg-[#140a2e]"
+            initial={{ scale: 0 }}
+            animate={{ scale: [0, 1, 1, 0] }}
+            transition={{ duration: 0.75, times: [0, 0.25, 0.6, 1], delay: diag * 0.012, ease: (t) => Math.round(t * 4) / 4 }}
+          />
+        );
+      })}
+    </div>
   );
 }

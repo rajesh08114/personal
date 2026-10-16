@@ -53,40 +53,61 @@ export default function CosmicJourney() {
 }
 
 /** Star-streak hyperspace flash. */
+/**
+ * Hyperspace: stars stretch into streaks as speed builds, then shorten back to points as the
+ * ship drops out of warp. Time-based (not frame-based) so it looks the same at 30, 60 or 120 Hz,
+ * and drawn at device-pixel resolution so the streaks stay crisp.
+ */
 function Warp() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const c = ref.current;
     const ctx = c?.getContext('2d');
     if (!c || !ctx) return;
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
-    const cx = c.width / 2;
-    const cy = c.height / 2;
-    const stars = Array.from({ length: 220 }, () => ({ a: Math.random() * Math.PI * 2, d: Math.random() * 60, v: 6 + Math.random() * 18 }));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    c.width = w * dpr;
+    c.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    const cx = w / 2;
+    const cy = h / 2;
+    const reach = Math.hypot(cx, cy);
+    const stars = Array.from({ length: 260 }, () => ({ a: Math.random() * Math.PI * 2, d: 10 + Math.random() * reach * 0.6, k: 0.6 + Math.random() * 0.8 }));
+    const DURATION = 1400;
     let raf = 0;
     const start = performance.now();
+    let last = start;
     const frame = (now: number) => {
-      const t = (now - start) / 900;
-      ctx.fillStyle = 'rgba(3,4,12,0.35)';
-      ctx.fillRect(0, 0, c.width, c.height);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const p = Math.min(1, (now - start) / DURATION);
+      // Speed rises and falls on a sine: accelerate into warp, decelerate out of it.
+      const speed = Math.sin(p * Math.PI) * reach * 2.4;
+      const streak = 0.02 + Math.sin(p * Math.PI) * 0.28;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#03040c';
+      ctx.globalAlpha = 1 - Math.max(0, (p - 0.75) / 0.25);
+      ctx.fillRect(0, 0, w, h);
       ctx.strokeStyle = '#dbeafe';
-      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
       for (const s of stars) {
-        const d0 = s.d;
-        s.d += s.v * (1 + t * 4);
-        ctx.globalAlpha = Math.min(1, s.d / 200);
+        s.d += speed * s.k * dt;
+        if (s.d > reach) s.d = 10 + Math.random() * 40;
+        const tail = s.d * (1 - streak * s.k);
+        ctx.globalAlpha = Math.min(1, s.d / 160) * (1 - Math.max(0, (p - 0.8) / 0.2));
+        ctx.lineWidth = 0.8 + s.k * 0.9;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(s.a) * d0, cy + Math.sin(s.a) * d0);
+        ctx.moveTo(cx + Math.cos(s.a) * tail, cy + Math.sin(s.a) * tail);
         ctx.lineTo(cx + Math.cos(s.a) * s.d, cy + Math.sin(s.a) * s.d);
         ctx.stroke();
       }
-      if (t < 1) raf = requestAnimationFrame(frame);
+      if (p < 1) raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, []);
-  return <motion.canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 z-[88]" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ delay: 0.7, duration: 0.5 }} />;
+  return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 z-[88] h-full w-full" />;
 }
 
 function Launch({ onWarp }: { onWarp: () => void }) {

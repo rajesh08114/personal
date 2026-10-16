@@ -1,0 +1,10 @@
+{
+  "name": "Birthday Studio",
+  "short_name": "Birthday",
+  "description": "Make a personal, interactive birthday website in minutes.",
+  "start_url": "/templates",
+  "display": "standalone",
+  "background_color": "#f4efe6",
+  "theme_color": "#f4efe6",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

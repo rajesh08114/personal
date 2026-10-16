@@ -15,13 +15,14 @@ npm run dev        # http://localhost:5173
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Type-check and build for production into `dist/` |
-| `npm run preview` | Serve the production build locally |
+| `npm run preview` | Serve the production build on :4173 with the production security headers (CSP etc.) |
 | `npm run typecheck` | TypeScript only |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
 | `npm test` | Unit tests (Vitest) |
+| `npm run check` | Everything CI runs: typecheck, lint, tests, build |
 
-Requires Node 20.19+ (tested on Node 23).
+Requires Node 20.19+ or 22.12+ (tested on Node 23). Copy `.env.example` to `.env.local` for the optional settings below.
 
 ## Routes
 
@@ -122,8 +123,9 @@ src/
 ├── themes/                 7 mood presets, custom colours, CSS variables
 ├── templates/
 │   ├── registry.ts         List of all templates (metadata loads up front)
-│   └── <id>/meta.tsx       Name, moods, fonts, palette, animated thumbnail
-│       <id>/index.tsx      The experience itself (separate lazy-loaded chunk)
+│   └── <id>/meta.tsx       Name, moods, fonts, palette (small; loads with the registry)
+│       <id>/thumbnail.tsx  Animated gallery thumbnail (own lazy chunk)
+│       <id>/index.tsx      The experience itself (own lazy chunk)
 ├── components/
 │   ├── experience/         ExperienceShell, Lightbox, BirthdayCake, PhotoSlot, photoFraming, Fill, MusicPlayer…
 │   ├── effects/            Confetti/fireworks engine, Particles, PointerTrail, MorphParticles, Tilt…
@@ -268,7 +270,17 @@ For Firebase, Supabase or Postgres, write an implementation and assign it to `ex
 
 ## Adding a template
 
-1. Create `src/templates/my-template/meta.tsx` with a `BirthdayTemplate` object (name, moods, palette, fonts, `Thumbnail`, `component: lazy(() => import('./index'))`).
+1. Create `src/templates/my-template/` with `index.tsx` (the experience), `thumbnail.tsx` (default-exported gallery thumbnail) and `meta.tsx`:
+
+   ```ts
+   const load = loadChunk(() => import('./index'));
+   export const myTemplate: BirthdayTemplate = {
+     id: 'my-template', name: '…', /* moods, palette, fonts … */
+     Thumbnail: lazyChunk(() => import('./thumbnail')),
+     load,
+     component: lazy(load),
+   };
+   ```
 2. Build `index.tsx`. Use `useExperience()` and `useBirthdayText()` for content, `<Fill>` and `<PhotoSlot>` for placeholder-aware text and images (`PhotoSlot` applies photo framing for you), `getMemories` / `getTimeline` for lists, and call `open()` from your opening screen. Start from a real-world reference and run the five audit questions in [docs/template-concepts.md](docs/template-concepts.md).
 3. Add the id to `TEMPLATE_IDS` in `src/data/templateIds.ts` (the single source of truth for `TemplateId` and validation). For a love template, add `'love'` to `categories` and set `loveTags`.
 4. Register it in `src/templates/registry.ts`.
@@ -278,19 +290,50 @@ For Firebase, Supabase or Postgres, write an implementation and assign it to `ex
 - Semantic sections and headings, visible focus rings, and labelled icon buttons. Dialogs and the lightbox trap focus and close with Esc. The lightbox supports ← / → and swipe; the scrapbook supports arrow keys.
 - Every interaction has a keyboard or button alternative: "Blow them all out", "Skip level", "Plant every seed", "Pop them all at once", and so on.
 - `prefers-reduced-motion` is respected throughout: Motion is set to `reducedMotion="user"`, CSS animations are neutralised, effects are disabled, and scroll-driven sections fall back to plain layouts.
-- Each template and page is its own chunk (≈3–7 KB gzipped per template) and loads only its own Google Fonts.
 - Particles pause when off-screen or in a background tab, and their count scales with device capability. The effects canvas only runs while particles exist.
-- Images are lazy-loaded, fade in, and fall back gracefully when missing or broken.
 - Neon and strobe-style effects stay below photosensitivity-safe flash rates.
+
+## Performance and lazy loading
+
+Nothing is downloaded before it's needed. What each kind of visitor loads:
+
+| Loaded | When |
+| --- | --- |
+| React, router, Motion, icons, app shell | First visit. Separate vendor chunks with content-hashed names, cached for a year, so a new deploy doesn't re-download React or Motion |
+| Each page (`/create`, `/templates`, `/birthday/:id`, …) | When the route is opened (`src/routes.ts`) |
+| A template's experience (3–7 KB gzipped) and its CSS | When that template is played; prefetched when its card is hovered or focused |
+| A template's gallery thumbnail | Only in the gallery and template picker, when the card scrolls within 400 px of the viewport. Recipients never download thumbnails |
+| Template fonts | When the template mounts (`useGoogleFonts`); studio fonts are preloaded but never block the first paint |
+| Confetti / fireworks engine | When the browser is idle after the page loads, or on the first effect, whichever comes first |
+| Music player | Only when the birthday has a song |
+| Photo editor, Share dialog | The first time the creator presses **Adjust** or **Share** |
+| Photos | `loading="lazy"` and `decoding="async"`, except the hero photo |
+
+On `/templates`, the Preview and Studio pages are prefetched while the browser is idle (skipped on Save-Data or 2G connections).
+
+**Deploy safety.** After a deploy, an open tab may request chunk files that no longer exist. `lazyChunk` / `loadChunk` (`src/utils/lazyChunk.ts`) and the `vite:preloadError` handler detect this and reload the page **once**, to pick up the new build. A second failure within 30 seconds shows the error screen instead of looping.
+
+## Production checklist
+
+- **Environment:** `VITE_BIRTHDAY_API_URL` (server mode) is validated at build time and must be an http(s) URL. `VITE_ERROR_REPORT_URL` is optional (see below). Both are typed in `src/vite-env.d.ts`.
+- **Security headers:** `vercel.json` and `public/_headers` (Netlify / Cloudflare Pages) set the same policy, and `npm run preview` applies it locally:
+  - Content-Security-Policy: scripts only from this origin, no inline scripts, fonts only from Google Fonts, `frame-ancestors 'self'`. `connect-src` allows `https:` so any server-mode API works; tighten it to your API's origin if you like.
+  - `X-Content-Type-Options`, `Referrer-Policy`, HSTS.
+  - `Permissions-Policy`: the microphone is allowed for this origin only (the cake can be blown out by voice); camera and geolocation are off.
+- **Caching:** `/assets/*` is `immutable` for a year; `index.html` is `no-cache`, so new deploys are picked up immediately.
+- **Privacy:** `/birthday/:id` pages send `noindex, nofollow`, and `robots.txt` disallows `/birthday/`, `/preview` and `/create`.
+- **Errors:** a root error boundary and global `error` / `unhandledrejection` listeners call `reportError`. Set `VITE_ERROR_REPORT_URL` to receive JSON reports (`name`, `message`, `stack`, `path`, `userAgent`) by `sendBeacon`. Birthday content (names, messages, photos) is never included. Reports are de-duplicated and capped per page load.
+- **App shell:** a web app manifest, theme colour, Open Graph tags, a `noscript` message and a lightweight boot placeholder.
+- **CI:** `.github/workflows/ci.yml` runs typecheck, lint, tests and build on every push and pull request.
 
 ## Deployment
 
 It is a static single-page app. Run `npm run build` and deploy `dist/`.
 
-- **Vercel:** `vercel.json` already rewrites all routes to `index.html`.
-- **Netlify:** `public/_redirects` is included.
-- **Other hosts:** configure a fallback to `/index.html` so deep links like `/birthday/:id` work.
+- **Vercel:** `vercel.json` rewrites routes to `index.html` and sets the headers above.
+- **Netlify / Cloudflare Pages:** `public/_redirects` and `public/_headers` are included.
+- **Other hosts:** configure a fallback to `/index.html` so deep links like `/birthday/:id` work, serve `/assets/*` with long-lived caching, and copy the headers from `public/_headers`.
 
 ## Testing
 
-`npm test` runs unit tests for config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way.
+`npm test` runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build was also checked under `npm run preview` with the production CSP: no policy violations, lazy chunks loading on demand, and a missing chunk triggering exactly one reload.

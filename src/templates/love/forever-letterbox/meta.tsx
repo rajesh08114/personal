@@ -1,18 +1,8 @@
 import { lazy } from 'react';
 import type { BirthdayTemplate } from '@/types/template';
+import { lazyChunk, loadChunk } from '@/utils/lazyChunk';
 
-function Thumbnail() {
-  return (
-    <div className="relative flex h-full w-full items-center overflow-hidden bg-black">
-      <div className="relative aspect-[2.39/1] w-full overflow-hidden">
-        <div className="absolute inset-0 scale-110 bg-gradient-to-r from-[#3b2b22] via-[#6b4a3a] to-[#2a2230] transition-transform duration-[2s] group-hover:translate-x-[-6%]" />
-        <p className="absolute bottom-2 left-3 text-[0.55rem] tracking-[0.35em] text-white/80" style={{ fontFamily: "'Tenor Sans', sans-serif" }}>
-          SCENE 01 — THE DAY WE MET
-        </p>
-      </div>
-    </div>
-  );
-}
+const load = loadChunk(() => import('./index'));
 
 export const foreverLetterboxTemplate: BirthdayTemplate = {
   id: 'forever-letterbox',
@@ -28,6 +18,7 @@ export const foreverLetterboxTemplate: BirthdayTemplate = {
   fonts: { google: ['Tenor+Sans', 'Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300'], display: "'Tenor Sans', system-ui, sans-serif", body: "'Newsreader', Georgia, serif" },
   animations: { language: 'Pan & dip to black', ambientDensity: 0 },
   interactions: { highlights: ['Pinned 21:9 frame', 'Slow camera pans', 'Dip-to-black cuts', '“To be continued…”'] },
-  Thumbnail,
-  component: lazy(() => import('./index')),
+  Thumbnail: lazyChunk(() => import('./thumbnail')),
+  load,
+  component: lazy(load),
 };

@@ -18,6 +18,15 @@ export default function BirthdayPage() {
   const [state, setState] = useState<State>({ status: 'loading' });
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Personal pages should never appear in search results.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => meta.remove();
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setState({ status: 'loading' });

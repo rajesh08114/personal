@@ -85,3 +85,44 @@ export function TextReveal({
     </Comp>
   );
 }
+
+/**
+ * Characters appear one after another, like type being set or a teleprinter.
+ * Opacity only (no layout shift), the full text stays available to screen readers,
+ * and under reduced motion it simply appears.
+ */
+export function TypeOn({
+  text,
+  className,
+  delay = 0,
+  perChar = 0.022,
+  as = 'span',
+}: {
+  text: string;
+  className?: string;
+  delay?: number;
+  perChar?: number;
+  as?: 'span' | 'h1' | 'h2' | 'p';
+}) {
+  const Comp = motion[as] as ElementType;
+  return (
+    <Comp
+      className={className}
+      aria-label={text}
+      initial="hidden"
+      animate="show"
+      variants={{ hidden: {}, show: { transition: { staggerChildren: perChar, delayChildren: delay } } }}
+    >
+      {[...text].map((ch, i) => (
+        <motion.span
+          key={i}
+          aria-hidden
+          variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
+          transition={{ duration: 0.01 }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </Comp>
+  );
+}
