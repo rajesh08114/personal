@@ -1,6 +1,6 @@
 # Birthday Studio
 
-Build a cinematic, personal birthday website in minutes. Pick one of **38 different experiences**, including a 20-template **Love & Romance** collection. Add your photos and words, preview it live, and share a link.
+Build a cinematic, personal birthday website in minutes. Pick one of **39 different experiences**, including a 20-template **Love & Romance** collection. Add your photos and words, preview it live, and share a link.
 
 Each template is its own experience, not a colour swap. Starry Night spells their name in constellations, Game Night has three mini-games, Love Letter opens with a wax seal, and so on. The same photos and messages work in every template, so switching never loses content.
 
@@ -72,8 +72,9 @@ Anything you leave empty shows a clearly marked placeholder such as `[BIRTHDAY P
 | 🪐 | Cosmic Journey | Launch countdown, memories as orbiting planets, planet alignment |
 | ☕ | Coffee & Memories | Chalkboard menu, orders served to the table, cupcake candle, receipt |
 | 🖥️ | Terminal 1983 | Amber CRT: boot and log in, the letter decodes on screen, memories as files, BIRTHDAY.EXE prints a text cake |
+| 🌳 | A Year Around You | Draw the curtains on one tree and watch a whole year turn: blossoms open on photos, catch summer fireflies, brush away autumn leaves, wipe winter frost off the glass. The year ends on their birthday season |
 
-Every template is modelled on a real object or medium (a newspaper, a biscuit tin, a CRT terminal, a paperback, an orrery) rather than a generic web layout. The concept, references and design audit for all 38 are in [docs/template-concepts.md](docs/template-concepts.md).
+Every template is modelled on a real object or medium (a newspaper, a biscuit tin, a CRT terminal, a paperback, an orrery) rather than a generic web layout. The concept, references and design audit for all 39 are in [docs/template-concepts.md](docs/template-concepts.md).
 
 ## The Love & Romance collection
 
@@ -157,7 +158,7 @@ src/
 - its own typography, palette, photo treatment and motion language;
 - its own mobile composition (for example, the cinema templates switch to a vertical frame on phones instead of shrinking a widescreen strip).
 
-Switching templates never touches the content, so a creator can try all 38 without losing anything.
+Switching templates never touches the content, so a creator can try all 39 without losing anything.
 
 **Live preview.** The studio renders the experience in an iframe (`/preview?embed=1`) and sends the config with `postMessage` on every change. Because it is a real iframe, phone and tablet breakpoints behave exactly as they will on a real device.
 

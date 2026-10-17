@@ -19,6 +19,7 @@ export const TEMPLATE_IDS = [
   'cosmic-journey',
   'coffee-memories',
   'digital-future',
+  'four-seasons',
   // Love & Romance collection
   'our-story',
   'two-souls',

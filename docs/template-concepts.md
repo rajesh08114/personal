@@ -25,7 +25,7 @@ Results:
 | --- | --- |
 | Redesigned | The Birthday Edition (replaces Aurora Surprise), Time Capsule, Parallel Universes, Our Little Universe, Terminal 1983 (was Digital Future) |
 | Restrained | Two Souls, Neon Party; glassmorphism (`backdrop-blur`) removed from every template |
-| Pass | Love Letter, Polaroid Memories, Scrapbook, Film Roll, Cinematic Film, Coffee & Memories, Comic Book, Minimal Luxury, Balloon Festival, Garden of Wishes, Game Night, Our Story, Memory Gallery, Polaroid Wall, Forever Timeline, Vinyl Love, Candlelight Dinner, Gift Box, Cinema Date, Forever Letterbox, Handwritten Journal, Rose Garden, Secret Garden, Midnight Date, Constellation of Us |
+| Pass | A Year Around You, Love Letter, Polaroid Memories, Scrapbook, Film Roll, Cinematic Film, Coffee & Memories, Comic Book, Minimal Luxury, Balloon Festival, Garden of Wishes, Game Night, Our Story, Memory Gallery, Polaroid Wall, Forever Timeline, Vinyl Love, Candlelight Dinner, Gift Box, Cinema Date, Forever Letterbox, Handwritten Journal, Rose Garden, Secret Garden, Midnight Date, Constellation of Us |
 | Follow-up | Cosmic Journey, Starry Night, Message in the Stars, Digital Heartbeat, Festival of Memories, Fairytale |
 
 Studio chrome was audited too:
@@ -174,6 +174,22 @@ Studio chrome was audited too:
 ### Fairytale — `fairytale` · Follow-up
 - **Concept:** a living storybook.
 - **Note:** glass removed. A good candidate for an illustrated-book treatment (deckled pages, engraved initials) in place of the remaining glow.
+
+### A Year Around You — `four-seasons` · Pass
+- **Concept:** one window, one tree, a whole year. The window frame never moves; the world outside it turns through four seasons and comes home to the season of their birthday.
+- **Inspiration:** "the same tree, every season" photo series; Hiroshige's seasonal woodblock prints; a hand-kept almanac.
+- **Emotional goal:** "Every season of the year was better with you in it."
+- **Layout:**
+  - Desktop: the window fills the screen and the tree stands to the right; almanac pages sit on the sill (left and centre) as the year scrolls past.
+  - Mobile: one column of pages over a centred tree, in the same reading order.
+- **Order:** a full year ending on the birthday season (from `birthdayDate`, with an optional southern-hemisphere setting). Each act gets the next message: intro, the letter, the wish (with the story chapters as almanac entries), the surprise. Memories are shared evenly across the four seasons (12 → 3 each).
+- **Typography:** IM Fell English for headings, EB Garamond for text, small-caps season lines ("II · Spring").
+- **Colour:** a palette per season (dawn pink, high blue, amber, steel grey) blended continuously; theme colours tint the candle, the name and the letter.
+- **Photo treatment:** prints with a white border, slightly rotated. Spring photos sit inside blossoms (circle crop), summer photos stay dark until the fireflies light them, autumn photos lie under leaves, winter's message is behind frosted glass. All go through `PhotoSlot`, so framing is respected.
+- **Interaction:** pull the curtains apart; tap buds to bloom; catch fireflies to fill a jar; brush leaves aside; wipe frost off the glass; blow out one candle on the sill. Each has a button alternative ("Let every bud bloom", "Light the jar", "Rake all the leaves", "Clear the window"), and fireflies hold still under the pointer or focus.
+- **Animation:** every motion has a physical cause: the curtains part, petals and leaves fall and tumble, fireflies hover then dart, snow settles on the limbs, frost creeps in from the corners. Seasons never cut: the sky, light, ground and each leaf cluster blend over 2.6 seconds, and clusters turn one by one the way a real tree does.
+- **Final reveal:** after the candle, petals, fireflies, leaves and snow burst up together, and the lights gather into their name at dusk, above the final photo and the closing line.
+- **Performance and accessibility:** one weather canvas whose particle count scales with the device; the scene updates outside React. Under reduced motion there is no weather and every reveal starts open.
 
 ---
 

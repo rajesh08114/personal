@@ -90,6 +90,8 @@ export interface BirthdayConfig {
   birthdayDate?: string;
   /** Overrides the age derived from birthdayDate. */
   age?: number;
+  /** Where they live, so seasonal templates match the birthday's season. Absent = northern. */
+  hemisphere?: 'north' | 'south';
   heroImage?: string;
   heroFraming?: PhotoFraming;
   finalImage?: string;
