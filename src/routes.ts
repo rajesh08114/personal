@@ -11,6 +11,7 @@ export const pageLoaders = {
   templates: loadChunk(() => import('@/pages/TemplatesPage')),
   templatePreview: loadChunk(() => import('@/pages/TemplatePreviewPage')),
   birthday: loadChunk(() => import('@/pages/BirthdayPage')),
+  privacy: loadChunk(() => import('@/pages/PrivacyPage')),
 };
 
 /** Downloads page chunks in the background once the main thread is idle. Never on slow or data-saving connections. */

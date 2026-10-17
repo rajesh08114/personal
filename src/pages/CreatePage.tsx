@@ -28,7 +28,7 @@ import { cn } from '@/utils/cn';
 
 /** `/create` — the Birthday Studio: customise everything with a live preview. */
 export default function CreatePage() {
-  const { config, ready, status, saveError, shareId, setConfig, setShareId, reset } = useDraft();
+  const { config, ready, status, saveError, shareId, editToken, setConfig, setShareId, reset } = useDraft();
   const [params, setParams] = useSearchParams();
   const [openSection, setOpenSection] = useState<SectionId | null>('basics');
   const [shareOpen, setShareOpen] = useState(params.get('share') === '1');
@@ -180,6 +180,7 @@ export default function CreatePage() {
             onClose={() => setShareOpen(false)}
             config={config}
             shareId={shareId}
+            editToken={editToken}
             onSaved={setShareId}
             onImport={(c, importedId) => {
               setConfig(c);

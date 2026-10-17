@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, HardDrive, Globe2, Share2 } from 'lucide-react';
+import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, HardDrive, Globe2, Share2, Trash2 } from 'lucide-react';
+import { Link } from 'react-router';
 import type { BirthdayConfig } from '@/types/birthday';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -14,19 +15,21 @@ interface ShareDialogProps {
   onClose: () => void;
   config: BirthdayConfig;
   shareId?: string;
-  onSaved: (id: string) => void;
+  editToken?: string;
+  onSaved: (id: string | undefined, editToken?: string) => void;
   onImport: (config: BirthdayConfig, shareId?: string) => void;
   onJump: (section: string) => void;
 }
 
 const linkFor = (id: string) => `${window.location.origin}/birthday/${id}`;
 
-export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport, onJump }: ShareDialogProps) {
+export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved, onImport, onJump }: ShareDialogProps) {
   const toast = useToast();
   const local = storageMode === 'local';
   const [busy, setBusy] = useState(false);
   const [savedId, setSavedId] = useState<string | undefined>(shareId);
   const [copied, setCopied] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const missing = getReadiness(config).filter((r) => !r.done);
   const link = savedId ? linkFor(savedId) : null;
@@ -35,13 +38,30 @@ export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport,
   const save = async (): Promise<string | null> => {
     setBusy(true);
     try {
-      const id = await experienceRepository.save(config, savedId);
-      setSavedId(id);
-      onSaved(id);
-      return id;
+      const saved = await experienceRepository.save(config, savedId, editToken);
+      setSavedId(saved.id);
+      onSaved(saved.id, saved.editToken);
+      return saved.id;
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Saving failed. Please try again.', 'error');
       return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Takes the shared link offline. The draft stays, so it can be published again later. */
+  const unpublish = async () => {
+    if (!savedId) return;
+    setBusy(true);
+    try {
+      await experienceRepository.remove(savedId, editToken);
+      setSavedId(undefined);
+      onSaved(undefined);
+      setConfirmRemove(false);
+      toast('The link has been removed. Your draft is still here.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Removing the link failed. Please try again.', 'error');
     } finally {
       setBusy(false);
     }
@@ -189,7 +209,25 @@ export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport,
             <Button variant="ghost" size="sm" loading={busy} onClick={() => void save().then((id) => id && toast('Link updated with your latest changes.', 'success'))}>
               Update with latest changes
             </Button>
+            {editToken && !confirmRemove && (
+              <Button variant="ghost" size="sm" onClick={() => setConfirmRemove(true)} icon={<Trash2 className="size-4" aria-hidden />}>
+                Unpublish
+              </Button>
+            )}
           </div>
+          {confirmRemove && (
+            <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+              <p>Remove this link? Anyone who opens it will see “couldn’t be found”. Your draft stays in the studio.</p>
+              <div className="mt-2 flex gap-2">
+                <Button variant="secondary" size="sm" loading={busy} onClick={() => void unpublish()}>
+                  Remove link
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmRemove(false)}>
+                  Keep it
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <Button variant="brand" size="lg" className="w-full" loading={busy} onClick={() => void save()} icon={<Globe2 className="size-5" aria-hidden />}>
@@ -211,6 +249,12 @@ export function ShareDialog({ open, onClose, config, shareId, onSaved, onImport,
           </Button>
           <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => void importFile(e.target.files?.[0])} />
         </div>
+        <p className="mt-4 text-xs text-ink-500">
+          {local ? 'Nothing leaves this browser.' : 'Published photos, words and music are stored on our server until you unpublish.'}{' '}
+          <Link to="/privacy" target="_blank" className="underline underline-offset-2 hover:text-ink-800">
+            Privacy
+          </Link>
+        </p>
       </div>
     </Modal>
   );

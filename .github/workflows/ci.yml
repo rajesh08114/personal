@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -19,3 +26,34 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t birthday-studio .
+      - name: Smoke test the image
+        run: |
+          docker run -d --name app -p 8787:8787 -e PUBLIC_ORIGIN=http://localhost:8787 birthday-studio
+          for i in $(seq 1 20); do curl -fsS http://localhost:8787/api/health && break; sleep 1; done
+          curl -fsS http://localhost:8787/templates | grep -q '<div id="root">'
+          docker logs app

@@ -26,14 +26,19 @@ const CSP = [
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const apiUrl = env.VITE_BIRTHDAY_API_URL?.trim();
-  if (apiUrl && !/^https?:\/\/[^\s]+$/i.test(apiUrl)) {
-    throw new Error(`VITE_BIRTHDAY_API_URL must be an http(s) URL, got "${apiUrl}".`);
+  if (apiUrl && !/^(https?:\/\/[^\s]+|\/[^\s]*)$/i.test(apiUrl)) {
+    throw new Error(`VITE_BIRTHDAY_API_URL must be an http(s) URL or a same-origin path like /api, got "${apiUrl}".`);
   }
+  // `npm run dev:server` runs the API on :8787; the dev server forwards to it so VITE_BIRTHDAY_API_URL=/api works.
+  const devApi = env.VITE_DEV_API_TARGET?.trim() || 'http://localhost:8787';
 
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    },
+    server: {
+      proxy: { '/api': devApi, '/media': devApi },
     },
     preview: {
       headers: {

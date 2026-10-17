@@ -12,9 +12,11 @@ interface DraftContextValue {
   status: SaveStatus;
   saveError: string | null;
   shareId?: string;
+  /** Lets this browser update or unpublish the shared link (server mode). */
+  editToken?: string;
   setConfig: (next: BirthdayConfig | ((prev: BirthdayConfig) => BirthdayConfig)) => void;
   patch: (partial: Partial<BirthdayConfig>) => void;
-  setShareId: (id: string) => void;
+  setShareId: (id: string | undefined, editToken?: string) => void;
   reset: () => void;
 }
 
@@ -27,6 +29,7 @@ const DraftContext = createContext<DraftContextValue | null>(null);
 export function DraftProvider({ children }: { children: ReactNode }) {
   const [config, setConfigState] = useState<BirthdayConfig>(createDefaultConfig);
   const [shareId, setShareIdState] = useState<string | undefined>();
+  const [editToken, setEditToken] = useState<string | undefined>();
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState<SaveStatus>('loading');
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -40,6 +43,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         if (cancelled || !draft) return;
         setConfigState(draft.config);
         setShareIdState(draft.shareId);
+        setEditToken(draft.editToken);
       })
       .catch(() => {
         /* No storage (private mode etc.) — keep working in memory. */
@@ -59,7 +63,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
     setStatus('saving');
     const t = window.setTimeout(() => {
       draftStorage
-        .save(config, shareId)
+        .save({ config, shareId, editToken })
         .then(() => {
           setStatus('saved');
           setSaveError(null);
@@ -70,7 +74,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         });
     }, 450);
     return () => window.clearTimeout(t);
-  }, [config, shareId, ready]);
+  }, [config, shareId, editToken, ready]);
 
   const setConfig = useCallback<DraftContextValue['setConfig']>((next) => {
     dirty.current = true;
@@ -79,20 +83,22 @@ export function DraftProvider({ children }: { children: ReactNode }) {
 
   const patch = useCallback((partial: Partial<BirthdayConfig>) => setConfig((prev) => ({ ...prev, ...partial })), [setConfig]);
 
-  const setShareId = useCallback((id: string) => {
+  const setShareId = useCallback((id: string | undefined, token?: string) => {
     dirty.current = true;
     setShareIdState(id);
+    setEditToken(token);
   }, []);
 
   const reset = useCallback(() => {
     dirty.current = true;
     setShareIdState(undefined);
+    setEditToken(undefined);
     setConfigState((prev) => ({ ...createDefaultConfig(), templateId: prev.templateId }));
   }, []);
 
   const value = useMemo(
-    () => ({ config, ready, status, saveError, shareId, setConfig, patch, setShareId, reset }),
-    [config, ready, status, saveError, shareId, setConfig, patch, setShareId, reset],
+    () => ({ config, ready, status, saveError, shareId, editToken, setConfig, patch, setShareId, reset }),
+    [config, ready, status, saveError, shareId, editToken, setConfig, patch, setShareId, reset],
   );
 
   return <DraftContext.Provider value={value}>{children}</DraftContext.Provider>;

@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev:server": "vite build --config vite.server.config.ts --mode development && STATIC_DIR= PUBLIC_ORIGIN=http://localhost:5173 CORS_ORIGINS=http://localhost:5173 node dist-server/index.js",
+    "build": "tsc -b && vite build && npm run build:server",
+    "build:server": "vite build --config vite.server.config.ts",
+    "start": "node --enable-source-maps dist-server/index.js",
     "preview": "vite preview --port 4173",
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\"",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
@@ -22,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",

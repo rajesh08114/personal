@@ -14,12 +14,15 @@ npm run dev        # http://localhost:5173
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm run build` | Type-check and build for production into `dist/` |
+| `npm run dev:server` | Run the API on :8787 for server mode in development (the dev server proxies `/api` and `/media` to it) |
+| `npm run build` | Type-check and build the app into `dist/` and the server into `dist-server/` |
+| `npm run start` | Run the production server: app + API on one port (see [Deployment](#deployment)) |
 | `npm run preview` | Serve the production build on :4173 with the production security headers (CSP etc.) |
 | `npm run typecheck` | TypeScript only |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
-| `npm test` | Unit tests (Vitest) |
+| `npm test` | Unit and API tests (Vitest) |
+| `npm run test:e2e` | End-to-end tests in Chromium, desktop and mobile (Playwright, server mode) |
 | `npm run check` | Everything CI runs: typecheck, lint, tests, build |
 
 Requires Node 20.19+ or 22.12+ (tested on Node 23). Copy `.env.example` to `.env.local` for the optional settings below.
@@ -34,6 +37,9 @@ Requires Node 20.19+ or 22.12+ (tested on Node 23). Copy `.env.example` to `.env
 | `/create` | The studio: customise everything with a live desktop, tablet or mobile preview |
 | `/preview` | Full-screen preview of your draft (`?embed=1` runs inside the studio's preview frame) |
 | `/birthday/:id` | The shared link the recipient opens. It has no creator controls |
+| `/privacy` | What is stored, where, and how to remove it |
+
+A first-time visitor to `/` (no draft yet) is sent to `/templates`.
 
 ## How to make one (no code needed)
 
@@ -237,36 +243,42 @@ On import, the file goes through `normalizeConfig`, so unknown fields are droppe
 
 ### Server mode
 
-Set one environment variable and rebuild:
+The repo includes a production server (`server/`, no runtime dependencies) that serves the app and the API from one origin. Build the client with the API path and start it:
 
 ```bash
-# .env.local
-VITE_BIRTHDAY_API_URL=https://api.example.com
+VITE_BIRTHDAY_API_URL=/api npm run build
+PUBLIC_ORIGIN=https://birthday.example.com npm run start   # or use the Dockerfile
 ```
 
-Share links now open on any device. The Share dialog switches to "Your birthday experience is ready to share" with **Copy share link** and **Open experience** buttons (and **Update with latest changes**). Backup download and import stay available.
+Share links now open on any device. The Share dialog switches to "Your birthday experience is ready to share" with **Copy share link**, **Open experience**, **Update with latest changes** and **Unpublish**. Backup download and import stay available.
 
-The client (`src/data/api/birthdayApi.ts`) expects:
+For development, run `npm run dev:server` in one terminal and `VITE_BIRTHDAY_API_URL=/api npm run dev` in another.
 
-| Function | Method | Path | Body | Returns |
-| --- | --- | --- | --- | --- |
-| `createExperience` | `POST` | `/birthdays` | `BirthdayConfig` | `{ id }` |
-| `updateExperience` | `PUT` | `/birthdays/:id` | `BirthdayConfig` | `{ id }` |
-| `getExperience` | `GET` | `/birthdays/:id` | — | `BirthdayConfig` (404 if missing) |
+**API** (`src/data/api/birthdayApi.ts` is the client):
 
-Network failures and error statuses surface as friendly messages in the dialog.
+| Method | Path | Body | Returns |
+| --- | --- | --- | --- |
+| `POST` | `/api/media` | Photo or song bytes (JPG, PNG, WEBP, MP3, WAV) | `{ url }` (201) |
+| `POST` | `/api/birthdays` | `BirthdayConfig` | `{ id, editToken }` (201) |
+| `GET` | `/api/birthdays/:id` | — | `BirthdayConfig` (404 if missing) |
+| `PUT` | `/api/birthdays/:id` | `BirthdayConfig`, with `Authorization: Bearer <editToken>` | `{ id }` |
+| `DELETE` | `/api/birthdays/:id` | `Authorization: Bearer <editToken>` | 204 |
+| `POST` | `/api/errors` | Client error report | 204 (written to the server log) |
+| `GET` | `/api/health` | — | `{ ok: true }` |
 
-**Using a different backend.** UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts`:
+How it stays safe:
 
-```ts
-interface ExperienceRepository {
-  readonly mode: 'local' | 'server';
-  save(config: BirthdayConfig, existingId?: string): Promise<string>;
-  get(id: string): Promise<BirthdayConfig | null>;
-}
-```
+- **Ownership.** Creating a birthday returns a random edit token, shown only once. The server stores only its SHA-256 hash and compares it in constant time. The token lives in the creator's draft. A browser without it, such as one that imported a backup, publishes a new link instead of overwriting the old one. Backups never contain the token.
+- **Small payloads, real files.** The draft keeps photos and music embedded (so backups stay self-contained). On publish, each one is uploaded once to `/api/media` and the published config points at the hosted file. Uploads are content-addressed (identical files are stored once), and the server checks the file's signature, not its claimed type.
+- **Validation.** Every config passes through the same `normalizeConfig` as the client. The server then keeps only media URLs it hosts, so a published page can't load third-party images or tracking pixels. JSON bodies are capped at 512 KB, photos at 8 MB, songs at 13 MB.
+- **Abuse limits.** Per-IP rate limits for reads, writes and uploads (configurable). Cross-site writes are refused unless the origin is in `CORS_ORIGINS`. Uploads that no birthday references are deleted after 24 hours.
+- **Privacy.** Shared pages send `X-Robots-Tag: noindex` and birthday ids are redacted from access logs.
+- **Link previews.** `/birthday/:id` is served with its own title, description and `og:image` (the hero photo), so WhatsApp, iMessage and Slack show "Happy Birthday, Maya!" instead of a generic card. Missing links return a real 404.
+- **Media playback.** Byte-range requests are supported, which Safari needs for audio.
 
-For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes. For production, consider uploading images to object storage and storing `https://` URLs instead of data URLs (`normalizeConfig` already accepts them), so payloads stay small.
+**Storage and scaling.** `server/store.ts` keeps one JSON file per birthday and one file per upload under `DATA_DIR`, with atomic writes. That suits a single instance with a persistent volume. To run several instances, replace `FileStore` with a database and object storage, and the in-memory `RateLimiter` with a shared one (e.g. Redis). The HTTP layer doesn't change.
+
+**Using a different backend.** UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts` (`save`, `get`, `remove`). For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes.
 
 ## Adding a template
 
@@ -315,20 +327,30 @@ On `/templates`, the Preview and Studio pages are prefetched while the browser i
 
 ## Production checklist
 
-- **Environment:** `VITE_BIRTHDAY_API_URL` (server mode) is validated at build time and must be an http(s) URL. `VITE_ERROR_REPORT_URL` is optional (see below). Both are typed in `src/vite-env.d.ts`.
-- **Security headers:** `vercel.json` and `public/_headers` (Netlify / Cloudflare Pages) set the same policy, and `npm run preview` applies it locally:
-  - Content-Security-Policy: scripts only from this origin, no inline scripts, fonts only from Google Fonts, `frame-ancestors 'self'`. `connect-src` allows `https:` so any server-mode API works; tighten it to your API's origin if you like.
-  - `X-Content-Type-Options`, `Referrer-Policy`, HSTS.
-  - `Permissions-Policy`: the microphone is allowed for this origin only (the cake can be blown out by voice); camera and geolocation are off.
-- **Caching:** `/assets/*` is `immutable` for a year; `index.html` is `no-cache`, so new deploys are picked up immediately.
-- **Privacy:** `/birthday/:id` pages send `noindex, nofollow`, and `robots.txt` disallows `/birthday/`, `/preview` and `/create`.
-- **Errors:** a root error boundary and global `error` / `unhandledrejection` listeners call `reportError`. Set `VITE_ERROR_REPORT_URL` to receive JSON reports (`name`, `message`, `stack`, `path`, `userAgent`) by `sendBeacon`. Birthday content (names, messages, photos) is never included. Reports are de-duplicated and capped per page load.
-- **App shell:** a web app manifest, theme colour, Open Graph tags, a `noscript` message and a lightweight boot placeholder.
-- **CI:** `.github/workflows/ci.yml` runs typecheck, lint, tests and build on every push and pull request.
+- **Environment:** see `.env.example`. Client settings (`VITE_*`) are baked in at build time; `VITE_BIRTHDAY_API_URL` is validated and must be an http(s) URL or a same-origin path. Server settings are read at start-up; `PUBLIC_ORIGIN` is required when `NODE_ENV=production`.
+- **Security headers:** the bundled server, `vercel.json` and `public/_headers` set the same policy, and `npm run preview` applies it locally. The bundled server is stricter: `connect-src`, `img-src` and `media-src` are limited to its own origin, plus `Cross-Origin-Opener-Policy`. Also: `X-Content-Type-Options`, `Referrer-Policy`, HSTS (on https origins), and a `Permissions-Policy` that allows the microphone for this origin only (the cake can be blown out by voice).
+- **Caching:** `/assets/*` and uploaded media are `immutable` for a year; `index.html` is `no-cache`, so new deploys are picked up immediately. The server gzips text assets.
+- **Privacy:** a `/privacy` page explains what is stored and how to remove it (set `VITE_CONTACT_EMAIL` to show a takedown contact). Creators can unpublish a link. `/birthday/:id` pages send `noindex, nofollow`, and `robots.txt` disallows `/birthday/`, `/preview` and `/create`.
+- **Errors and logs:** a root error boundary and global `error` / `unhandledrejection` listeners call `reportError`. With `VITE_ERROR_REPORT_URL=/api/errors` (the Docker default) reports land in the server log. Reports never include birthday content and are capped per page load. The server writes one JSON line per request and per error to stdout/stderr.
+- **Operations:** `/api/health` for load balancers, a Docker `HEALTHCHECK`, graceful shutdown on `SIGTERM`, request timeouts, and a non-root container user. Back up `DATA_DIR`.
+- **App shell:** a web app manifest with PNG and maskable icons, an Apple touch icon, a 1200×630 social image (`scripts/generate-icons.mjs` regenerates them), theme colour, a `noscript` message and a lightweight boot placeholder.
+- **CI:** `.github/workflows/ci.yml` runs typecheck, lint, unit and API tests, the build and `npm audit` on every push and pull request. It also runs the Playwright suite and builds and smoke-tests the Docker image. Dependabot keeps npm packages, Actions and the base image up to date.
 
 ## Deployment
 
-It is a static single-page app. Run `npm run build` and deploy `dist/`.
+**Recommended: one container (server mode).** Links work on every device.
+
+```bash
+docker build --build-arg VITE_CONTACT_EMAIL=hello@example.com -t birthday-studio .
+docker run -p 8787:8787 \
+  -e PUBLIC_ORIGIN=https://birthday.example.com \
+  -e TRUST_PROXY=1 \
+  -v birthday-data:/data birthday-studio
+```
+
+Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Caddy…), and mount a persistent volume at `/data`. Set `TRUST_PROXY=1` only when a proxy you control sets `X-Forwarded-For`, so rate limits apply per visitor.
+
+**Static only (local share mode).** Run `npm run build` and deploy `dist/`. Links only open in the creator's browser.
 
 - **Vercel:** `vercel.json` rewrites routes to `index.html` and sets the headers above.
 - **Netlify / Cloudflare Pages:** `public/_redirects` and `public/_headers` are included.
@@ -336,4 +358,6 @@ It is a static single-page app. Run `npm run build` and deploy `dist/`.
 
 ## Testing
 
-`npm test` runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build was also checked under `npm run preview` with the production CSP: no policy violations, lazy chunks loading on demand, and a missing chunk triggering exactly one reload.
+`npm run test:e2e` builds the app in server mode, starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium.
+
+`npm test` covers the API end to end over HTTP: edit tokens, validation, media sniffing, byte ranges, garbage collection, link previews, 404s and rate limits. It also covers the client's publish flow (uploads, token fallback), and runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build was also checked under `npm run preview` with the production CSP: no policy violations, lazy chunks loading on demand, and a missing chunk triggering exactly one reload.

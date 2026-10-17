@@ -12,6 +12,7 @@ const PreviewPage = lazy(pageLoaders.preview);
 const TemplatesPage = lazy(pageLoaders.templates);
 const TemplatePreviewPage = lazy(pageLoaders.templatePreview);
 const BirthdayPage = lazy(pageLoaders.birthday);
+const PrivacyPage = lazy(pageLoaders.privacy);
 
 function NotFound() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
                 <Route path="/templates" element={<TemplatesPage />} />
                 <Route path="/templates/:id" element={<TemplatePreviewPage />} />
                 <Route path="/birthday/:id" element={<BirthdayPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
