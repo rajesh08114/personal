@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "lucide-react": "^1.51.0",
+    "mongodb": "^7.7.0",
     "motion": "^14.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -35,6 +35,10 @@ export default defineConfig({
       PUBLIC_ORIGIN: origin,
       DATA_DIR: '.e2e-data',
       STATIC_DIR: 'dist-e2e',
+      // Set MONGODB_URI to run the same suite against MongoDB storage.
+      ...(process.env.MONGODB_URI
+        ? { MONGODB_URI: process.env.MONGODB_URI, MONGODB_DB: 'birthday_e2e' }
+        : {}),
     },
   },
 });

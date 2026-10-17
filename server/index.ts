@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { loadConfig } from './config';
-import { FileStore } from './store';
+import { FileStore, type Store } from './store';
 import { createApp } from './app';
 
 /** One JSON line per event, ready for any log collector. */
@@ -11,7 +11,10 @@ const log = (entry: object) => {
 };
 
 const config = loadConfig();
-const store = new FileStore(config.dataDir);
+// MongoDB is loaded only when configured, so file storage needs no database driver.
+const store: Store = config.mongoUri
+  ? new (await import('./mongoStore')).MongoStore(config.mongoUri, config.mongoDb)
+  : new FileStore(config.dataDir);
 await store.init();
 const app = createApp(config, store, log);
 
@@ -37,13 +40,14 @@ server.listen(config.port, config.host, () => {
     event: 'listening',
     port: config.port,
     origin: config.publicOrigin,
+    storage: config.mongoUri ? 'mongodb' : 'files',
     static: config.staticDir || null,
   });
 });
 
 function shutdown(signal: string) {
   log({ level: 'info', event: 'shutdown', signal });
-  server.close(() => process.exit(0));
+  server.close(() => void store.close().finally(() => process.exit(0)));
   server.closeIdleConnections();
   setTimeout(() => process.exit(0), 10_000).unref();
 }

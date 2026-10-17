@@ -276,9 +276,19 @@ How it stays safe:
 - **Link previews.** `/birthday/:id` is served with its own title, description and `og:image` (the hero photo), so WhatsApp, iMessage and Slack show "Happy Birthday, Maya!" instead of a generic card. Missing links return a real 404.
 - **Media playback.** Byte-range requests are supported, which Safari needs for audio.
 
-**Storage and scaling.** `server/store.ts` keeps one JSON file per birthday and one file per upload under `DATA_DIR`, with atomic writes. That suits a single instance with a persistent volume. To run several instances, replace `FileStore` with a database and object storage, and the in-memory `RateLimiter` with a shared one (e.g. Redis). The HTTP layer doesn't change.
+**Storage.** Two backends, chosen at start-up. Both are covered by the same API test suite.
 
-**Using a different backend.** UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts` (`save`, `get`, `remove`). For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes.
+- **Files (default).** `server/store.ts` keeps one JSON file per birthday and one file per upload under `DATA_DIR`, with atomic writes. This suits a single instance with a persistent volume.
+- **MongoDB.** Set `MONGODB_URI`, and optionally `MONGODB_DB`. `server/mongoStore.ts` stores birthdays in the `birthdays` collection and photos and songs in the `media` **GridFS** bucket (`media.files` / `media.chunks`). GridFS splits files into chunks, so uploads aren't limited by MongoDB's 16 MB document size. Uploads are still named by content hash and stored once, and byte-range requests stream directly from GridFS. Nothing is written to local disk, so several server instances can share one database (MongoDB Atlas works as-is). `docker compose up` runs the app with a local MongoDB.
+
+  ```bash
+  MONGODB_URI="mongodb+srv://user:pass@cluster.example.mongodb.net" MONGODB_DB=birthday_studio \
+  PUBLIC_ORIGIN=https://birthday.example.com npm run start
+  ```
+
+With several instances, rate limits are still counted per instance (in memory). Swap `RateLimiter` for a shared one, such as Redis, if you need exact global limits.
+
+**Using a different backend.** On the server, implement the `Store` interface in `server/store.ts` (for Postgres, S3 and so on). In the browser, UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts` (`save`, `get`, `remove`). For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes.
 
 ## Adding a template
 
@@ -348,6 +358,8 @@ docker run -p 8787:8787 \
   -v birthday-data:/data birthday-studio
 ```
 
+With MongoDB instead of a volume, add `-e MONGODB_URI=…`, or run `docker compose up` (app + MongoDB).
+
 Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Caddy…), and mount a persistent volume at `/data`. Set `TRUST_PROXY=1` only when a proxy you control sets `X-Forwarded-For`, so rate limits apply per visitor.
 
 **Static only (local share mode).** Run `npm run build` and deploy `dist/`. Links only open in the creator's browser.
@@ -358,6 +370,8 @@ Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Ca
 
 ## Testing
 
-`npm run test:e2e` builds the app in server mode, starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium.
+`npm run test:e2e` builds the app in server mode, starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium, and `MONGODB_URI` to run it against MongoDB storage. CI runs it with both backends.
+
+Set `MONGODB_TEST_URI=mongodb://127.0.0.1:27017` to also run the API tests against MongoDB. CI does this with a MongoDB service.
 
 `npm test` covers the API end to end over HTTP: edit tokens, validation, media sniffing, byte ranges, garbage collection, link previews, 404s and rate limits. It also covers the client's publish flow (uploads, token fallback), and runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build was also checked under `npm run preview` with the production CSP: no policy violations, lazy chunks loading on demand, and a missing chunk triggering exactly one reload.

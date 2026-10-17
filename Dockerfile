@@ -1,6 +1,9 @@
-# Birthday Studio: the app and its API in one small image (no runtime npm dependencies).
+# Birthday Studio: the app and its API in one image.
+# Storage: files under /data by default, or MongoDB (uploads in GridFS) when MONGODB_URI is set.
 #   docker build --build-arg VITE_CONTACT_EMAIL=hello@example.com -t birthday-studio .
 #   docker run -p 8787:8787 -e PUBLIC_ORIGIN=https://birthday.example.com -v birthday-data:/data birthday-studio
+#   docker run -p 8787:8787 -e PUBLIC_ORIGIN=... -e MONGODB_URI=mongodb+srv://... birthday-studio
+# Or `docker compose up` for the app plus a MongoDB container.
 
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -19,6 +22,9 @@ RUN npm run build
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=8787 DATA_DIR=/data STATIC_DIR=/app/dist
 WORKDIR /app
+# Runtime packages only (the MongoDB driver); the app itself is pre-built.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/dist-server ./dist-server
 RUN mkdir -p /data && chown node:node /data

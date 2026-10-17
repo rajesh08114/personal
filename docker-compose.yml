@@ -1,0 +1,27 @@
+# The app with MongoDB storage: `docker compose up`, then open http://localhost:8787
+# For production set PUBLIC_ORIGIN to your https address and put a TLS proxy in front.
+services:
+  app:
+    build: .
+    ports: ['8787:8787']
+    environment:
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8787}
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: birthday_studio
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8
+    volumes: ['mongo-data:/data/db']
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.runCommand({ ping: 1 }).ok']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

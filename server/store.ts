@@ -1,5 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import type { Readable } from 'node:stream';
 import path from 'node:path';
 import type { BirthdayConfig } from '../src/types/birthday';
 import { createId } from '../src/utils/id';
@@ -24,6 +26,40 @@ export type MediaType = keyof typeof MEDIA_TYPES;
 export const MEDIA_FILE = /^([a-f0-9]{64})\.(webp|jpg|png|mp3|wav)$/;
 export const BIRTHDAY_ID = /^[a-km-np-z2-9]{10}$/;
 
+export interface StoredMedia {
+  size: number;
+  /** Streams the file, or the inclusive byte range start..end. */
+  stream(start?: number, end?: number): Readable;
+}
+
+/**
+ * Where birthdays and uploads live. `FileStore` (a directory) is the default;
+ * `MongoStore` (MongoDB, uploads in GridFS) is used when MONGODB_URI is set.
+ */
+export interface Store {
+  init(): Promise<void>;
+  get(id: string): Promise<StoredBirthday | null>;
+  create(config: BirthdayConfig): Promise<{ id: string; editToken: string }>;
+  update(record: StoredBirthday, config: BirthdayConfig): Promise<void>;
+  delete(id: string): Promise<void>;
+  /** Stores an upload once per content hash and returns its file name (`<sha256>.<ext>`). */
+  putMedia(bytes: Buffer, type: MediaType): Promise<string>;
+  openMedia(name: string): Promise<StoredMedia | null>;
+  /** Deletes uploads that no birthday references and that are older than `olderThanMs`. */
+  collectGarbage(olderThanMs: number): Promise<number>;
+  close(): Promise<void>;
+}
+
+export const mediaName = (bytes: Buffer, type: MediaType) =>
+  `${createHash('sha256').update(bytes).digest('hex')}.${MEDIA_TYPES[type]}`;
+
+/** Upload file names referenced anywhere in a stored birthday. */
+export function mediaReferences(serialized: string): string[] {
+  return [...serialized.matchAll(/\/media\/([a-f0-9]{64}\.[a-z0-9]+)/g)].map((m) => m[1]);
+}
+
+export const newEditToken = () => randomBytes(24).toString('base64url');
+
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
 export function tokenMatches(record: StoredBirthday, token: string | undefined): boolean {
@@ -38,7 +74,7 @@ export function tokenMatches(record: StoredBirthday, token: string | undefined):
  * Writes are atomic (temp file + rename). Designed for a single server process with a
  * persistent volume; swap this class for a database/object-storage implementation to scale out.
  */
-export class FileStore {
+export class FileStore implements Store {
   private readonly birthdays: string;
   private readonly media: string;
 
@@ -76,7 +112,7 @@ export class FileStore {
   async create(config: BirthdayConfig): Promise<{ id: string; editToken: string }> {
     let id = createId(10);
     while (await this.get(id)) id = createId(10);
-    const editToken = randomBytes(24).toString('base64url');
+    const editToken = newEditToken();
     const now = new Date().toISOString();
     const record: StoredBirthday = {
       id,
@@ -99,7 +135,7 @@ export class FileStore {
   }
 
   async putMedia(bytes: Buffer, type: MediaType): Promise<string> {
-    const name = `${createHash('sha256').update(bytes).digest('hex')}.${MEDIA_TYPES[type]}`;
+    const name = mediaName(bytes, type);
     const file = path.join(this.media, name);
     try {
       await stat(file);
@@ -114,13 +150,19 @@ export class FileStore {
     return MEDIA_FILE.test(name) ? path.join(this.media, name) : null;
   }
 
-  /** Deletes uploads that no birthday references and that are older than `olderThanMs`. */
+  async openMedia(name: string): Promise<StoredMedia | null> {
+    const file = this.mediaPath(name);
+    const info = file ? await stat(file).catch(() => null) : null;
+    if (!file || !info?.isFile()) return null;
+    return { size: info.size, stream: (start, end) => createReadStream(file, { start, end }) };
+  }
+
   async collectGarbage(olderThanMs: number): Promise<number> {
     const referenced = new Set<string>();
     for (const file of await readdir(this.birthdays)) {
       if (!file.endsWith('.json')) continue;
       const text = await readFile(path.join(this.birthdays, file), 'utf8').catch(() => '');
-      for (const m of text.matchAll(/\/media\/([a-f0-9]{64}\.[a-z0-9]+)/g)) referenced.add(m[1]);
+      for (const name of mediaReferences(text)) referenced.add(name);
     }
     let removed = 0;
     const cutoff = Date.now() - olderThanMs;
@@ -135,4 +177,6 @@ export class FileStore {
     }
     return removed;
   }
+
+  async close(): Promise<void> {}
 }

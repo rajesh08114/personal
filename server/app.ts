@@ -1,5 +1,4 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -7,7 +6,7 @@ import type { BirthdayConfig } from '../src/types/birthday';
 import { normalizeConfig, isTemplateId } from '../src/data/normalizeConfig';
 import { mapConfigMedia } from '../src/data/configMedia';
 import type { ServerConfig } from './config';
-import { BIRTHDAY_ID, FileStore, MEDIA_FILE, MEDIA_TYPES, tokenMatches, type MediaType } from './store';
+import { BIRTHDAY_ID, MEDIA_FILE, MEDIA_TYPES, tokenMatches, type MediaType, type Store } from './store';
 import { RateLimiter } from './rateLimit';
 import { birthdayMeta, injectMeta } from './meta';
 
@@ -64,11 +63,7 @@ export interface App {
   mediaPrefix: string;
 }
 
-export function createApp(
-  config: ServerConfig,
-  store: FileStore,
-  log: (entry: object) => void = () => {},
-): App {
+export function createApp(config: ServerConfig, store: Store, log: (entry: object) => void = () => {}): App {
   const limiter = new RateLimiter(60_000);
   const mediaPrefix = `${config.publicOrigin}/media/`;
   const allowedOrigins = new Set([config.publicOrigin, ...config.corsOrigins]);
@@ -258,9 +253,14 @@ export function createApp(
 
   async function serveMedia(req: IncomingMessage, res: ServerResponse, name: string) {
     limit(req, 'read');
-    const file = store.mediaPath(name);
-    const info = file ? await stat(file).catch(() => null) : null;
-    if (!file || !info) throw new HttpError(404, 'Not found.');
+    const media = MEDIA_FILE.test(name) ? await store.openMedia(name) : null;
+    if (!media) throw new HttpError(404, 'Not found.');
+    const info = { size: media.size };
+    const pipe = (start?: number, end?: number) => {
+      const stream = media.stream(start, end);
+      stream.on('error', () => res.destroy());
+      stream.pipe(res);
+    };
     const type = Object.entries(MEDIA_TYPES).find(([, ext]) => name.endsWith(`.${ext}`))![0];
     const headers: Record<string, string | number> = {
       'Content-Type': type,
@@ -286,12 +286,12 @@ export function createApp(
         'Content-Length': end - start + 1,
       });
       if (req.method === 'HEAD') return void res.end();
-      createReadStream(file, { start, end }).pipe(res);
+      pipe(start, end);
       return;
     }
     res.writeHead(200, { ...headers, 'Content-Length': info.size });
     if (req.method === 'HEAD') return void res.end();
-    createReadStream(file).pipe(res);
+    pipe();
   }
 
   async function loadStatic(rel: string) {

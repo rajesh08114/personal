@@ -4,8 +4,12 @@ import path from 'node:path';
 export interface ServerConfig {
   port: number;
   host: string;
-  /** Where birthdays and uploaded media are stored. */
+  /** Where birthdays and uploaded media are stored when MongoDB isn't configured. */
   dataDir: string;
+  /** MongoDB connection string. When set, birthdays and uploads (GridFS) are stored in MongoDB instead of dataDir. */
+  mongoUri: string;
+  /** Database name; defaults to the one in the connection string, else "test" (MongoDB's default). */
+  mongoDb: string;
   /** The built client (`dist/`). Set to '' to run the API only. */
   staticDir: string;
   /** Public origin of the app, e.g. https://birthday.example.com. Used for media URLs and link previews. */
@@ -45,6 +49,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     port,
     host: env.HOST ?? '0.0.0.0',
     dataDir: path.resolve(env.DATA_DIR ?? './data'),
+    mongoUri: (env.MONGODB_URI ?? '').trim(),
+    mongoDb: (env.MONGODB_DB ?? '').trim(),
     staticDir: env.STATIC_DIR === '' ? '' : path.resolve(env.STATIC_DIR ?? './dist'),
     publicOrigin: publicOrigin || `http://localhost:${port}`,
     corsOrigins: (env.CORS_ORIGINS ?? '')
