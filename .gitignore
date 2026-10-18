@@ -5,9 +5,9 @@ dist
 .env.*
 !.env.example
 .playwright-mcp
-dist-server
-data
-test-results
-playwright-report
-dist-e2e
-.e2e-data
+/dist-server
+/data
+/test-results
+/playwright-report
+/dist-e2e
+/.e2e-data
