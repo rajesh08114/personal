@@ -1,8 +1,10 @@
+'use client';
+
 import { useEffect } from 'react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { storageMode } from '@/data/repository';
 
-const contact = import.meta.env.VITE_CONTACT_EMAIL?.trim();
+const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
 /** `/privacy` — what is stored, where, and how to remove it. Kept short and factual. */
 export default function PrivacyPage() {
@@ -67,7 +69,7 @@ export default function PrivacyPage() {
         )}
 
         <p className="pt-6">
-          <Link to="/templates" className="font-semibold underline underline-offset-4">
+          <Link href="/templates" className="font-semibold underline underline-offset-4">
             Back to templates
           </Link>
         </p>

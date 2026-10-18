@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, LayoutGrid, Pencil, X } from 'lucide-react';
 
@@ -26,7 +28,7 @@ export function CreatorBar({ label, children, backTo }: CreatorBarProps) {
         >
           {backTo && (
             <Link
-              to={backTo.to}
+              href={backTo.to}
               className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 font-semibold text-white/85 hover:bg-white/10 hover:text-white"
             >
               <ChevronLeft className="size-4" aria-hidden />
@@ -53,7 +55,7 @@ export function CreatorLink({ to, icon, children, primary }: { to: string; icon?
   const Icon = icon === 'grid' ? LayoutGrid : Pencil;
   return (
     <Link
-      to={to}
+      href={to}
       className={
         primary
           ? 'inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 font-semibold text-ink-900 hover:bg-white/90'

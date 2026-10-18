@@ -93,7 +93,7 @@ export function createServerRepository(baseUrl: string): ExperienceRepository {
   };
 }
 
-const apiUrl = import.meta.env.VITE_BIRTHDAY_API_URL?.trim();
+const apiUrl = process.env.NEXT_PUBLIC_BIRTHDAY_API_URL?.trim();
 export const experienceRepository: ExperienceRepository = apiUrl ? createServerRepository(apiUrl) : localRepository;
 export const storageMode: StorageMode = experienceRepository.mode;
 

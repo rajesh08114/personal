@@ -5,7 +5,7 @@ const origin = `http://127.0.0.1:${PORT}`;
 
 /**
  * End-to-end tests against the real production server (server mode) with a throwaway data dir.
- * `npm run test:e2e` builds the app with VITE_BIRTHDAY_API_URL=/api into dist-e2e first.
+ * `npm run test:e2e` builds the app with NEXT_PUBLIC_BIRTHDAY_API_URL=/api into .next-e2e first.
  */
 export default defineConfig({
   testDir: 'e2e',
@@ -24,17 +24,16 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command:
-      'rm -rf .e2e-data && VITE_BIRTHDAY_API_URL=/api npx vite build --outDir dist-e2e --emptyOutDir && npm run build:server && node dist-server/index.js',
+    // A separate build directory keeps `npm run dev` and the e2e build from overwriting each other.
+    command: 'npx next build && npx next start -p ' + PORT + ' -H 127.0.0.1',
     url: `${origin}/api/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 240_000,
     env: {
-      PORT: String(PORT),
-      HOST: '127.0.0.1',
+      NEXT_DIST_DIR: '.next-e2e',
+      NEXT_PUBLIC_BIRTHDAY_API_URL: '/api',
       PUBLIC_ORIGIN: origin,
-      DATA_DIR: '.e2e-data',
-      STATIC_DIR: 'dist-e2e',
+      DATA_DIR: `.e2e-data/${Date.now()}`,
       // Set MONGODB_URI to run the same suite against MongoDB storage.
       ...(process.env.MONGODB_URI
         ? { MONGODB_URI: process.env.MONGODB_URI, MONGODB_DB: 'birthday_e2e' }

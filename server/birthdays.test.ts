@@ -1,14 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createServer, type Server } from 'node:http';
-import { mkdtemp, mkdir, rm, utimes, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
 import { loadConfig } from './config';
 import { MongoClient } from 'mongodb';
 import { FileStore, type Store } from './store';
 import { MongoStore } from './mongoStore';
-import { createApp, sniffMedia } from './app';
+import { createApi, sniffMedia, type Api } from './api';
 import { RateLimiter } from './rateLimit';
 
 const WEBP = Buffer.concat([Buffer.from('RIFF\0\0\0\0WEBPVP8 '), Buffer.alloc(32, 1)]);
@@ -56,34 +54,33 @@ if (MONGO) {
 
 describe.each(BACKENDS)('$name storage', ({ make, age, cleanup }) => {
   let dir: string;
-  let server: Server;
-  let base: string;
+  let api: Api;
+  const base = 'https://birthday.test';
   let store: Store;
-  const ORIGIN = 'https://birthday.test';
+  const ORIGIN = base;
+
+  /** Drives the API in-process with Web Request and Response, the way the Next.js route handlers do. */
+  const fetch = (input: string, init?: RequestInit): Promise<Response> => {
+    const url = new URL(input);
+    const req = new Request(url, init);
+    if (url.pathname.startsWith('/media/'))
+      return api.handleMedia(req, decodeURIComponent(url.pathname.slice('/media/'.length)), '127.0.0.1');
+    if (url.pathname.startsWith('/api/')) return api.handleApi(req, '127.0.0.1');
+    return Promise.resolve(new Response(null, { status: 404 }));
+  };
 
   beforeAll(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'bd-server-'));
-    const dist = path.join(dir, 'dist');
-    await mkdir(path.join(dist, 'assets'), { recursive: true });
-    await writeFile(
-      path.join(dist, 'index.html'),
-      '<html><head><title>Birthday Studio</title><meta name="description" content="x" /><meta property="og:title" content="Birthday Studio" /></head><body></body></html>',
-    );
-    await writeFile(path.join(dist, 'assets', 'app-abc.js'), 'console.log(1);'.repeat(200));
     const config = {
-      ...loadConfig({ DATA_DIR: path.join(dir, 'data'), STATIC_DIR: dist, PUBLIC_ORIGIN: ORIGIN }),
+      ...loadConfig({ DATA_DIR: path.join(dir, 'data'), PUBLIC_ORIGIN: ORIGIN }),
       rateLimits: { read: 1000, write: 1000, upload: 1000 },
     };
     store = make(dir);
     await store.init();
-    const app = createApp(config, store);
-    server = createServer((req, res) => void app.handle(req, res));
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    api = createApi(config, store);
   });
 
   afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
     await store.close();
     await cleanup?.();
     await rm(dir, { recursive: true, force: true });
@@ -231,39 +228,6 @@ describe.each(BACKENDS)('$name storage', ({ make, age, cleanup }) => {
       expect(await store.collectGarbage(24 * 3600 * 1000)).toBeGreaterThanOrEqual(1);
       expect((await fetch(url!.replace(ORIGIN, base))).status).toBe(404);
       expect((await fetch(kept.url!.replace(ORIGIN, base))).status).toBe(200);
-    });
-  });
-
-  describe('app shell', () => {
-    it('serves known routes with 200, unknown ones with 404, and security headers everywhere', async () => {
-      const home = await fetch(`${base}/templates`);
-      expect(home.status).toBe(200);
-      expect(home.headers.get('content-security-policy')).toContain("script-src 'self'");
-      expect(home.headers.get('strict-transport-security')).toBeTruthy();
-      expect((await fetch(`${base}/templates/starry-night`)).status).toBe(200);
-      expect((await fetch(`${base}/templates/not-a-template`)).status).toBe(404);
-      expect((await fetch(`${base}/wp-admin`)).status).toBe(404);
-    });
-
-    it('caches hashed assets for a year and compresses them', async () => {
-      const res = await fetch(`${base}/assets/app-abc.js`, { headers: { 'Accept-Encoding': 'gzip' } });
-      expect(res.headers.get('cache-control')).toContain('immutable');
-      expect(res.headers.get('content-encoding')).toBe('gzip');
-    });
-
-    it('adds escaped link-preview tags to shared birthdays and keeps them out of search', async () => {
-      const { url } = await upload(WEBP);
-      const { id } = (await (
-        await post('/api/birthdays', { birthdayPerson: 'Maya "<b>', senderName: 'Alex', heroImage: url })
-      ).json()) as { id: string };
-      const res = await fetch(`${base}/birthday/${id}`);
-      const html = await res.text();
-      expect(res.headers.get('x-robots-tag')).toContain('noindex');
-      expect(html).toContain('<title>Happy Birthday, Maya &quot;&lt;b&gt;!</title>');
-      expect(html).toContain(`<meta property="og:image" content="${url}" />`);
-      expect(html).toContain('Alex made you a birthday surprise');
-      expect(html.match(/og:title/g)).toHaveLength(1);
-      expect((await fetch(`${base}/birthday/aaaaaaaaaa`)).status).toBe(404);
     });
   });
 });

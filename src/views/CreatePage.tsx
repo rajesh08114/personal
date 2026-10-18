@@ -1,5 +1,8 @@
+'use client';
+
 import { Suspense, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   CloudAlert,
   Eye,
@@ -29,7 +32,9 @@ import { cn } from '@/utils/cn';
 /** `/create` — the Birthday Studio: customise everything with a live preview. */
 export default function CreatePage() {
   const { config, ready, status, saveError, shareId, editToken, setConfig, setShareId, reset } = useDraft();
-  const [params, setParams] = useSearchParams();
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [openSection, setOpenSection] = useState<SectionId | null>('basics');
   const [shareOpen, setShareOpen] = useState(params.get('share') === '1');
   // Keep the dialog mounted after first open so its close animation and saved link survive.
@@ -50,10 +55,11 @@ export default function CreatePage() {
   useEffect(() => {
     if (params.get('share') === '1') {
       setShareOpen(true);
-      params.delete('share');
-      setParams(params, { replace: true });
+      const rest = new URLSearchParams(params.toString());
+      rest.delete('share');
+      router.replace(rest.size ? `${pathname}?${rest}` : pathname);
     }
-  }, [params, setParams]);
+  }, [params, router, pathname]);
 
   if (!ready) return <LoadingScreen dark={false} label="Opening your studio…" />;
 
@@ -74,7 +80,7 @@ export default function CreatePage() {
     <div className="flex h-dvh flex-col bg-paper text-ink-900">
       <header className="z-20 flex h-16 shrink-0 items-center gap-3 border-b border-ink-200 bg-paper/90 px-4 backdrop-blur sm:px-6">
         <Link
-          to="/templates"
+          href="/templates"
           className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight"
         >
           <img src="/favicon.svg" alt="" className="size-8" />
@@ -83,13 +89,13 @@ export default function CreatePage() {
         <SaveIndicator status={status} error={saveError} />
         <div className="ml-auto flex items-center gap-2">
           <Link
-            to="/templates"
+            href="/templates"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-ink-700 hover:bg-ink-100 max-md:hidden"
           >
             <LayoutGrid className="size-4" aria-hidden /> Templates
           </Link>
           <Link
-            to="/preview"
+            href="/preview"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-ink-200 bg-white px-3 text-sm font-semibold text-ink-900 hover:bg-ink-100/60"
           >
             <Eye className="size-4" aria-hidden /> <span className="max-sm:sr-only">Preview</span>

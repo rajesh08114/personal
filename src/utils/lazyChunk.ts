@@ -5,7 +5,7 @@ const RELOAD_KEY = 'bs:chunk-reload-at';
 /** True for the errors browsers throw when a code-split chunk can't be fetched (offline, or removed by a new deploy). */
 export function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Failed to fetch|ChunkLoadError/i.test(
+  return /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Failed to fetch|ChunkLoadError|Loading chunk .* failed|Failed to load chunk/i.test(
     message,
   );
 }

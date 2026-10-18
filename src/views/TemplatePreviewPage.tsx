@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
+'use client';
+
+import { useEffect, useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
 import { ExperienceShell } from '@/components/experience/ExperienceShell';
 import { CreatorBar } from '@/components/experience/CreatorBar';
@@ -10,12 +12,15 @@ import { useDraft } from '@/store/DraftProvider';
 
 /** `/templates/:id` — the complete experience with fictional sample content. */
 export default function TemplatePreviewPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const router = useRouter();
   const { patch } = useDraft();
   const valid = isTemplateId(id);
   const config = useMemo(() => (valid ? createSampleConfig(id, { love: isLoveTemplate(id) }) : null), [valid, id]);
-  if (!valid || !config) return <Navigate to="/templates" replace />;
+  useEffect(() => {
+    if (!valid) router.replace('/templates');
+  }, [valid, router]);
+  if (!valid || !config) return null;
   const template = getTemplate(id);
 
   return (
@@ -26,7 +31,7 @@ export default function TemplatePreviewPage() {
           type="button"
           onClick={() => {
             patch({ templateId: id });
-            navigate('/create');
+            router.push('/create');
           }}
           className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 font-semibold whitespace-nowrap text-ink-900 hover:bg-white/90"
         >

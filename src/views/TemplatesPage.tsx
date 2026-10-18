@@ -1,12 +1,14 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import type { LoveTag, TemplateCategory } from '@/types/template';
 import { CATEGORIES, LOVE_TAGS, TEMPLATES } from '@/templates/registry';
 import { useDraft } from '@/store/DraftProvider';
 import { cn } from '@/utils/cn';
-import { prefetchPagesWhenIdle } from '@/routes';
 import { prefetchTemplate, TemplateThumbnail } from '@/components/ui/TemplateThumbnail';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -18,7 +20,7 @@ export default function TemplatesPage() {
   );
   const [loveTag, setLoveTag] = useState<LoveTag | 'all'>('all');
   const { config, patch } = useDraft();
-  const navigate = useNavigate();
+  const router = useRouter();
   const byCategory = category === 'all' ? TEMPLATES : TEMPLATES.filter((t) => t.categories.includes(category));
   const list = category === 'love' && loveTag !== 'all' ? byCategory.filter((t) => t.loveTags?.includes(loveTag)) : byCategory;
 
@@ -26,20 +28,17 @@ export default function TemplatesPage() {
     document.title = 'Choose your birthday experience — Birthday Studio';
   }, []);
 
-  // The next click is almost always "Preview" or "Use this one".
-  useEffect(() => prefetchPagesWhenIdle('templatePreview', 'create'), []);
-
   return (
     <div className="min-h-dvh bg-[#f4efe6] text-[#24201b]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
-        <Link to="/templates" className="flex items-center gap-2 font-display text-lg font-semibold">
+        <Link href="/templates" className="flex items-center gap-2 font-display text-lg font-semibold">
           <img src="/favicon.svg" alt="" className="size-8" /> Birthday Studio
         </Link>
         <nav className="flex items-center gap-1" aria-label="Main">
-          <Link to="/" className="inline-flex h-10 items-center px-3 text-sm font-semibold text-[#5b5348] hover:text-[#24201b] max-sm:hidden">
+          <Link href="/" className="inline-flex h-10 items-center px-3 text-sm font-semibold text-[#5b5348] hover:text-[#24201b] max-sm:hidden">
             My website
           </Link>
-          <Link to="/create" className="inline-flex h-10 items-center gap-1.5 rounded-md bg-[#24201b] px-4 text-sm font-semibold text-[#f4efe6] hover:bg-[#3a342c]">
+          <Link href="/create" className="inline-flex h-10 items-center gap-1.5 rounded-md bg-[#24201b] px-4 text-sm font-semibold text-[#f4efe6] hover:bg-[#3a342c]">
             Open studio <ArrowRight className="size-4" aria-hidden />
           </Link>
         </nav>
@@ -124,7 +123,7 @@ export default function TemplatesPage() {
                 className="group flex flex-col"
               >
                 <Link
-                  to={`/templates/${t.id}`}
+                  href={`/templates/${t.id}`}
                   onPointerEnter={() => prefetchTemplate(t)}
                   onFocus={() => prefetchTemplate(t)}
                   className="relative block aspect-[16/11] overflow-hidden rounded-sm bg-[#e4dccd]"
@@ -142,14 +141,14 @@ export default function TemplatesPage() {
                   {t.moods.join(', ')} · Best for {t.bestFor.charAt(0).toLowerCase() + t.bestFor.slice(1)}
                 </p>
                 <div className="mt-4 flex gap-4 text-sm font-semibold">
-                  <Link to={`/templates/${t.id}`} className="inline-flex h-10 items-center underline decoration-[#24201b]/30 underline-offset-4 hover:decoration-[#24201b]">
+                  <Link href={`/templates/${t.id}`} className="inline-flex h-10 items-center underline decoration-[#24201b]/30 underline-offset-4 hover:decoration-[#24201b]">
                     Preview
                   </Link>
                   <button
                     type="button"
                     onClick={() => {
                       patch({ templateId: t.id });
-                      navigate('/create');
+                      router.push('/create');
                     }}
                     className="inline-flex h-10 items-center gap-1 underline decoration-[#24201b]/30 underline-offset-4 hover:decoration-[#24201b]"
                   >

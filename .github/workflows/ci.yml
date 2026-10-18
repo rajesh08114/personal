@@ -72,5 +72,6 @@ jobs:
         run: |
           docker run -d --name app -p 8787:8787 -e PUBLIC_ORIGIN=http://localhost:8787 birthday-studio
           for i in $(seq 1 20); do curl -fsS http://localhost:8787/api/health && break; sleep 1; done
-          curl -fsS http://localhost:8787/templates | grep -q '<div id="root">'
+          curl -fsS http://localhost:8787/templates | grep -q 'Birthday Studio'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8787/templates/no-such-template)" = 404
           docker logs app

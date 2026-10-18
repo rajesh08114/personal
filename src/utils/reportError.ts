@@ -1,13 +1,13 @@
 /**
- * Optional production error reporting. When VITE_ERROR_REPORT_URL is set, uncaught
+ * Optional production error reporting. When NEXT_PUBLIC_ERROR_REPORT_URL is set, uncaught
  * errors are sent there as a small JSON beacon. Only technical details are sent —
  * never names, messages, photos or anything else from the birthday itself.
  */
-const endpoint = import.meta.env.VITE_ERROR_REPORT_URL?.trim();
+const endpoint = process.env.NEXT_PUBLIC_ERROR_REPORT_URL?.trim();
 const sent = new Set<string>();
 
 export function reportError(error: unknown, context?: string): void {
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV !== 'production') {
     console.warn('[birthday-studio]', context ?? 'error', error);
     return;
   }

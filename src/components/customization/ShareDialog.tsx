@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, HardDrive, Globe2, Share2, Trash2 } from 'lucide-react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 import type { BirthdayConfig } from '@/types/birthday';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -251,7 +251,7 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
         </div>
         <p className="mt-4 text-xs text-ink-500">
           {local ? 'Nothing leaves this browser.' : 'Published photos, words and music are stored on our server until you unpublish.'}{' '}
-          <Link to="/privacy" target="_blank" className="underline underline-offset-2 hover:text-ink-800">
+          <Link href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-ink-800">
             Privacy
           </Link>
         </p>

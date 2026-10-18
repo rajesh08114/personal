@@ -10,8 +10,6 @@ export interface ServerConfig {
   mongoUri: string;
   /** Database name; defaults to the one in the connection string, else "test" (MongoDB's default). */
   mongoDb: string;
-  /** The built client (`dist/`). Set to '' to run the API only. */
-  staticDir: string;
   /** Public origin of the app, e.g. https://birthday.example.com. Used for media URLs and link previews. */
   publicOrigin: string;
   /** Extra origins allowed to call the API from a browser (the app's own origin is always allowed). */
@@ -32,7 +30,7 @@ const int = (v: string | undefined, fallback: number) => {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 };
 
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
+export function loadConfig(env: Record<string, string | undefined> = process.env): ServerConfig {
   const production = env.NODE_ENV === 'production';
   const port = int(env.PORT, 8787);
   const publicOrigin = (env.PUBLIC_ORIGIN ?? '').trim().replace(/\/+$/, '');
@@ -48,10 +46,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   return {
     port,
     host: env.HOST ?? '0.0.0.0',
-    dataDir: path.resolve(env.DATA_DIR ?? './data'),
+    dataDir: path.resolve(/*turbopackIgnore: true*/ env.DATA_DIR ?? './data'),
     mongoUri: (env.MONGODB_URI ?? '').trim(),
     mongoDb: (env.MONGODB_DB ?? '').trim(),
-    staticDir: env.STATIC_DIR === '' ? '' : path.resolve(env.STATIC_DIR ?? './dist'),
+
     publicOrigin: publicOrigin || `http://localhost:${port}`,
     corsOrigins: (env.CORS_ORIGINS ?? '')
       .split(',')

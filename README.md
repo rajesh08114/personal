@@ -8,16 +8,14 @@ Each template is its own experience, not a colour swap. Starry Night spells thei
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3000
 ```
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Start the dev server |
-| `npm run dev:server` | Run the API on :8787 for server mode in development (the dev server proxies `/api` and `/media` to it) |
-| `npm run build` | Type-check and build the app into `dist/` and the server into `dist-server/` |
-| `npm run start` | Run the production server: app + API on one port (see [Deployment](#deployment)) |
-| `npm run preview` | Serve the production build on :4173 with the production security headers (CSP etc.) |
+| `npm run dev` | Start the Next.js dev server. Set `NEXT_PUBLIC_BIRTHDAY_API_URL=/api` to try server mode: the API runs in the same process |
+| `npm run build` | Type-check and build the app (and its API routes) into `.next/` |
+| `npm run start` | Run the production build: app + API on one port (see [Deployment](#deployment)) |
 | `npm run typecheck` | TypeScript only |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
@@ -25,7 +23,7 @@ npm run dev        # http://localhost:5173
 | `npm run test:e2e` | End-to-end tests in Chromium, desktop and mobile (Playwright, server mode) |
 | `npm run check` | Everything CI runs: typecheck, lint, tests, build |
 
-Requires Node 20.19+ or 22.12+ (tested on Node 23). Copy `.env.example` to `.env.local` for the optional settings below.
+Requires Node 20.19+ or 22.12+ (CI and the Docker image use Node 22). It is a Next.js (App Router) app. Copy `.env.example` to `.env.local` for the optional settings below.
 
 ## Routes
 
@@ -114,8 +112,10 @@ Shared engine pieces added for the collection:
 
 ```
 src/
-├── App.tsx                 Router (every page lazy-loaded)
-├── pages/                  Experience, Create, Preview, Templates, TemplatePreview, Birthday
+├── app/                    Next.js App Router: layout + providers, one thin page per route, API and media route handlers
+├── proxy.ts                CSP (per-request nonce) and security headers for pages
+├── instrumentation.ts      Opens the store and starts the media garbage collector at boot
+├── views/                  The pages themselves (Experience, Create, Preview, Templates, TemplatePreview, Birthday); client-only
 ├── types/                  BirthdayConfig (data model) and BirthdayTemplate (template contract)
 ├── data/
 │   ├── defaultConfig.ts    A new, empty birthday (placeholders everywhere)
@@ -244,16 +244,16 @@ On import, the file goes through `normalizeConfig`, so unknown fields are droppe
 
 ### Server mode
 
-The repo includes a production server (`server/`, no runtime dependencies) that serves the app and the API from one origin. Build the client with the API path and start it:
+The API lives in the same Next.js app (`src/app/api/`, `src/app/media/`, with the logic in `server/`), so one process serves the pages and the API from one origin. Build with the API path and start it:
 
 ```bash
-VITE_BIRTHDAY_API_URL=/api npm run build
+NEXT_PUBLIC_BIRTHDAY_API_URL=/api npm run build
 PUBLIC_ORIGIN=https://birthday.example.com npm run start   # or use the Dockerfile
 ```
 
 Share links now open on any device. The Share dialog switches to "Your birthday experience is ready to share" with **Copy share link**, **Open experience**, **Update with latest changes** and **Unpublish**. Backup download and import stay available.
 
-For development, run `npm run dev:server` in one terminal and `VITE_BIRTHDAY_API_URL=/api npm run dev` in another.
+For development, run `NEXT_PUBLIC_BIRTHDAY_API_URL=/api npm run dev`.
 
 **API** (`src/data/api/birthdayApi.ts` is the client):
 
@@ -334,17 +334,17 @@ Nothing is downloaded before it's needed. What each kind of visitor loads:
 
 On `/templates`, the Preview and Studio pages are prefetched while the browser is idle (skipped on Save-Data or 2G connections).
 
-**Deploy safety.** After a deploy, an open tab may request chunk files that no longer exist. `lazyChunk` / `loadChunk` (`src/utils/lazyChunk.ts`) and the `vite:preloadError` handler detect this and reload the page **once**, to pick up the new build. A second failure within 30 seconds shows the error screen instead of looping.
+**Deploy safety.** After a deploy, an open tab may request chunk files that no longer exist. `lazyChunk` / `loadChunk` (`src/utils/lazyChunk.ts`) and the chunk-error handler in `src/app/providers.tsx` detect this and reload the page **once**, to pick up the new build. A second failure within 30 seconds shows the error screen instead of looping.
 
 ## Production checklist
 
-- **Environment:** see `.env.example`. Client settings (`VITE_*`) are baked in at build time; `VITE_BIRTHDAY_API_URL` is validated and must be an http(s) URL or a same-origin path. Server settings are read at start-up; `PUBLIC_ORIGIN` is required when `NODE_ENV=production`.
-- **Security headers:** the bundled server, `vercel.json` and `public/_headers` set the same policy, and `npm run preview` applies it locally. The bundled server is stricter: `connect-src`, `img-src` and `media-src` are limited to its own origin, plus `Cross-Origin-Opener-Policy`. Also: `X-Content-Type-Options`, `Referrer-Policy`, HSTS (on https origins), and a `Permissions-Policy` that allows the microphone for this origin only (the cake can be blown out by voice).
-- **Caching:** `/assets/*` and uploaded media are `immutable` for a year; `index.html` is `no-cache`, so new deploys are picked up immediately. The server gzips text assets.
-- **Privacy:** a `/privacy` page explains what is stored and how to remove it (set `VITE_CONTACT_EMAIL` to show a takedown contact). Creators can unpublish a link. `/birthday/:id` pages send `noindex, nofollow`, and `robots.txt` disallows `/birthday/`, `/preview` and `/create`.
-- **Errors and logs:** a root error boundary and global `error` / `unhandledrejection` listeners call `reportError`. With `VITE_ERROR_REPORT_URL=/api/errors` (the Docker default) reports land in the server log. Reports never include birthday content and are capped per page load. The server writes one JSON line per request and per error to stdout/stderr.
-- **Operations:** `/api/health` for load balancers, a Docker `HEALTHCHECK`, graceful shutdown on `SIGTERM`, request timeouts, and a non-root container user. Back up `DATA_DIR`.
-- **App shell:** a web app manifest with PNG and maskable icons, an Apple touch icon, a 1200×630 social image (`scripts/generate-icons.mjs` regenerates them), theme colour, a `noscript` message and a lightweight boot placeholder.
+- **Environment:** see `.env.example`. Client settings (`NEXT_PUBLIC_*`) are baked in at build time; `NEXT_PUBLIC_BIRTHDAY_API_URL` is validated and must be an http(s) URL or a same-origin path. Server settings are read at start-up; `PUBLIC_ORIGIN` is required when `NODE_ENV=production`.
+- **Security headers:** `src/proxy.ts` sets a Content-Security-Policy with a fresh nonce on every page (so Next.js's inline scripts run and everything else is blocked), with `connect-src`, `img-src` and `media-src` limited to the app's own origin, plus `Cross-Origin-Opener-Policy`. Pages are rendered per request for this reason. The API and media routes are excluded from the proxy and set their own headers. Also: `X-Content-Type-Options`, `Referrer-Policy`, HSTS (on https origins), and a `Permissions-Policy` that allows the microphone for this origin only (the cake can be blown out by voice).
+- **Caching:** `/_next/static/*` and uploaded media are `immutable` for a year; pages are never cached, so new deploys are picked up immediately.
+- **Privacy:** a `/privacy` page explains what is stored and how to remove it (set `NEXT_PUBLIC_CONTACT_EMAIL` to show a takedown contact). Creators can unpublish a link. `/birthday/:id` pages send `noindex, nofollow`, and `robots.txt` (generated by `src/app/robots.ts`, with a sitemap) disallows `/birthday/`, `/preview` and `/create`.
+- **Errors and logs:** a root error boundary and global `error` / `unhandledrejection` listeners call `reportError`. With `NEXT_PUBLIC_ERROR_REPORT_URL=/api/errors` (the Docker default) reports land in the server log. Reports never include birthday content and are capped per page load. The server writes one JSON line per request and per error to stdout/stderr.
+- **Operations:** `/api/health` for load balancers, a Docker `HEALTHCHECK`, the store is opened and the media garbage collector started when the server boots (`src/instrumentation.ts`), and a non-root container user. Back up `DATA_DIR`.
+- **App shell:** a web app manifest with PNG and maskable icons, an Apple touch icon, a 1200×630 social image (`scripts/generate-icons.mjs` regenerates them), theme colour, a `noscript` message and a loading screen until the page is ready.
 - **CI:** `.github/workflows/ci.yml` runs typecheck, lint, unit and API tests, the build and `npm audit` on every push and pull request. It also runs the Playwright suite and builds and smoke-tests the Docker image. Dependabot keeps npm packages, Actions and the base image up to date.
 
 ## Deployment
@@ -352,7 +352,7 @@ On `/templates`, the Preview and Studio pages are prefetched while the browser i
 **Recommended: one container (server mode).** Links work on every device.
 
 ```bash
-docker build --build-arg VITE_CONTACT_EMAIL=hello@example.com -t birthday-studio .
+docker build --build-arg NEXT_PUBLIC_CONTACT_EMAIL=hello@example.com -t birthday-studio .
 docker run -p 8787:8787 \
   -e PUBLIC_ORIGIN=https://birthday.example.com \
   -e TRUST_PROXY=1 \
@@ -361,18 +361,14 @@ docker run -p 8787:8787 \
 
 With MongoDB instead of a volume, add `-e MONGODB_URI=…`, or run `docker compose up` (app + MongoDB).
 
-Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Caddy…), and mount a persistent volume at `/data`. Set `TRUST_PROXY=1` only when a proxy you control sets `X-Forwarded-For`, so rate limits apply per visitor.
+Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Caddy…), and mount a persistent volume at `/data`. Set `TRUST_PROXY=1` only when a proxy you control sets `X-Forwarded-For`, so rate limits apply per visitor. Next.js route handlers can't see the socket address and fill `X-Forwarded-For` themselves when it is missing, so a server exposed directly (no proxy) can have its per-IP limits dodged by a spoofed header; always run it behind a proxy.
 
-**Static only (local share mode).** Run `npm run build` and deploy `dist/`. Links only open in the creator's browser.
-
-- **Vercel:** `vercel.json` rewrites routes to `index.html` and sets the headers above.
-- **Netlify / Cloudflare Pages:** `public/_redirects` and `public/_headers` are included.
-- **Other hosts:** configure a fallback to `/index.html` so deep links like `/birthday/:id` work, serve `/assets/*` with long-lived caching, and copy the headers from `public/_headers`.
+**Serverless hosts (Vercel and similar).** Not supported in server mode: the file store needs a persistent disk, and uploads of up to 13 MB exceed the usual request-body limits. Local share mode (no `NEXT_PUBLIC_BIRTHDAY_API_URL`, links open only in the creator's browser) has no such needs, and MongoDB storage removes the disk requirement; uploads would still need a direct-to-storage flow.
 
 ## Testing
 
-`npm run test:e2e` builds the app in server mode, starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium, and `MONGODB_URI` to run it against MongoDB storage. CI runs it with both backends.
+`npm run test:e2e` builds the app in server mode (into `.next-e2e`), starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. A second spec loads every template (found from the `meta.tsx` files) and fails on a blank page, horizontal overflow or any console error. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium, and `MONGODB_URI` to run it against MongoDB storage. CI runs it with both backends.
 
 Set `MONGODB_TEST_URI=mongodb://127.0.0.1:27017` to also run the API tests against MongoDB. CI does this with a MongoDB service.
 
-`npm test` covers the API end to end over HTTP: edit tokens, validation, media sniffing, byte ranges, garbage collection, link previews, 404s and rate limits. It also covers the client's publish flow (uploads, token fallback), and runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build was also checked under `npm run preview` with the production CSP: no policy violations, lazy chunks loading on demand, and a missing chunk triggering exactly one reload.
+`npm test` covers the API through its Web `Request` / `Response` core (the same code the route handlers run): edit tokens, validation, media sniffing, byte ranges, garbage collection, link previews, 404s and rate limits. It also covers the client's publish flow (uploads, token fallback), and runs unit tests for stale-chunk detection, the template registry (every template has lazy experience and thumbnail chunks), config validation and migration, photo framing (clamping, focal-point CSS), backup round-trips (including framing and share ids, legacy files and newer-version rejection), age and date logic, readiness checks and placeholder fallbacks. During development, every template was also exercised in a real browser at 1366 px and 390 px: opening interaction, a full scroll, console errors and horizontal overflow. The create → upload → share → open-link flow and reduced-motion mode were checked the same way. The production build is checked by the e2e suite with the production CSP: no policy violations.

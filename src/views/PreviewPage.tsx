@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useSearchParams } from 'next/navigation';
 import type { BirthdayConfig } from '@/types/birthday';
 import { useDraft } from '@/store/DraftProvider';
 import { normalizeConfig } from '@/data/normalizeConfig';
@@ -11,7 +13,7 @@ import { PREVIEW_MESSAGE, PREVIEW_READY } from '@/data/previewChannel';
 
 /** `/preview` — full-screen preview of the draft. `?embed=1` powers the live preview frame. */
 export default function PreviewPage() {
-  const [params] = useSearchParams();
+  const params = useSearchParams();
   return params.get('embed') === '1' ? <EmbeddedPreview /> : <DraftPreview />;
 }
 

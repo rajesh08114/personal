@@ -77,3 +77,42 @@ test('first visit lands in the gallery, unknown pages 404, privacy page exists',
   await page.goto('/privacy');
   await expect(page.getByRole('heading', { name: 'Your birthday, your data' })).toBeVisible();
 });
+
+test('a shared link carries escaped link-preview tags and stays out of search engines', async ({ page, request }) => {
+  const photo = await makePhoto(page);
+  const upload = await request.post('/api/media', { data: photo, headers: { 'Content-Type': 'image/png' } });
+  expect(upload.status()).toBe(201);
+  const { url } = (await upload.json()) as { url: string };
+  const created = await request.post('/api/birthdays', {
+    data: { birthdayPerson: 'Maya "<b>', senderName: 'Alex', heroImage: url },
+  });
+  expect(created.status()).toBe(201);
+  const { id } = (await created.json()) as { id: string };
+
+  const res = await request.get(`/birthday/${id}`);
+  expect(res.status()).toBe(200);
+  const html = await res.text();
+  expect(html).toContain('<title>Happy Birthday, Maya &quot;&lt;b&gt;!</title>');
+  expect(html).toContain(`<meta property="og:image" content="${url}"/>`);
+  expect(html).toContain('Alex made you a birthday surprise');
+  expect(html).not.toContain('<b>!');
+  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"\/>/);
+  expect((await request.get('/birthday/aaaaaaaaaa')).status()).toBe(404);
+});
+
+test('large songs upload in full, and over-limit ones are refused', async ({ request }) => {
+  const wav = (bytes: number) => {
+    const body = Buffer.alloc(bytes, 1);
+    body.write('RIFF', 0, 'latin1');
+    body.write('WAVE', 8, 'latin1');
+    return body;
+  };
+  // Above the 10 MB a proxy would buffer, below the 13 MB audio limit.
+  const ok = await request.post('/api/media', { data: wav(12 * 1024 * 1024), headers: { 'Content-Type': 'audio/wav' } });
+  expect(ok.status()).toBe(201);
+  const { url } = (await ok.json()) as { url: string };
+  const head = await request.head(url);
+  expect(head.headers()['content-length']).toBe(String(12 * 1024 * 1024));
+  const tooBig = await request.post('/api/media', { data: wav(14 * 1024 * 1024), headers: { 'Content-Type': 'audio/wav' } });
+  expect(tooBig.status()).toBe(413);
+});

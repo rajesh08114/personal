@@ -136,7 +136,7 @@ export class FileStore implements Store {
 
   async putMedia(bytes: Buffer, type: MediaType): Promise<string> {
     const name = mediaName(bytes, type);
-    const file = path.join(this.media, name);
+    const file = path.join(/*turbopackIgnore: true*/ this.media, name);
     try {
       await stat(file);
     } catch {
@@ -147,7 +147,7 @@ export class FileStore implements Store {
 
   /** Absolute path of a stored media file, or null if the name is invalid. */
   mediaPath(name: string): string | null {
-    return MEDIA_FILE.test(name) ? path.join(this.media, name) : null;
+    return MEDIA_FILE.test(name) ? path.join(/*turbopackIgnore: true*/ this.media, name) : null;
   }
 
   async openMedia(name: string): Promise<StoredMedia | null> {

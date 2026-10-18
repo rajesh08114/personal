@@ -1,4 +1,6 @@
 node_modules
+.next
+.next-e2e
 dist
 dist-server
 dist-e2e
@@ -7,6 +9,8 @@ data
 test-results
 playwright-report
 .git
+.playwright-mcp
+.code-review-graph
 .env
 .env.*
 !.env.example

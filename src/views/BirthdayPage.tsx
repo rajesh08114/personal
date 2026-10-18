@@ -1,5 +1,8 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import type { BirthdayConfig } from '@/types/birthday';
 import { experienceRepository, localRepository, storageMode } from '@/data/repository';
 import { readBackupFile, BackupError } from '@/data/backup';
@@ -14,7 +17,7 @@ type State =
 
 /** `/birthday/:id` — what the recipient sees. No creator chrome. */
 export default function BirthdayPage() {
-  const { id = '' } = useParams();
+  const { id = '' } = useParams<{ id?: string }>();
   const [state, setState] = useState<State>({ status: 'loading' });
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +101,7 @@ export default function BirthdayPage() {
               />
             </>
           )}
-          <Link to="/templates" className="text-sm font-semibold underline underline-offset-4 hover:text-black">
+          <Link href="/templates" className="text-sm font-semibold underline underline-offset-4 hover:text-black">
             Create your own birthday surprise
           </Link>
         </div>
