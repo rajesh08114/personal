@@ -23,7 +23,7 @@ jobs:
       # Runs the API test suite against MongoDB as well as file storage.
       MONGODB_TEST_URI: mongodb://localhost:27017
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -48,7 +48,7 @@ jobs:
     env:
       MONGODB_URI: ${{ matrix.storage == 'mongodb' && 'mongodb://localhost:27017' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -66,7 +66,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -t birthday-studio .
       - name: Smoke test the image
         run: |
