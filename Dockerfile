@@ -5,7 +5,7 @@
 #   docker run -p 8787:8787 -e PUBLIC_ORIGIN=... -e MONGODB_URI=mongodb+srv://... birthday-studio
 # Or `docker compose up` for the app plus a MongoDB container.
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -19,7 +19,7 @@ ENV VITE_BIRTHDAY_API_URL=$VITE_BIRTHDAY_API_URL \
     VITE_CONTACT_EMAIL=$VITE_CONTACT_EMAIL
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production PORT=8787 DATA_DIR=/data STATIC_DIR=/app/dist
 WORKDIR /app
 # Runtime packages only (the MongoDB driver); the app itself is pre-built.
