@@ -3,7 +3,7 @@
  * confetti cannons, confetti rain, fireworks and themed bursts (hearts, stars, petals…).
  * The RAF loop only runs while particles exist.
  */
-export type FxShape = 'rect' | 'circle' | 'heart' | 'star' | 'petal' | 'pixel' | 'spark';
+export type FxShape = 'rect' | 'circle' | 'heart' | 'star' | 'petal' | 'leaf' | 'pixel' | 'spark';
 
 export interface ConfettiOptions {
   /** Origin as a 0–1 fraction of the viewport. */
@@ -381,6 +381,11 @@ export class FxEngine {
         ctx.ellipse(0, 0, s / 2, s / 4, 0, 0, Math.PI * 2);
         ctx.fill();
         break;
+      case 'leaf':
+        // Tumbles as it falls: the flip shows the leaf edge-on, then face-on.
+        ctx.scale(Math.max(0.2, Math.abs(Math.cos(p.tilt))), 1);
+        leaf(ctx, s);
+        break;
       case 'heart':
         heart(ctx, s);
         break;
@@ -398,6 +403,15 @@ function heart(ctx: CanvasRenderingContext2D, s: number) {
   ctx.moveTo(0, h * 0.7);
   ctx.bezierCurveTo(-h * 1.4, -h * 0.2, -h * 0.6, -h * 1.2, 0, -h * 0.45);
   ctx.bezierCurveTo(h * 0.6, -h * 1.2, h * 1.4, -h * 0.2, 0, h * 0.7);
+  ctx.fill();
+}
+
+function leaf(ctx: CanvasRenderingContext2D, s: number) {
+  const h = s / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -h);
+  ctx.quadraticCurveTo(h * 0.9, -h * 0.2, 0, h);
+  ctx.quadraticCurveTo(-h * 0.9, -h * 0.2, 0, -h);
   ctx.fill();
 }
 

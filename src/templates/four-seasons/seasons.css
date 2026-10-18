@@ -1,0 +1,87 @@
+/* A Year Around You: the scene's colours come from --fs-* custom properties set by Scene.tsx. */
+.fs-root {
+  --fs-sky-top: #c9dcea;
+  --fs-sky-bottom: #f6e3e2;
+  --fs-ground: #9cbf7a;
+  --fs-hills: #b9cfa2;
+  --fs-sun-x: 20%;
+  --fs-sun-y: 30%;
+  --fs-frost: 0;
+  --fs-mist: 0;
+}
+
+.fs-sun {
+  left: var(--fs-sun-x);
+  top: var(--fs-sun-y);
+  background: radial-gradient(circle, #fff7e0 0 38%, rgb(255 236 190 / 0.55) 40%, transparent 70%);
+}
+
+.fs-snowline {
+  opacity: var(--fs-frost);
+}
+
+/* Autumn haze and winter breath on the glass. */
+.fs-mist {
+  opacity: var(--fs-mist);
+  background: linear-gradient(to top, rgb(255 255 255 / 0.55), transparent 55%);
+}
+
+/* Frost creeping in from the corners of the pane. */
+.fs-frost {
+  opacity: var(--fs-frost);
+  background:
+    radial-gradient(ellipse at 0 0, rgb(255 255 255 / 0.85), transparent 32%),
+    radial-gradient(ellipse at 100% 0, rgb(255 255 255 / 0.75), transparent 28%),
+    radial-gradient(ellipse at 0 100%, rgb(255 255 255 / 0.8), transparent 30%),
+    radial-gradient(ellipse at 100% 100%, rgb(255 255 255 / 0.85), transparent 34%);
+}
+
+/* Pages of the almanac sitting on the sill: warm paper, slightly translucent so the season shows through. */
+.fs-page {
+  background: rgb(255 251 244 / 0.96);
+  box-shadow: 0 18px 40px -22px rgb(40 30 20 / 0.45);
+}
+
+/* Heavy velvet curtains with pleats. */
+.fs-curtain {
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.25), transparent 18%, transparent 82%, rgb(0 0 0 / 0.35)),
+    repeating-linear-gradient(90deg, #6e2b2b 0 22px, #8a3a36 34px, #6a2828 56px, #5a2121 64px);
+}
+.fs-curtain:first-child {
+  box-shadow: inset -18px 0 30px -12px rgb(0 0 0 / 0.5);
+}
+
+@keyframes fs-firefly {
+  0%,
+  30% {
+    transform: translate(0, 0);
+  }
+  40%,
+  65% {
+    transform: translate(18px, -14px);
+  }
+  75%,
+  95% {
+    transform: translate(-10px, 8px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+.fs-firefly {
+  animation: fs-firefly 7s ease-in-out infinite;
+}
+.fs-firefly:hover,
+.fs-firefly:focus-visible {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs-curtain {
+    transition: none;
+  }
+  .fs-firefly {
+    animation: none;
+  }
+}

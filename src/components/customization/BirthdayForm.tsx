@@ -1,5 +1,6 @@
 import type { BirthdayConfig, BirthdayMessages } from '@/types/birthday';
 import { Input } from '@/components/ui/Field';
+import { SegmentedControl } from '@/components/ui/Layout';
 import { getTemplate } from '@/templates/registry';
 import { createMemory, createTimelineItem, MAX_MEMORIES, MAX_TIMELINE } from '@/data/defaultConfig';
 import { getTurningAge } from '@/utils/date';
@@ -95,6 +96,22 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
             hint={derivedAge ? `Leave empty to use ${derivedAge}.` : 'Some templates celebrate the age.'}
           />
         </div>
+        {config.templateId === 'four-seasons' && (
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-ink-800">Where do they live?</p>
+            <SegmentedControl
+              label="Hemisphere"
+              showLabels
+              value={config.hemisphere ?? 'north'}
+              onChange={(h) => patch({ hemisphere: h === 'south' ? 'south' : undefined })}
+              options={[
+                { value: 'north', label: 'Northern hemisphere' },
+                { value: 'south', label: 'Southern hemisphere' },
+              ]}
+            />
+            <p className="text-xs text-ink-500">The year ends in the season of their birthday, e.g. a July birthday is summer up north, winter down south.</p>
+          </div>
+        )}
       </EditorSection>
 
       <EditorSection

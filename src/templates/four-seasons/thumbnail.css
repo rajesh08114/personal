@@ -1,0 +1,93 @@
+@keyframes fs-thumb-sky {
+  0%,
+  20% {
+    background: linear-gradient(#c9dcea, #f6e3e2);
+  }
+  25%,
+  45% {
+    background: linear-gradient(#6fa8d6, #d8ecf2);
+  }
+  50%,
+  70% {
+    background: linear-gradient(#e7b98a, #f6dcc0);
+  }
+  75%,
+  95% {
+    background: linear-gradient(#8e9fb3, #dfe6ee);
+  }
+  100% {
+    background: linear-gradient(#c9dcea, #f6e3e2);
+  }
+}
+@keyframes fs-thumb-ground {
+  0%,
+  20% {
+    background: #9cbf7a;
+  }
+  25%,
+  45% {
+    background: #6e9c4c;
+  }
+  50%,
+  70% {
+    background: #b88a4a;
+  }
+  75%,
+  95% {
+    background: #eef2f6;
+  }
+  100% {
+    background: #9cbf7a;
+  }
+}
+@keyframes fs-thumb-leaf {
+  0%,
+  20% {
+    fill: #f1b3c4;
+    transform: scale(0.7);
+  }
+  25%,
+  45% {
+    fill: #4f8a3c;
+    transform: scale(1);
+  }
+  50%,
+  70% {
+    fill: #d9822b;
+    transform: scale(0.9);
+  }
+  75%,
+  95% {
+    fill: #ffffff;
+    transform: scale(0);
+  }
+  100% {
+    fill: #f1b3c4;
+    transform: scale(0.7);
+  }
+}
+.fs-thumb-sky {
+  animation: fs-thumb-sky 8s ease-in-out infinite;
+}
+.fs-thumb-ground {
+  animation: fs-thumb-ground 8s ease-in-out infinite;
+}
+.fs-thumb-leaf {
+  animation: fs-thumb-leaf 8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fs-thumb-sky,
+  .fs-thumb-ground,
+  .fs-thumb-leaf {
+    animation: none;
+  }
+  .fs-thumb-sky {
+    background: linear-gradient(#e7b98a, #f6dcc0);
+  }
+  .fs-thumb-ground {
+    background: #b88a4a;
+  }
+  .fs-thumb-leaf {
+    fill: #d9822b;
+  }
+}

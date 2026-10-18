@@ -109,6 +109,7 @@ export function normalizeConfig(input: unknown): BirthdayConfig {
     relationship: str(input.relationship, '', 60),
     birthdayDate: date,
     age,
+    hemisphere: input.hemisphere === 'south' ? 'south' : undefined,
     heroImage: mediaUrl(input.heroImage),
     heroFraming: mediaUrl(input.heroImage) ? normalizeFraming(input.heroFraming) : undefined,
     finalImage: mediaUrl(input.finalImage),
