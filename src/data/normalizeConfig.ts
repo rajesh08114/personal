@@ -42,7 +42,8 @@ export function isTemplateId(v: unknown): v is TemplateId {
 function mediaUrl(v: unknown): string | undefined {
   const s = optStr(v);
   if (!s) return undefined;
-  return /^(data:(image|audio)\/|blob:|https?:\/\/)/i.test(s) ? s : undefined;
+  // Local static media, people photos, and template previews, data URLs, blob URLs, http(s), and account library URLs.
+  return /^(data:(image|audio)\/|blob:|https?:\/\/|\/api\/library\/[a-f0-9]{24}\/file$|\/templates\/[a-z0-9_-]+\.webp$|\/people\/[a-z0-9_-]+\.webp$|\/media\/[a-f0-9]{64}\.webp$)/i.test(s) ? s : undefined;
 }
 
 const num = (v: unknown, min: number, max: number, fallback: number): number =>

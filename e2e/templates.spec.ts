@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** Every template id, read from the meta files so a new template is covered automatically. */
 function templateIds(dir = 'src/templates'): string[] {

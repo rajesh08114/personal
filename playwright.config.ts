@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4317;
 const origin = `http://127.0.0.1:${PORT}`;
+const anonymousOrigin = 'http://127.0.0.1:4318';
 
 /**
  * End-to-end tests against the real production server (server mode) with a throwaway data dir.
@@ -11,6 +12,10 @@ export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
+  // Four projects share two servers and every test signs up its own user. Fewer workers and a longer
+  // default wait keep a busy machine from turning slowness into false failures.
+  workers: process.env.CI ? 2 : 3,
+  expect: { timeout: 10_000 },
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: origin,
@@ -20,24 +25,18 @@ export default defineConfig({
       : {}),
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    // The server with accounts on: everything but the anonymous flows.
+    { name: 'desktop', testIgnore: /anonymous\.spec/, use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile', testIgnore: /anonymous\.spec/, use: { ...devices['Pixel 7'] } },
+    // The server with accounts off: publishing without logging in.
+    { name: 'desktop-anonymous', testMatch: /anonymous\.spec/, use: { ...devices['Desktop Chrome'], baseURL: anonymousOrigin } },
+    { name: 'mobile-anonymous', testMatch: /anonymous\.spec/, use: { ...devices['Pixel 7'], baseURL: anonymousOrigin } },
   ],
   webServer: {
-    // A separate build directory keeps `npm run dev` and the e2e build from overwriting each other.
-    command: 'npx next build && npx next start -p ' + PORT + ' -H 127.0.0.1',
+    // Builds into .next-e2e (so `npm run dev` isn't disturbed) and starts both servers; see the script.
+    command: 'node scripts/e2e-servers.mjs',
     url: `${origin}/api/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
-    env: {
-      NEXT_DIST_DIR: '.next-e2e',
-      NEXT_PUBLIC_BIRTHDAY_API_URL: '/api',
-      PUBLIC_ORIGIN: origin,
-      DATA_DIR: `.e2e-data/${Date.now()}`,
-      // Set MONGODB_URI to run the same suite against MongoDB storage.
-      ...(process.env.MONGODB_URI
-        ? { MONGODB_URI: process.env.MONGODB_URI, MONGODB_DB: 'birthday_e2e' }
-        : {}),
-    },
+    timeout: 300_000,
   },
 });

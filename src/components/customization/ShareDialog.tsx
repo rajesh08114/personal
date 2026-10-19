@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, CircleAlert, Copy, Download, ExternalLink, FileUp, HardDrive, Globe2, Share2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import type { BirthdayConfig } from '@/types/birthday';
@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { experienceRepository, storageMode } from '@/data/repository';
 import { downloadBackup, readBackupFile, BackupError } from '@/data/backup';
+import { inlineLibraryMedia } from '@/data/configMedia';
 import { getReadiness } from '@/utils/readiness';
 import { cn } from '@/utils/cn';
+import { useDraft } from '@/store/DraftProvider';
 
 interface ShareDialogProps {
   open: boolean;
@@ -25,9 +27,12 @@ const linkFor = (id: string) => `${window.location.origin}/birthday/${id}`;
 
 export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved, onImport, onJump }: ShareDialogProps) {
   const toast = useToast();
+  const { accountMode, publishWork, unpublishWork } = useDraft();
   const local = storageMode === 'local';
   const [busy, setBusy] = useState(false);
   const [savedId, setSavedId] = useState<string | undefined>(shareId);
+  // Opening another birthday (or publishing from elsewhere) changes the link this dialog is about.
+  useEffect(() => setSavedId(shareId), [shareId]);
   const [copied, setCopied] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -38,6 +43,12 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
   const save = async (): Promise<string | null> => {
     setBusy(true);
     try {
+      if (accountMode) {
+        // Saves the newest changes to the account first, then publishes the work.
+        const id = await publishWork();
+        setSavedId(id);
+        return id;
+      }
       const saved = await experienceRepository.save(config, savedId, editToken);
       setSavedId(saved.id);
       onSaved(saved.id, saved.editToken);
@@ -55,9 +66,12 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
     if (!savedId) return;
     setBusy(true);
     try {
-      await experienceRepository.remove(savedId, editToken);
+      if (accountMode) await unpublishWork();
+      else {
+        await experienceRepository.remove(savedId, editToken);
+        onSaved(undefined);
+      }
       setSavedId(undefined);
-      onSaved(undefined);
       setConfirmRemove(false);
       toast('The link has been removed. Your draft is still here.', 'success');
     } catch (err) {
@@ -77,6 +91,15 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
       toast(local ? 'Local link copied — it opens in this browser only.' : 'Share link copied.', 'success');
     } catch {
       toast('Copy failed — select the link and copy it manually.', 'error');
+    }
+  };
+
+  /** In an account the photos and songs are library references, so they are fetched into the file. */
+  const downloadWithMedia = async () => {
+    try {
+      downloadBackup(accountMode ? await inlineLibraryMedia(config) : config, savedId);
+    } catch {
+      toast('The backup couldn’t be created. Check your connection and try again.', 'error');
     }
   };
 
@@ -108,7 +131,7 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
         )}
       >
         {local ? <HardDrive className="size-3.5" aria-hidden /> : <Globe2 className="size-3.5" aria-hidden />}
-        {local ? 'Local share mode' : 'Server mode'}
+        {local ? 'Local share mode' : accountMode ? 'Your account' : 'Server mode'}
       </p>
 
       {missing.length > 0 && (
@@ -164,7 +187,7 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
             >
               {copied ? 'Copied' : 'Copy local link'}
             </Button>
-            <Button variant="primary" onClick={() => downloadBackup(config, savedId)} icon={<Download className="size-4" aria-hidden />}>
+            <Button variant="primary" onClick={() => void downloadWithMedia()} icon={<Download className="size-4" aria-hidden />}>
               Download backup
             </Button>
           </div>
@@ -209,7 +232,7 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
             <Button variant="ghost" size="sm" loading={busy} onClick={() => void save().then((id) => id && toast('Link updated with your latest changes.', 'success'))}>
               Update with latest changes
             </Button>
-            {editToken && !confirmRemove && (
+            {(editToken || accountMode) && !confirmRemove && (
               <Button variant="ghost" size="sm" onClick={() => setConfirmRemove(true)} icon={<Trash2 className="size-4" aria-hidden />}>
                 Unpublish
               </Button>
@@ -240,7 +263,7 @@ export function ShareDialog({ open, onClose, config, shareId, editToken, onSaved
         <p className="mt-1 text-xs text-ink-500">Move a birthday between devices, or keep a copy safe.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {!local && (
-            <Button variant="secondary" size="sm" onClick={() => downloadBackup(config, savedId)} icon={<Download className="size-4" aria-hidden />}>
+            <Button variant="secondary" size="sm" onClick={() => void downloadWithMedia()} icon={<Download className="size-4" aria-hidden />}>
               Download backup
             </Button>
           )}

@@ -1,6 +1,5 @@
 import type { BirthdayConfig, TemplateId } from '@/types/birthday';
 import { createDefaultConfig } from './defaultConfig';
-import { sampleArt } from './sampleArt';
 
 type Copy = { title: string; description: string; date?: string; place?: string };
 
@@ -29,6 +28,24 @@ const LOVE_TIMELINE: Copy[] = [
   { title: 'Today', description: 'Still my favourite person in every room.', date: 'Today', place: 'Right here' },
 ];
 
+const FRIEND_PHOTOS = [
+  '/people/mem_roadtrip.webp',
+  '/people/mem_pancakes.webp',
+  '/people/mem_concert.webp',
+  '/people/mem_museum.webp',
+  '/people/mem_graduation.webp',
+  '/people/mem_picnic.webp',
+];
+
+const LOVE_PHOTOS = [
+  '/people/love_day_met.webp',
+  '/people/love_trip.webp',
+  '/people/love_dancing.webp',
+  '/people/love_lights.webp',
+  '/people/love_sunday.webp',
+  '/people/love_everyday.webp',
+];
+
 /**
  * Fictional sample content used ONLY for template previews.
  * Real birthdays start from createDefaultConfig() with visible placeholders.
@@ -45,8 +62,8 @@ export function createSampleConfig(templateId: TemplateId = 'birthday-edition', 
     relationship: love ? 'Partner' : 'Best friend',
     birthdayDate: '1999-10-12',
     age: 27,
-    heroImage: sampleArt(0, 'Sample portrait'),
-    finalImage: sampleArt(4, 'Sample photo', 'landscape'),
+    heroImage: `/templates/${templateId}.webp`,
+    finalImage: love ? '/people/love_everyday.webp' : '/people/birthday_cake.webp',
     messages: {
       intro: '',
       main: love
@@ -68,13 +85,13 @@ export function createSampleConfig(templateId: TemplateId = 'birthday-edition', 
     },
     memories: base.memories.map((m, i) => ({
       ...m,
-      image: sampleArt(i + 1, `Sample memory ${i + 1}`, i % 3 === 1 ? 'landscape' : 'portrait'),
+      image: love ? LOVE_PHOTOS[i % LOVE_PHOTOS.length] : FRIEND_PHOTOS[i % FRIEND_PHOTOS.length],
       ...memories[i],
     })),
     timeline: base.timeline.map((t, i) => ({
       ...t,
       ...(love ? LOVE_TIMELINE[i] : { date: ['2016', '2018', '2021', 'Today'][i] }),
-      image: i < 3 ? sampleArt(i + 5, 'Sample photo', 'landscape') : undefined,
+      image: i < 3 ? (love ? LOVE_PHOTOS[i] : FRIEND_PHOTOS[i]) : undefined,
     })),
   };
 }

@@ -8,13 +8,13 @@ import { CreatorBar } from '@/components/experience/CreatorBar';
 import { createSampleConfig } from '@/data/sampleConfig';
 import { isTemplateId } from '@/data/normalizeConfig';
 import { getTemplate, isLoveTemplate } from '@/templates/registry';
-import { useDraft } from '@/store/DraftProvider';
+import { useStartFromTemplate } from '@/hooks/useStartFromTemplate';
 
 /** `/templates/:id` — the complete experience with fictional sample content. */
 export default function TemplatePreviewPage() {
   const { id } = useParams<{ id?: string }>();
   const router = useRouter();
-  const { patch } = useDraft();
+  const startFromTemplate = useStartFromTemplate();
   const valid = isTemplateId(id);
   const config = useMemo(() => (valid ? createSampleConfig(id, { love: isLoveTemplate(id) }) : null), [valid, id]);
   useEffect(() => {
@@ -30,8 +30,7 @@ export default function TemplatePreviewPage() {
         <button
           type="button"
           onClick={() => {
-            patch({ templateId: id });
-            router.push('/create');
+            void startFromTemplate(id);
           }}
           className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 font-semibold whitespace-nowrap text-ink-900 hover:bg-white/90"
         >

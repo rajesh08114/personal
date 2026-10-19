@@ -1,6 +1,8 @@
 import { loadConfig, type ServerConfig } from './config';
 import { FileStore, type Store } from './store';
 import { createApi, type Api } from './api';
+import { MemoryAccountStore, type AccountStore } from './accounts';
+import { createMailer } from './mailer';
 
 /**
  * The server-side singletons shared by the API route handlers and the pages that read birthdays:
@@ -10,6 +12,8 @@ import { createApi, type Api } from './api';
 export interface Runtime {
   config: ServerConfig;
   store: Store;
+  /** Users, works and libraries. Only with MongoDB. */
+  accounts: AccountStore | null;
   api: Api;
   log: (entry: object) => void;
 }
@@ -31,7 +35,19 @@ async function create(): Promise<Runtime> {
     ? new (await import('./mongoStore')).MongoStore(config.mongoUri, config.mongoDb)
     : new FileStore(config.dataDir);
   await store.init();
-  const api = createApi(config, store, log);
+  let accounts: AccountStore | null = null;
+  if (config.accounts.store === 'mongodb') {
+    accounts = new (await import('./mongoAccounts')).MongoAccountStore(config.mongoUri, config.mongoDb);
+  } else if (config.accounts.store === 'memory') {
+    log({ level: 'warn', event: 'memory-accounts', message: 'Accounts are kept in memory and lost on restart.' });
+    accounts = new MemoryAccountStore();
+  }
+  await accounts?.init();
+  const mailer = createMailer(config.email, log);
+  if (accounts && mailer.mode === 'off') {
+    log({ level: 'info', event: 'email-off', message: 'Set RESEND_API_KEY and EMAIL_FROM to enable password reset and email verification.' });
+  }
+  const api = createApi(config, store, log, accounts ?? undefined, mailer);
 
   const sweep = () =>
     store
@@ -47,6 +63,7 @@ async function create(): Promise<Runtime> {
     process.once(signal, () => {
       log({ level: 'info', event: 'shutdown', signal });
       void store.close();
+      void accounts?.close();
     });
   }
 
@@ -55,8 +72,9 @@ async function create(): Promise<Runtime> {
     event: 'ready',
     origin: config.publicOrigin,
     storage: config.mongoUri ? 'mongodb' : 'files',
+    accounts: !!accounts,
   });
-  return { config, store, api, log };
+  return { config, store, accounts, api, log };
 }
 
 export function getRuntime(): Promise<Runtime> {

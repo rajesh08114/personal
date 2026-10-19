@@ -73,7 +73,7 @@ describe.each(BACKENDS)('$name storage', ({ make, age, cleanup }) => {
     dir = await mkdtemp(path.join(tmpdir(), 'bd-server-'));
     const config = {
       ...loadConfig({ DATA_DIR: path.join(dir, 'data'), PUBLIC_ORIGIN: ORIGIN }),
-      rateLimits: { read: 1000, write: 1000, upload: 1000 },
+      rateLimits: { read: 1000, write: 1000, upload: 1000, auth: 1000 },
     };
     store = make(dir);
     await store.init();

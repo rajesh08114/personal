@@ -46,3 +46,21 @@ export function parseDataUrl(url: string): { type: string; bytes: Uint8Array } |
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return { type: match[1].toLowerCase(), bytes };
 }
+
+const LIBRARY_PATH = /^\/api\/library\/[a-f0-9]{24}\/file$/;
+
+/** Swaps the user's library references for data URLs, so a backup file carries its photos and music with it. */
+export function inlineLibraryMedia(config: BirthdayConfig): Promise<BirthdayConfig> {
+  return mapConfigMedia(config, async (url) => {
+    if (!LIBRARY_PATH.test(url)) return url;
+    const res = await fetch(url, { credentials: 'same-origin' });
+    if (!res.ok) return undefined;
+    const blob = await res.blob();
+    return new Promise<string | undefined>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => resolve(undefined);
+      reader.readAsDataURL(blob);
+    });
+  });
+}

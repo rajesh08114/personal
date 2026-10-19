@@ -6,6 +6,27 @@ import { NextResponse, type NextRequest } from 'next/server';
  * routes are excluded: they send JSON and files, and proxying would buffer their upload bodies.
  */
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const hasSession = Boolean(
+    request.cookies.get('__Host-session')?.value || request.cookies.get('session')?.value,
+  );
+
+  // If user is already signed in and visits login or register, redirect to dashboard
+  if (hasSession && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // If user is signed out and visits private account routes, redirect to login
+  if (
+    process.env.NEXT_PUBLIC_BIRTHDAY_API_URL &&
+    !hasSession &&
+    (pathname === '/dashboard' || pathname === '/profile')
+  ) {
+    const login = new URL('/login', request.url);
+    login.searchParams.set('next', pathname + request.nextUrl.search);
+    return NextResponse.redirect(login);
+  }
+
   const nonce = btoa(crypto.randomUUID());
   const dev = process.env.NODE_ENV !== 'production';
 

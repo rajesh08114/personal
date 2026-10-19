@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { storageMode } from '@/data/repository';
+import { useAuth } from '@/store/AuthProvider';
 
 const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
@@ -12,6 +13,9 @@ export default function PrivacyPage() {
     document.title = 'Birthday Studio — Privacy';
   }, []);
   const server = storageMode === 'server';
+  const auth = useAuth();
+  const accounts = auth.accountsEnabled;
+  const emailOn = auth.emailEnabled;
 
   return (
     <main className="min-h-dvh bg-[#f4efe6] px-6 py-16 text-[#2b2620]">
@@ -20,11 +24,33 @@ export default function PrivacyPage() {
         <h1 className="font-display text-4xl">Your birthday, your data</h1>
 
         <h2 className="pt-4 text-xl font-semibold">While you create</h2>
-        <p>
-          Everything you type or upload in the studio (names, messages, photos, music) is saved in this
-          browser’s storage (IndexedDB) so you don’t lose work. It isn’t sent anywhere while you edit. Photos
-          are resized in your browser before they are saved.
-        </p>
+        {accounts ? (
+          <p>
+            Everything you type or upload in the studio (names, messages, photos, music) is saved to your
+            account on our server as you edit, so you can pick it up on any device. Photos are resized in your
+            browser first. Your birthdays and your photo and music library are private: only you, signed in,
+            can open them. They are only visible to others once you publish a birthday.
+          </p>
+        ) : (
+          <p>
+            Everything you type or upload in the studio (names, messages, photos, music) is saved in this
+            browser’s storage (IndexedDB) so you don’t lose work. It isn’t sent anywhere while you edit. Photos
+            are resized in your browser before they are saved.
+          </p>
+        )}
+
+        {accounts && (
+          <>
+            <h2 className="pt-4 text-xl font-semibold">Your account</h2>
+            <p>
+              We keep your email address, your name and a salted hash of your password (never the password
+              itself). {emailOn && 'We use your email address only to send what you ask for: a link to reset your password, a note when it changes, and a link to confirm the address. Those emails go through Resend. '}
+              A single cookie keeps you signed in; it isn’t used for tracking. You can change your
+              password, which signs out your other devices, or delete your account from the dashboard. Deleting
+              it removes your birthdays, your library and every share link right away.
+            </p>
+          </>
+        )}
 
         <h2 className="pt-4 text-xl font-semibold">When you share</h2>
         {server ? (

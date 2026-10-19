@@ -20,7 +20,7 @@ describe('api core', () => {
     dir = await mkdtemp(path.join(tmpdir(), 'bd-api-'));
     store = new FileStore(path.join(dir, 'data'));
     await store.init();
-    api = createApi({ ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 1000, write: 1000, upload: 1000 } }, store);
+    api = createApi({ ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 1000, write: 1000, upload: 1000, auth: 1000 } }, store);
   });
   afterAll(async () => {
     await store.close();
@@ -49,7 +49,7 @@ describe('api core', () => {
 
   it('rate limits per IP and sends Retry-After', async () => {
     const limited = createApi(
-      { ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 2, write: 1000, upload: 1000 } },
+      { ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 2, write: 1000, upload: 1000, auth: 1000 } },
       store,
     );
     const media = (ip: string) => limited.handleMedia(new Request(`${ORIGIN}/media/x`), 'x', ip);
@@ -89,7 +89,7 @@ describe('api core: edge cases', () => {
 
   it('caps all visitors together, so a spoofed address cannot dodge the limit', async () => {
     const api = createApi(
-      { ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 1, write: 1000, upload: 1000 } },
+      { ...loadConfig({ PUBLIC_ORIGIN: ORIGIN }), rateLimits: { read: 1, write: 1000, upload: 1000, auth: 1000 } },
       store,
     );
     // Every request claims a fresh address; the shared ceiling is 20x the per-address limit.

@@ -1,5 +1,5 @@
 import { Suspense, useId, useRef, useState, type DragEvent } from 'react';
-import { Crop, ImagePlus, LoaderCircle, RefreshCw, Trash2, TriangleAlert } from 'lucide-react';
+import { Crop, FolderOpen, ImagePlus, LoaderCircle, RefreshCw, Trash2, TriangleAlert } from 'lucide-react';
 import type { PhotoFraming } from '@/types/birthday';
 import { framingStyle } from '@/components/experience/photoFraming';
 import { lazyChunk } from '@/utils/lazyChunk';
@@ -8,6 +8,8 @@ import { lazyChunk } from '@/utils/lazyChunk';
 const PhotoEditor = lazyChunk(() => import('./PhotoEditor').then((m) => ({ default: m.PhotoEditor })));
 import { compressImage, errorMessage, IMAGE_ACCEPT } from '@/utils/media';
 import { cn } from '@/utils/cn';
+import { useAuth } from '@/store/AuthProvider';
+import { LibraryPicker, useLibraryEnabled } from './LibraryPicker';
 
 interface ImageUploaderProps {
   value?: string;
@@ -50,13 +52,17 @@ export function ImageUploader({
   const [editorMounted, setEditorMounted] = useState(false);
   if (editing && !editorMounted) setEditorMounted(true);
   const errorId = useId();
+  const auth = useAuth();
+  const hasLibrary = useLibraryEnabled();
+  const [picking, setPicking] = useState(false);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setBusy(true);
     setError(null);
     try {
-      onChange(await compressImage(file));
+      // Signed in, the photo goes straight to the user's library and the work keeps only a reference.
+      onChange(await auth.storeMedia(await compressImage(file), file.name));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -119,6 +125,17 @@ export function ImageUploader({
                   <Crop className="size-3.5" aria-hidden /> {!compact && 'Adjust'}
                 </button>
               )}
+              {hasLibrary && (
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  className="inline-flex size-9 items-center justify-center rounded-lg bg-white/95 text-ink-900 shadow hover:bg-white"
+                  aria-label={`Choose ${label.toLowerCase()} from your library`}
+                  title="Choose from library"
+                >
+                  <FolderOpen className="size-3.5" aria-hidden />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={pick}
@@ -166,6 +183,17 @@ export function ImageUploader({
             {!compact && <span className="text-xs text-ink-500">{emptyHint}</span>}
           </button>
         )}
+        {!value && hasLibrary && (
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            aria-label={`Choose ${label.toLowerCase()} from your library`}
+            title="Choose from library"
+            className="absolute right-2 bottom-2 inline-flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-ink-800 shadow-sm ring-1 ring-ink-200 hover:bg-brand-soft"
+          >
+            <FolderOpen className="size-3.5" aria-hidden /> {!compact && 'Library'}
+          </button>
+        )}
         {busy && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/80 backdrop-blur-sm"
@@ -176,6 +204,18 @@ export function ImageUploader({
           </div>
         )}
       </div>
+      {hasLibrary && (
+        <LibraryPicker
+          open={picking}
+          kind="image"
+          onClose={() => setPicking(false)}
+          onPick={(item) => {
+            onChange(item.url);
+            setError(null);
+            setPicking(false);
+          }}
+        />
+      )}
       {onFramingChange && editorMounted && (
         <Suspense fallback={null}>
           <PhotoEditor

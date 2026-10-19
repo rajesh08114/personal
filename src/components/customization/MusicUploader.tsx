@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { LoaderCircle, Music, Pause, Play, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import { FolderOpen, LoaderCircle, Music, Pause, Play, Trash2, TriangleAlert, Upload } from 'lucide-react';
 import type { MusicSettings } from '@/types/birthday';
 import { Switch } from '@/components/ui/Field';
 import { Button, IconButton } from '@/components/ui/Button';
 import { AUDIO_ACCEPT, errorMessage, readAudioFile } from '@/utils/media';
+import { useAuth } from '@/store/AuthProvider';
+import { LibraryPicker, useLibraryEnabled } from './LibraryPicker';
 
 interface MusicUploaderProps {
   music: MusicSettings;
@@ -16,6 +18,9 @@ export function MusicUploader({ music, onChange }: MusicUploaderProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+  const auth = useAuth();
+  const hasLibrary = useLibraryEnabled();
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -31,7 +36,8 @@ export function MusicUploader({ music, onChange }: MusicUploaderProps) {
     setBusy(true);
     setError(null);
     try {
-      const url = await readAudioFile(file);
+      // Signed in, the song goes straight to the user's library and the work keeps only a reference.
+      const url = await auth.storeMedia(await readAudioFile(file), file.name);
       onChange({ ...music, url, name: file.name.replace(/\.[^.]+$/, ''), enabled: true });
     } catch (err) {
       setError(errorMessage(err));
@@ -83,6 +89,11 @@ export function MusicUploader({ music, onChange }: MusicUploaderProps) {
             <p className="truncate text-sm font-semibold text-ink-900">{music.name ?? 'Your song'}</p>
             <p className="text-xs text-ink-500">Plays after they open their surprise</p>
           </div>
+          {hasLibrary && (
+            <IconButton size="sm" label="Choose music from your library" onClick={() => setPicking(true)}>
+              <FolderOpen className="size-4" aria-hidden />
+            </IconButton>
+          )}
           <Button size="sm" variant="ghost" onClick={() => inputRef.current?.click()}>
             Replace
           </Button>
@@ -111,6 +122,23 @@ export function MusicUploader({ music, onChange }: MusicUploaderProps) {
           </span>
           <Upload className="ml-auto size-4 text-ink-400" aria-hidden />
         </button>
+      )}
+      {!music.url && hasLibrary && (
+        <Button size="sm" variant="ghost" icon={<FolderOpen className="size-4" aria-hidden />} onClick={() => setPicking(true)}>
+          Choose from your library
+        </Button>
+      )}
+      {hasLibrary && (
+        <LibraryPicker
+          open={picking}
+          kind="audio"
+          onClose={() => setPicking(false)}
+          onPick={(item) => {
+            onChange({ ...music, url: item.url, name: item.name.replace(/\.[^.]+$/, ''), enabled: true });
+            setError(null);
+            setPicking(false);
+          }}
+        />
       )}
       {error && (
         <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-rose-700">

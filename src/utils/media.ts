@@ -1,3 +1,5 @@
+import { ApiError } from '@/data/api/birthdayApi';
+
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export const IMAGE_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp';
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
@@ -104,7 +106,8 @@ export async function readAudioFile(file: File): Promise<string> {
 }
 
 export function errorMessage(err: unknown): string {
-  if (err instanceof MediaError) return err.message;
+  // MediaError and ApiError messages are written for people to read.
+  if (err instanceof MediaError || err instanceof ApiError) return err.message;
   if (err instanceof DOMException && err.name === 'QuotaExceededError') {
     return 'Your browser storage is full. Try removing a few photos or the music file.';
   }

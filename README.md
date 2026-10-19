@@ -29,20 +29,24 @@ Requires Node 20.19+ or 22.12+ (CI and the Docker image use Node 22). It is a Ne
 
 | Route | Purpose |
 | --- | --- |
-| `/` | The birthday website built from your current draft, with a small creator toolbar you can dismiss |
+| `/` | The landing page: what Birthday Studio is, how it works, a taste of the templates, why to make an account. Its buttons follow who is looking: new visitor, signed-in user, or a server without accounts |
 | `/templates` | "Choose your birthday experience" gallery, with category filters |
 | `/templates/:id` | Full preview of a template using fictional sample content |
-| `/create` | The studio: customise everything with a live desktop, tablet or mobile preview |
+| `/create` | The studio: customise everything with a live desktop, tablet or mobile preview. With accounts on it needs a login and saves to the account |
 | `/preview` | Full-screen preview of your draft (`?embed=1` runs inside the studio's preview frame) |
 | `/birthday/:id` | The shared link the recipient opens. It has no creator controls |
+| `/login`, `/register` | Sign in or create an account (only when the server has accounts on) |
+| `/forgot-password`, `/reset-password`, `/verify-email` | The email flows: ask for a reset link, choose the new password, confirm an address |
+| `/dashboard` | The signed-in user's birthdays (`?tab=library` for the media library) |
+| `/profile` | Who you are, what you're using, rename, change password, sign out other devices, delete the account |
 | `/privacy` | What is stored, where, and how to remove it |
 
-A first-time visitor to `/` (no draft yet) is sent to `/templates`.
+**The flow.** A visitor lands on `/`, browses `/templates` freely, and signs up when they start building (or straight from the landing page, which sends them on to the templates). The account menu in every header (initial → My birthdays, library, the studio, Profile & settings, Log out) is the way around. A brand-new account's dashboard walks through the three steps; later it lists their birthdays, each with Edit, View, Duplicate, Rename and Delete. Logging out or deleting the account returns to `/`. Without accounts there is no login: the landing page and header open the studio directly, and `/preview` shows the draft.
 
 ## How to make one (no code needed)
 
-1. Go to **/templates**, then click **Preview** or **Use template**.
-2. In **/create**, fill in the steps: basics, photos, messages, memories, story, colours and music. Everything autosaves to your browser.
+1. Start on the home page, then go to **/templates** and click **Preview** or **Use template**. With accounts on, you sign up (free) at this point; the template you chose is waiting for you after.
+2. In **/create**, fill in the steps: basics, photos, messages, memories, story, colours and music. Everything autosaves, to your account (or to your browser, when the server has no accounts).
 3. Watch the live preview. Switch device sizes, replay the opening, or open it full screen.
 4. Click **Share**. The studio lists any personal touches still missing, then gives you a link, plus a backup file you can move to another device (see [Sharing](#sharing-local-mode-and-server-mode)).
 
@@ -291,6 +295,61 @@ With several instances, rate limits are still counted per instance (in memory). 
 
 **Using a different backend.** On the server, implement the `Store` interface in `server/store.ts` (for Postgres, S3 and so on). In the browser, UI code only talks to the `ExperienceRepository` interface in `src/data/repository.ts` (`save`, `get`, `remove`). For Firebase, Supabase or Postgres, write an implementation and assign it to `experienceRepository`; nothing else changes.
 
+## Accounts, works and the media library
+
+With a server and a database, people sign up and keep their own birthdays ("works") and a private library of photos and songs. It is on by default whenever `MONGODB_URI` is set.
+
+| Setting | Meaning |
+| --- | --- |
+| `ACCOUNTS` | `mongodb` (the default when `MONGODB_URI` is set), `memory` (development and tests: everything is lost on restart) or `off` |
+| `REGISTRATION` | `closed` stops new sign-ups; existing accounts keep working |
+| `SESSION_DAYS` | How long a login lasts (default 30) |
+| `MAX_WORKS_PER_USER`, `MAX_LIBRARY_MB` | Per-user limits (default 50 birthdays, 200 MB of media) |
+| `RATE_LIMIT_AUTH` | Login and sign-up attempts a minute, per address and per email (default 10) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Turn on email through [Resend](https://resend.com): password reset and address confirmation. `EMAIL_FROM` is like `Birthday Studio <hello@birthday.example.com>` on a domain verified in Resend. With neither set, the "Forgot your password?" link is hidden |
+| `EMAIL=log` | Development: write each email to the server log instead of sending it |
+| `RATE_LIMIT_EMAIL_PER_HOUR`, `RATE_LIMIT_EMAIL_IP_PER_HOUR` | Emails one address may be sent (default 3), and one visitor may ask for (default 10), per hour |
+| `EMAIL_DAILY_LIMIT` | A ceiling on all emails a day (default 500), so abuse can't exhaust the Resend quota |
+| `RESET_LINK_MINUTES`, `VERIFY_LINK_HOURS` | How long the emailed links work (default 60 minutes, 24 hours) |
+| `RESEND_API_URL` | Only to point tests or a proxy at a different Resend endpoint |
+
+**What changes for people.**
+- `/create` and `/dashboard` need a login. Templates and published birthdays stay public.
+- The studio autosaves to the server, as one of the user's works. Photos and songs go into their library the moment they are chosen, and the work holds only `/api/library/<id>/file` references, so saving stays light. Anything already in the library can be picked again from **Library** in any photo or music slot.
+- **Share** publishes the work: the files it uses are copied to the public store and a share link is created. Editing afterwards stays private until **Update with latest changes**. Unpublishing, or deleting the work, takes the link down.
+- Anonymous publishing (`POST /api/birthdays`, `POST /api/media`) is switched off, so every public birthday belongs to someone. Links that already exist keep working.
+
+**How media is stored.** Files are kept as BSON `Binary` in the `userMedia` collection (up to the 13 MB song limit, under MongoDB's 16 MB document cap), once per user by SHA-256. This holds the same bytes a base64 string would, without base64's 33% overhead, which would push a 12 MB song past the cap. The browser still handles photos as base64 data URLs while editing; the server decodes them to bytes on upload. Library files are served only to their owner (`Cache-Control: private`, revalidated with an `ETag`, byte ranges for audio).
+
+**Isolation.** Every query on works and media includes the owner's id taken from the session, never from the request, so another person's data can't be reached rather than being checked after the fact. Someone else's work or file answers `404`, the same as one that doesn't exist. A work can only reference files from its owner's library (anything else is dropped on save), and `server/accountsApi.test.ts` and `e2e/accounts.spec.ts` try to read, change, delete and publish each other's things.
+
+**Security.** Passwords are hashed with scrypt (N=32768) and a per-user salt; login takes as long for an unknown email as for a wrong password and says the same thing; password guesses are limited per account as well as per address. Sessions are random tokens, stored only as a hash, in an `HttpOnly`, `SameSite=Lax` cookie (`__Host-` prefixed and `Secure` on https). Every write must come with a known `Origin`. Changing a password signs out the other devices. Deleting an account removes its works, library and share links.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/auth/me` | `{ accountsEnabled, user }`; `accountsEnabled: false` on servers without accounts |
+| `POST` | `/api/auth/register`, `/login`, `/logout`, `/password` | |
+| `POST` | `/api/auth/forgot`, `/api/auth/reset` | Email a one-time reset link; set the new password with it |
+| `POST` | `/api/auth/verify`, `/api/auth/resend-verification` | Confirm the address from the emailed link; send the link again |
+| `DELETE` | `/api/auth/account` | Needs the password |
+| `GET`, `POST` | `/api/works` | List, create |
+| `GET`, `PUT`, `DELETE` | `/api/works/:id` | |
+| `POST` | `/api/works/:id/publish`, `/unpublish` | Publish returns `{ shareId }` |
+| `POST` | `/api/works/:id/duplicate` | A private copy |
+| `POST` | `/api/works/claim` | `{ id, editToken }`: moves a birthday published before accounts into the account, keeping its link |
+| `GET`, `POST` | `/api/library` | Upload sends the bytes, with the name in `X-File-Name` |
+| `GET`, `DELETE` | `/api/library/:id/file`, `/api/library/:id` | Delete is refused while a birthday still uses the file |
+
+Accounts need the API on the app's own origin (`NEXT_PUBLIC_BIRTHDAY_API_URL=/api`), so the login cookie is sent. Social login isn't built: it needs OAuth credentials from each provider.
+
+**Forgot password.** `/forgot-password` asks for an address and emails a link to `/reset-password`. The link carries a random 256-bit token that is stored only as a hash, works once, expires after an hour, and is replaced by any newer request. Using it signs the account out everywhere, revokes any other link, confirms the address, and emails a "your password was changed" notice. The page removes the token from the address bar once read, and the pages send no `Referer`. A request gets the same `202` whether or not the address has an account, and the email is sent after the response, so neither the answer nor its timing says who is registered.
+
+**Email limits.** All of these apply to reset and confirmation emails: 10 attempts a minute per visitor (`RATE_LIMIT_AUTH`); 3 emails an hour to one address, counted whether or not it has an account; 10 an hour requested by one visitor; and a daily ceiling on everything sent. Guessing reset tokens is limited per visitor too. A Resend outage never blocks signing up or leaks into a response; it is logged and the dashboard offers to send the confirmation again.
+
+**Confirming the address.** Sign-up emails a link to `/verify-email`, which asks for a click before confirming (so a mail scanner opening the link can't use it up). Confirming isn't required to use the app; the dashboard just reminds people until they do.
+
+**Moving earlier birthdays in.** If the browser still holds the edit token from publishing before accounts, the dashboard offers to add that birthday to the account: it copies the photos and song into the library, keeps the same share link, and stops the token being used a second time.
+
 ## Adding a template
 
 1. Create `src/templates/my-template/` with `index.tsx` (the experience), `thumbnail.tsx` (default-exported gallery thumbnail) and `meta.tsx`:
@@ -367,7 +426,7 @@ Put it behind any HTTPS proxy or platform (Fly.io, Railway, Render, a VM with Ca
 
 ## Testing
 
-`npm run test:e2e` builds the app in server mode (into `.next-e2e`), starts the real server with a throwaway data directory, and drives Chromium at desktop and phone sizes. It creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. It fails on any console error or CSP violation. Finally it unpublishes and checks that the link returns 404. A second spec loads every template (found from the `meta.tsx` files) and fails on a blank page, horizontal overflow or any console error. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium, and `MONGODB_URI` to run it against MongoDB storage. CI runs it with both backends.
+`npm run test:e2e` builds the app in server mode (into `.next-e2e`) and starts two real servers with throwaway data (`scripts/e2e-servers.mjs`): one with accounts on, which MongoDB backs when `MONGODB_URI` is set and memory otherwise, and one with accounts off for the anonymous flow. `e2e/accounts.spec.ts` signs up, builds a birthday with a photo in the library, publishes, checks another account can't see or reach any of it, deletes, logs out and in, and deletes the account. `e2e/anonymous.spec.ts` drives the original flow. All of it runs in Chromium at desktop and phone sizes. The anonymous spec creates a birthday, uploads a photo and publishes it, then opens the link in a separate browser context (a different "device") and checks the title, link preview and hosted photo. Both specs fail on any console error or CSP violation, and finish by unpublishing or deleting and checking that the link returns 404. A second spec loads every template (found from the `meta.tsx` files) and fails on a blank page, horizontal overflow or any console error. Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium, and `MONGODB_URI` to run it against MongoDB storage. CI runs it with both backends.
 
 Set `MONGODB_TEST_URI=mongodb://127.0.0.1:27017` to also run the API tests against MongoDB. CI does this with a MongoDB service.
 

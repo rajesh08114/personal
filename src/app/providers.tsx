@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
+import { AuthProvider } from '@/store/AuthProvider';
 import { DraftProvider } from '@/store/DraftProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ErrorBoundary } from '@/components/experience/ErrorBoundary';
@@ -20,9 +21,11 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ToastProvider>
-      <DraftProvider>
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </DraftProvider>
+      <AuthProvider>
+        <DraftProvider>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </DraftProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }

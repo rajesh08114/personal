@@ -95,8 +95,13 @@ export class FileStore implements Store {
 
   private async writeAtomic(file: string, data: string | Buffer): Promise<void> {
     const tmp = `${file}.${randomBytes(6).toString('hex')}.tmp`;
-    await writeFile(tmp, data);
-    await rename(tmp, file);
+    try {
+      await writeFile(tmp, data);
+      await rename(tmp, file);
+    } catch (err) {
+      await rm(tmp, { force: true });
+      throw err;
+    }
   }
 
   async get(id: string): Promise<StoredBirthday | null> {
@@ -140,7 +145,13 @@ export class FileStore implements Store {
     try {
       await stat(file);
     } catch {
-      await this.writeAtomic(file, bytes);
+      try {
+        await this.writeAtomic(file, bytes);
+      } catch (err) {
+        // The same bytes uploaded at the same moment: on Windows the second rename can't replace the
+        // file the first just put there. Either copy is identical, so having it at all is success.
+        if (!(await stat(file).catch(() => null))) throw err;
+      }
     }
     return name;
   }

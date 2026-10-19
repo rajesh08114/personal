@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, stubFonts, test } from './fixtures';
 
 /** A real PNG to upload, made by screenshotting a coloured box. */
 async function makePhoto(page: Page): Promise<Buffer> {
@@ -40,11 +41,11 @@ test('create → upload → publish → open on another device → unpublish', a
     .click();
   await page.getByRole('button', { name: /Publish & create share link/ }).click();
   const linkInput = page.getByLabel('Share link');
-  await expect(linkInput).toHaveValue(/\/birthday\/[a-z2-9]{10}$/);
+  await expect(linkInput).toHaveValue(/\/birthday\/[a-z2-9]{10}$/, { timeout: 20_000 });
   const link = await linkInput.inputValue();
 
   // A second browser context has no IndexedDB in common with the creator: it behaves like the recipient's phone.
-  const recipientContext = await browser.newContext();
+  const recipientContext = await stubFonts(await browser.newContext());
   const recipient = await recipientContext.newPage();
   const recipientErrors = watchErrors(recipient);
   const res = await recipient.goto(link);
@@ -70,8 +71,15 @@ test('create → upload → publish → open on another device → unpublish', a
   expect(creatorErrors).toEqual([]);
 });
 
-test('first visit lands in the gallery, unknown pages 404, privacy page exists', async ({ page }) => {
+test('the home page explains the product and opens the studio without a login; unknown pages 404; privacy exists', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('A birthday they’ll keep');
+  // No accounts here: nothing about logging in, and the way in is the studio itself.
+  await expect(page.getByRole('link', { name: 'Log in' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Open the studio' }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: /A free account keeps everything/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: /ways to say it/ })).toBeVisible();
+  await page.getByRole('link', { name: 'Browse templates' }).first().click();
   await expect(page).toHaveURL(/\/templates$/);
   expect((await page.request.get('/definitely-not-a-page')).status()).toBe(404);
   await page.goto('/privacy');

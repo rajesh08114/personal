@@ -1,4 +1,6 @@
 # The app with MongoDB storage: `docker compose up`, then open http://localhost:8787
+# With MongoDB, accounts are on: people sign up at /register and keep their own birthdays and media library.
+# Add REGISTRATION: closed to stop new sign-ups, or ACCOUNTS: 'off' for the old anonymous publishing.
 # For production set PUBLIC_ORIGIN to your https address and put a TLS proxy in front.
 services:
   app:

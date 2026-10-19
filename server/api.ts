@@ -3,35 +3,20 @@ import type { BirthdayConfig } from '../src/types/birthday';
 import { normalizeConfig } from '../src/data/normalizeConfig';
 import { mapConfigMedia } from '../src/data/configMedia';
 import type { ServerConfig } from './config';
-import { BIRTHDAY_ID, MEDIA_FILE, MEDIA_TYPES, tokenMatches, type MediaType, type Store } from './store';
+import { BIRTHDAY_ID, MEDIA_FILE, MEDIA_TYPES, tokenMatches, type Store } from './store';
 import { RateLimiter } from './rateLimit';
+import { HttpError, sniffMedia, type Log } from './http';
+import type { AccountStore } from './accounts';
+import { createAccountsApi } from './accountsApi';
+import { rangedResponse } from './range';
+import { createMailer, type Mailer } from './mailer';
+
+export { HttpError, sniffMedia, type Log };
 
 /**
  * The HTTP API (`/api/*` and `/media/*`) written against the standard Request and Response,
- * so the same code runs behind the Node adapter in app.ts and inside Next.js route handlers.
+ * so the same code runs inside Next.js route handlers and in plain tests.
  */
-
-export class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
-/** Checks the file's leading bytes, so an upload can't claim to be a photo when it isn't. */
-export function sniffMedia(bytes: Buffer): MediaType | null {
-  const ascii = (start: number, end: number) => bytes.subarray(start, end).toString('latin1');
-  if (bytes.length < 12) return null;
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
-  if (bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])))
-    return 'image/png';
-  if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return 'image/webp';
-  if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WAVE') return 'audio/wav';
-  if (ascii(0, 3) === 'ID3' || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)) return 'audio/mpeg';
-  return null;
-}
 
 /** All visitors together may make this many times the per-address limit. */
 const GLOBAL_LIMIT_FACTOR = 20;
@@ -45,7 +30,6 @@ function safeDecode(segment: string): string {
   }
 }
 
-export type Log =(entry: object) => void;
 
 export interface Api {
   /** Hosted media URL prefix, e.g. https://birthday.example.com/media/ */
@@ -60,8 +44,15 @@ export interface Api {
   errorResponse(err: unknown): Response;
 }
 
-export function createApi(config: ServerConfig, store: Store, log: Log = () => {}): Api {
+export function createApi(
+  config: ServerConfig,
+  store: Store,
+  log: Log = () => {},
+  accounts?: AccountStore,
+  mailer: Mailer = createMailer({ ...config.email, mode: 'off' }, log),
+): Api {
   const limiter = new RateLimiter(60_000);
+  const hourly = new RateLimiter(60 * 60_000);
   const mediaPrefix = `${config.publicOrigin}/media/`;
   const allowedOrigins = new Set([config.publicOrigin, ...config.corsOrigins]);
 
@@ -131,6 +122,33 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
     );
   }
 
+  const accountsApi = accounts
+    ? createAccountsApi({
+        config,
+        accounts,
+        store,
+        mediaPrefix,
+        mailer,
+        log,
+        allowHour: (key, max) => hourly.allow(key, max),
+        isAllowedOrigin: (origin) => allowedOrigins.has(origin),
+        throttle(key, max) {
+          if (!limiter.allow(key, max)) throw new HttpError(429, 'Too many attempts. Please wait a minute and try again.');
+        },
+        limit,
+        json,
+        readBody,
+        readJson,
+      })
+    : null;
+
+  /** With accounts on, publishing anonymously is off: people sign in, and publish from their works. */
+  async function requireLoginWhenAccountsAreOn(req: Request) {
+    if (accountsApi && !(await accountsApi.userFor(req))) {
+      throw new HttpError(401, 'Please log in to continue.');
+    }
+  }
+
   const bearer = (req: Request) => /^Bearer (\S+)$/.exec(req.headers.get('authorization') ?? '')?.[1];
 
   async function route(req: Request, ip: string, pathname: string, cors: Headers): Promise<Response> {
@@ -139,7 +157,7 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
       cors.set('Access-Control-Allow-Origin', origin);
       cors.set('Vary', 'Origin');
       cors.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      cors.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      cors.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
       cors.set('Access-Control-Max-Age', '600');
     } else if (origin && req.method !== 'GET') {
       throw new HttpError(403, 'Requests from this site aren’t allowed.');
@@ -149,6 +167,7 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
     if (pathname === '/api/health') return json(200, { ok: true });
 
     if (pathname === '/api/media' && req.method === 'POST') {
+      await requireLoginWhenAccountsAreOn(req);
       limit(ip, 'upload');
       const body = await readBody(req, Math.max(config.maxImageBytes, config.maxAudioBytes));
       const type = sniffMedia(body);
@@ -185,6 +204,7 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
     }
 
     if (pathname === '/api/birthdays' && req.method === 'POST') {
+      await requireLoginWhenAccountsAreOn(req);
       limit(ip, 'write');
       const cleaned = await cleanConfig(await readJson(req));
       return json(201, await store.create(cleaned));
@@ -216,6 +236,14 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
       throw new HttpError(405, 'Method not allowed.');
     }
 
+    if (accountsApi) {
+      const handled = await accountsApi.handle(req, ip, pathname);
+      if (handled) return handled;
+    } else if (pathname === '/api/auth/me' && req.method === 'GET') {
+      // Lets the app find out that this server has no accounts, and fall back to anonymous use.
+      return json(200, { accountsEnabled: false, user: null });
+    }
+
     throw new HttpError(404, 'Not found.');
   }
 
@@ -236,36 +264,19 @@ export function createApi(config: ServerConfig, store: Store, log: Log = () => {
       limit(ip, 'read');
       const media = MEDIA_FILE.test(name) ? await store.openMedia(name) : null;
       if (!media) throw new HttpError(404, 'Not found.');
-      const size = media.size;
-      const head = req.method === 'HEAD';
-      const body = (start?: number, end?: number) =>
-        head ? null : (Readable.toWeb(media.stream(start, end)) as unknown as ReadableStream);
       const type = Object.entries(MEDIA_TYPES).find(([, ext]) => name.endsWith(`.${ext}`))![0];
-      const headers: Record<string, string> = {
-        'Content-Type': type,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-        'Accept-Ranges': 'bytes',
-        'Cross-Origin-Resource-Policy': 'same-site',
-        'X-Robots-Tag': 'noindex',
-      };
-      // Safari only plays audio from servers that honour Range requests.
-      const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.get('range') ?? '');
-      if (range && (range[1] || range[2])) {
-        let start = range[1] ? Number(range[1]) : size - Number(range[2]);
-        let end = range[1] && range[2] ? Number(range[2]) : size - 1;
-        start = Math.max(0, start);
-        end = Math.min(end, size - 1);
-        if (start > end) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
-        return new Response(body(start, end), {
-          status: 206,
-          headers: {
-            ...headers,
-            'Content-Range': `bytes ${start}-${end}/${size}`,
-            'Content-Length': String(end - start + 1),
-          },
-        });
-      }
-      return new Response(body(), { status: 200, headers: { ...headers, 'Content-Length': String(size) } });
+      return rangedResponse(
+        req,
+        media.size,
+        {
+          'Content-Type': type,
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'Accept-Ranges': 'bytes',
+          'Cross-Origin-Resource-Policy': 'same-site',
+          'X-Robots-Tag': 'noindex',
+        },
+        (start, end) => Readable.toWeb(media.stream(start, end)) as unknown as ReadableStream,
+      );
     } catch (err) {
       return errorResponse(err);
     }

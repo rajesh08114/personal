@@ -14,6 +14,9 @@ import {
   CircleCheck,
 } from 'lucide-react';
 import { useDraft } from '@/store/DraftProvider';
+import { useAuth, useRequireLogin } from '@/store/AuthProvider';
+import { isTemplateId } from '@/data/normalizeConfig';
+import { AccountMenu } from '@/components/ui/AccountMenu';
 import { BirthdayForm, type SectionId } from '@/components/customization/BirthdayForm';
 import { LivePreview, type Device } from '@/components/customization/LivePreview';
 import { Button } from '@/components/ui/Button';
@@ -31,9 +34,13 @@ import { cn } from '@/utils/cn';
 
 /** `/create` — the Birthday Studio: customise everything with a live preview. */
 export default function CreatePage() {
-  const { config, ready, status, saveError, shareId, editToken, setConfig, setShareId, reset } = useDraft();
+  const { config, ready, status, saveError, shareId, editToken, accountMode, setConfig, setShareId, reset, patch, newWork } = useDraft();
   const params = useSearchParams();
   const router = useRouter();
+  const auth = useAuth();
+  const needsLogin = auth.status === 'ready' && auth.accountsEnabled && !auth.user;
+  const nextTarget = params.toString() ? `/create?${params.toString()}` : '/create';
+  const blocked = useRequireLogin(nextTarget);
   const pathname = usePathname();
   const [openSection, setOpenSection] = useState<SectionId | null>('basics');
   const [shareOpen, setShareOpen] = useState(params.get('share') === '1');
@@ -52,6 +59,17 @@ export default function CreatePage() {
     if (!isDesktop) setDevice('mobile');
   }, [isDesktop]);
 
+  // Arriving from "Use this template" after logging in: start that birthday, then tidy the address.
+  const template = params.get('template');
+  useEffect(() => {
+    if (!ready || needsLogin || !isTemplateId(template)) return;
+    const rest = new URLSearchParams(params.toString());
+    rest.delete('template');
+    router.replace(rest.size ? `${pathname}?${rest}` : pathname);
+    if (accountMode) void newWork(template);
+    else patch({ templateId: template });
+  }, [ready, needsLogin, template, accountMode, newWork, patch, params, pathname, router]);
+
   useEffect(() => {
     if (params.get('share') === '1') {
       setShareOpen(true);
@@ -61,7 +79,8 @@ export default function CreatePage() {
     }
   }, [params, router, pathname]);
 
-  if (!ready) return <LoadingScreen dark={false} label="Opening your studio…" />;
+  // With accounts on, the studio belongs to a signed-in user: send everyone else to log in, and back here after.
+  if (!ready || blocked) return <LoadingScreen dark={false} label="Opening your studio…" />;
 
   const readiness = getReadiness(config);
   const done = readiness.filter((r) => r.done).length;
@@ -80,7 +99,7 @@ export default function CreatePage() {
     <div className="flex h-dvh flex-col bg-paper text-ink-900">
       <header className="z-20 flex h-16 shrink-0 items-center gap-3 border-b border-ink-200 bg-paper/90 px-4 backdrop-blur sm:px-6">
         <Link
-          href="/templates"
+          href={auth.accountsEnabled ? '/dashboard' : '/'}
           className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight"
         >
           <img src="/favicon.svg" alt="" className="size-8" />
@@ -88,6 +107,7 @@ export default function CreatePage() {
         </Link>
         <SaveIndicator status={status} error={saveError} />
         <div className="ml-auto flex items-center gap-2">
+          <AccountMenu className="max-md:hidden" />
           <Link
             href="/templates"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-ink-700 hover:bg-ink-100 max-md:hidden"

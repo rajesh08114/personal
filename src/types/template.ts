@@ -42,6 +42,8 @@ export interface BirthdayTemplate {
   fonts: TemplateFonts;
   animations: AnimationConfig;
   interactions: InteractionConfig;
+  /** Generated .webp preview image for template galleries and cards. */
+  previewImage?: string;
   /** Animated gallery thumbnail. Its own lazy chunk, so pages that only play a template never download it. */
   Thumbnail: LazyExoticComponent<ComponentType>;
   /** Starts downloading the experience chunk (e.g. on hover) without rendering it. */
