@@ -15,12 +15,12 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
-    "lucide-react": "^1.51.0",
+    "lucide-react": "^1.57.0",
     "mongodb": "^7.7.0",
-    "motion": "^14.0.0",
+    "motion": "^14.3.0",
     "next": "16.4.2",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
