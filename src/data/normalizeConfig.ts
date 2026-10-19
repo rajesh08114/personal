@@ -139,6 +139,12 @@ export function normalizeConfig(input: unknown): BirthdayConfig {
       name: optStr(music.name)?.slice(0, 120),
       enabled: typeof music.enabled === 'boolean' ? music.enabled : true,
       volume: typeof music.volume === 'number' ? Math.min(1, Math.max(0, music.volume)) : 0.6,
+      startSec: typeof music.startSec === 'number' && Number.isFinite(music.startSec) && music.startSec > 0
+        ? Math.min(3600, Math.round(music.startSec * 10) / 10)
+        : undefined,
+      duration: typeof music.duration === 'number' && Number.isFinite(music.duration) && music.duration > 0
+        ? Math.min(3600, Math.round(music.duration * 10) / 10)
+        : undefined,
     },
   };
 }

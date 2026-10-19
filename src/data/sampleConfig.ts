@@ -3,21 +3,22 @@ import { createDefaultConfig } from './defaultConfig';
 
 type Copy = { title: string; description: string; date?: string; place?: string };
 
+// Each caption is written for the photo it sits on, so previews never show "Graduation" over a banquet hall.
 const FRIEND_MEMORIES: Copy[] = [
-  { title: 'Road trip to the coast', description: "That day we'll never forget.", date: 'Aug 2019', place: 'Big Sur' },
-  { title: 'Midnight pancakes', description: 'Nobody remembers whose idea it was.', date: 'Jan 2020', place: 'Your kitchen' },
+  { title: 'Festival weekend', description: "That day we'll never forget.", date: 'Aug 2019', place: 'Big Sur' },
+  { title: 'Group hugs only', description: 'Nobody remembers whose idea it was.', date: 'Jan 2020', place: 'Your kitchen' },
   { title: 'The concert', description: 'We lost our voices and found a new favourite song.', date: 'May 2021', place: 'The Greek' },
-  { title: 'Rainy-day museum', description: 'You explained every painting wrong. Confidently.', date: 'Nov 2021', place: 'The Getty' },
-  { title: 'Graduation', description: 'Proud does not even begin to cover it.', date: 'Jun 2022', place: 'Campus lawn' },
-  { title: 'Sunday picnic', description: 'The ants enjoyed it too.', date: 'Apr 2023', place: 'Golden Gate Park' },
+  { title: 'Rooftop sunset', description: 'Arms up, phones down, everyone loud.', date: 'Nov 2021', place: 'The rooftop' },
+  { title: 'Summer fields', description: 'Proud does not even begin to cover it.', date: 'Jun 2022', place: 'Countryside' },
+  { title: 'The big dinner', description: 'The table was set long before the first toast.', date: 'Apr 2023', place: 'Garden hall' },
 ];
 
 const LOVE_MEMORIES: Copy[] = [
   { title: 'The day we met', description: 'You laughed at my terrible joke. I knew I was in trouble.', date: '14 Mar 2020', place: 'The corner café' },
-  { title: 'Our first trip', description: 'We missed the train and found the best little town instead.', date: 'Jul 2020', place: 'Sintra' },
-  { title: 'Dancing in the kitchen', description: 'No music. Just us, and you stepping on my feet.', date: 'Dec 2020', place: 'Our first apartment' },
-  { title: 'Under the northern lights', description: 'You cried. I pretended I didn’t.', date: 'Feb 2022', place: 'Tromsø' },
-  { title: 'That rainy Sunday', description: 'Pancakes, a blanket fort and nowhere to be.', date: 'Oct 2023', place: 'Home' },
+  { title: 'Dancing in the woods', description: 'No music. Just us, and you stepping on my feet.', date: 'Jul 2020', place: 'Sintra' },
+  { title: 'The promise', description: 'Small ring, enormous feelings.', date: 'Dec 2020', place: 'Our first apartment' },
+  { title: 'Lights in the dark', description: 'You cried. I pretended I didn’t.', date: 'Feb 2022', place: 'Tromsø' },
+  { title: 'Dinner under the stars', description: 'Candles, a blanket and nowhere to be.', date: 'Oct 2023', place: 'The lakeside' },
   { title: 'The best ordinary day', description: 'Nothing happened, and it was perfect.', date: 'Every day', place: 'Wherever you are' },
 ];
 
@@ -32,18 +33,18 @@ const FRIEND_PHOTOS = [
   '/people/mem_roadtrip.webp',
   '/people/mem_pancakes.webp',
   '/people/mem_concert.webp',
-  '/people/mem_museum.webp',
-  '/people/mem_graduation.webp',
-  '/people/mem_picnic.webp',
+  '/people/couple_sunset.webp',
+  '/people/love_lights.webp',
+  '/people/birthday_cake.webp',
 ];
 
 const LOVE_PHOTOS = [
   '/people/love_day_met.webp',
+  '/people/love_forest_dance.webp',
   '/people/love_trip.webp',
-  '/people/love_dancing.webp',
-  '/people/love_lights.webp',
   '/people/love_sunday.webp',
-  '/people/love_everyday.webp',
+  '/people/love_stars_dinner.webp',
+  '/people/love_forest_dance.webp',
 ];
 
 /**
@@ -62,8 +63,8 @@ export function createSampleConfig(templateId: TemplateId = 'birthday-edition', 
     relationship: love ? 'Partner' : 'Best friend',
     birthdayDate: '1999-10-12',
     age: 27,
-    heroImage: `/templates/${templateId}.webp`,
-    finalImage: love ? '/people/love_everyday.webp' : '/people/birthday_cake.webp',
+    heroImage: love ? '/people/love_forest_dance.webp' : '/people/maya_hero.webp',
+    finalImage: love ? '/people/love_stars_dinner.webp' : '/people/birthday_cake.webp',
     messages: {
       intro: '',
       main: love

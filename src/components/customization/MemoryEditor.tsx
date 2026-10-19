@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
-import type { Memory } from '@/types/birthday';
+import { ArrowDown, ArrowUp, Plus, Sparkles, Trash2 } from 'lucide-react';
+import type { Memory, TemplateId } from '@/types/birthday';
 import { Input } from '@/components/ui/Field';
 import { Button, IconButton } from '@/components/ui/Button';
 import { ImageUploader } from './ImageUploader';
+import { getTemplateSuggestions } from '@/data/templateSuggestions';
 
 interface MemoryEditorProps {
   items: Memory[];
@@ -14,6 +15,7 @@ interface MemoryEditorProps {
   titlePlaceholder: string;
   captionPlaceholder: string;
   emptyPhotoTitle: (index: number) => string;
+  templateId?: TemplateId;
 }
 
 /** Add, edit, reorder and remove memories (also used for timeline chapters). */
@@ -26,7 +28,9 @@ export function MemoryEditor({
   titlePlaceholder,
   captionPlaceholder,
   emptyPhotoTitle,
+  templateId,
 }: MemoryEditorProps) {
+  const suggestions = templateId ? getTemplateSuggestions(templateId) : null;
   const update = (id: string, patch: Partial<Memory>) => onChange(items.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const move = (index: number, dir: -1 | 1) => {
     const next = [...items];
@@ -97,6 +101,24 @@ export function MemoryEditor({
                   onChange={(e) => update(m.id, { description: e.target.value })}
                   placeholder={captionPlaceholder}
                 />
+                {suggestions && suggestions.memoryCaptions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary-600">
+                      <Sparkles className="size-3" aria-hidden /> Ideas:
+                    </span>
+                    {suggestions.memoryCaptions.map((cap) => (
+                      <button
+                        key={cap}
+                        type="button"
+                        onClick={() => update(m.id, { description: cap })}
+                        className="rounded-full border border-ink-200/70 bg-paper-2 px-2.5 py-0.5 text-[11px] text-ink-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-800"
+                        title="Click to use caption"
+                      >
+                        {cap}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <Input
                     label="Date (optional)"

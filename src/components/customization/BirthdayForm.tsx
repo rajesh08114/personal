@@ -157,7 +157,7 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
         summary={config.messages.main ? `${config.messages.main.trim().split(/\s+/).length} words written` : 'Write from the heart'}
         complete={Boolean(config.messages.main.trim() && config.messages.surprise.trim())}
       >
-        <MessageEditor messages={config.messages} onChange={patchMessages} />
+        <MessageEditor messages={config.messages} onChange={patchMessages} templateId={config.templateId} />
       </EditorSection>
 
       <EditorSection
@@ -176,6 +176,7 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
           titlePlaceholder="e.g. Road trip to the coast"
           captionPlaceholder="That day we’ll never forget."
           emptyPhotoTitle={(i) => (i === 0 ? 'Upload a special memory' : 'Add another moment')}
+          templateId={config.templateId}
         />
       </EditorSection>
 
@@ -195,6 +196,7 @@ export function BirthdayForm({ config, setConfig, openSection, onToggle }: Birth
           titlePlaceholder="e.g. The Beginning"
           captionPlaceholder="Where everything started."
           emptyPhotoTitle={() => 'Add a photo'}
+          templateId={config.templateId}
         />
       </EditorSection>
 

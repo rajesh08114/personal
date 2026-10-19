@@ -78,6 +78,10 @@ export interface MusicSettings {
   name?: string;
   enabled: boolean;
   volume: number;
+  /** Start offset in seconds for playback trimming (e.g. skip intro). */
+  startSec?: number;
+  /** Maximum playback duration in seconds for trimmed clips (undefined = full track). */
+  duration?: number;
 }
 
 export interface BirthdayConfig {

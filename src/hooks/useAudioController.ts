@@ -86,17 +86,36 @@ export function useAudioController(music: MusicSettings): AudioController {
     writePrefs({ muted, volume });
   }, [volume, muted]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const startSec = music.startSec ?? 0;
+    const duration = music.duration;
+    const onTimeUpdate = () => {
+      if (duration && audio.currentTime >= startSec + duration) {
+        audio.currentTime = startSec;
+      }
+    };
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    return () => audio.removeEventListener('timeupdate', onTimeUpdate);
+  }, [music.startSec, music.duration]);
+
   const play = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio || !available) return;
     try {
       await ctxRef.current?.resume();
+      const startSec = music.startSec ?? 0;
+      const duration = music.duration;
+      if (audio.currentTime < startSec || (duration && audio.currentTime >= startSec + duration)) {
+        audio.currentTime = startSec;
+      }
       await audio.play();
     } catch {
       // Autoplay blocked or decode failure — the floating player lets them retry.
       setPlaying(false);
     }
-  }, [available]);
+  }, [available, music.startSec, music.duration]);
 
   const pause = useCallback(() => audioRef.current?.pause(), []);
   const toggle = useCallback(() => {

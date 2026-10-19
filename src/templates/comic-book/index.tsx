@@ -76,7 +76,7 @@ function Cover() {
   const { config, open } = useExperience();
   const { name, age, hasAge } = useBirthdayText();
   return (
-    <motion.div className="flex min-h-dvh items-center justify-center px-4 py-10" exit={{ rotateY: -90, opacity: 0, transition: { duration: 0.6 } }} style={{ transformOrigin: 'left center', perspective: 1200 }}>
+    <motion.div className="flex min-h-dvh items-center justify-center px-4 py-14" exit={{ rotateY: -90, opacity: 0, transition: { duration: 0.6 } }} style={{ transformOrigin: 'left center', perspective: 1200 }}>
       <motion.div initial={{ rotate: -6, scale: 0.8, opacity: 0 }} animate={{ rotate: -2, scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 120, damping: 12 }} className="relative w-[min(90vw,28rem)] border-[5px] border-black bg-white p-3 shadow-[10px_10px_0_#000]">
         <div className="flex items-start justify-between border-b-4 border-black pb-2">
           <p className={`${bang} text-xl leading-none text-[var(--bd-primary)]`}>
@@ -91,7 +91,7 @@ function Cover() {
           </span>
         </h1>
         <div className={cn('relative mt-4 border-4 border-black', halftone)}>
-          <PhotoSlot src={config.heroImage} alt={`Cover star: ${name}`} label="Add your hero photo" tone="light" priority className="aspect-[4/5] w-full" imgClassName="contrast-125 saturate-150" />
+          <PhotoSlot src={config.heroImage} alt={`Cover star: ${name}`} label="Add your hero photo" tone="light" priority className="aspect-[4/5] max-h-[min(36dvh,26rem)] w-full" imgClassName="contrast-125 saturate-150" />
           <Burst text="NEW!" className="absolute -top-6 -right-6 size-24 text-3xl" />
         </div>
         <motion.button
