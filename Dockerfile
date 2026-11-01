@@ -6,7 +6,7 @@
 # Or `docker compose up` for the app plus a MongoDB container.
 # Behind a reverse proxy or load balancer, also set TRUST_PROXY=1 so rate limits see the visitor's address.
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -22,7 +22,7 @@ ENV NEXT_PUBLIC_BIRTHDAY_API_URL=$NEXT_PUBLIC_BIRTHDAY_API_URL \
     NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production PORT=8787 HOSTNAME=0.0.0.0 DATA_DIR=/data NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 # The standalone output carries only the packages the server needs (including the MongoDB driver).
